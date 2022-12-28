@@ -1,0 +1,8 @@
+[Desktop Entry]
+Comment=Plots graphs of functions and more
+Terminal=false
+Name=PlotFunction
+Exec=PlotFunction
+Type=Application
+Icon=MV_Plot.png
+Categories=Math;

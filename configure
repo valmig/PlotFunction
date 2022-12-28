@@ -1,0 +1,52 @@
+#!/bin/sh
+
+prefix=/usr/
+cxx=g++
+HERE="$(dirname "$(readlink -f "${0}")")"
+CONF="${HERE}/val-config.in"
+MAKE="${HERE}/Makefile.in"
+includeflag="-I${HERE}/src"
+wxconfig="wx-config";
+
+#echo $CONF
+
+for arg in "$@"; do
+    case "$arg" in
+    --prefix=*)
+        prefix=`echo $arg | sed 's/--prefix=//'`
+        ;;
+    --cxx=*)
+        cxx=`echo $arg | sed 's/--cxx=//'`
+        ;;
+    --wxconfig=*)
+		wxconfig=`echo $arg | sed 's/--wxconfig=//'`
+		;;
+    --help|-h)
+        echo 'usage: ./configure [options]'
+        echo 'options:'
+        echo '  --prefix=<path>: installation prefix (else prefix=/usr)'
+        echo '  --cxx=<command>: c++ compiler (else cxx=g++)'
+        echo '  --wxconfig=<command>: your wx-config (else wxconfig=wx-config)'
+        exit 0
+        ;;
+    esac
+done
+
+ICONPATH="std::string iconpath = \"${prefix}/share/icons/PlotFunction/MV_Plot.xpm\","
+DESKICON="Icon=${prefix}/share/icons/PlotFunction/MV_Plot.png" 
+
+echo 'changing PlotFuncion.cpp'
+sed -i "25s#.*#${ICONPATH}#" "${HERE}/src/PlotFunction.cpp"
+
+echo 'changing PlotFuncion.desktop'
+sed -i "7s#.*#${DESKICON}#" "${HERE}/desktop/PlotFunction.desktop"
+
+
+echo 'generating makefile ...'
+echo "PREFIX=$prefix" > Makefile
+echo "DIRPATH = $HERE" >> Makefile
+echo "CXX=$cxx" >> Makefile
+echo "WXC  = $wxconfig" >> Makefile
+cat $MAKE >> Makefile
+
+echo 'configuration complete, type make to build.'
