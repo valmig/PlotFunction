@@ -1,12 +1,8 @@
-
 #include "PlotFunction.h"
-//#include <modq.h>
 #include <rational.h>
 #include <vector.h>
-//#include <fstream>
 #include <wx/msgdlg.h>
 #include <LA.h>
-//#include <function_parser.cpp>
 #include <polfactor.h>
 #include <ideal_roots.h>
 #include <analysis.h>
@@ -44,7 +40,7 @@ val::d_array<val::d_array<val::GPair<double>>> Points(3);
 
 val::d_array<std::string> WordList{"PI", "exp", "log", "line", "sinh", "sqrt", "cosh", "circle", "tanh", "text", "triangle", "polygon", "points",
                                    "inf", "fill", "abs", "arcsin", "arccos", "arctan", "rectangle", "sin", "cos", "tan",
-                                   "arsinh", "arcosh", "artanh" };
+                                   "arsinh", "arcosh", "artanh"};
 
 
 val::d_array<std::string> sfunctionlist({"sqrt", "exp", "log", "abs", "sinh", "cosh", "tanh", "arsinh", "arcosh", "artanh",
@@ -1870,6 +1866,7 @@ const myfunction& myfunction::infix_to_postfix(const std::string &s)
 			isrational = 0;
 			if (sf == "PI") {
                 t = s_stack(val::ToString(val::PI,20),s_stack::NUMBER);
+                i += sf.length();
 			}
 			else {
                 tp = s_stack::OPERATOR;
