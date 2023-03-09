@@ -567,15 +567,15 @@ void PlotFunctionFrame::GetSizeSettings()
 
 void PlotFunctionFrame::ResetColours()
 {
-    defaultpaintcolor = wxColour(0,0,255);  // Blau
-    Color[0]=wxColour(0,0,255);// Blau
-    Color[1]=wxColour(255,0,0); //Rot
-    Color[2]=wxColour(0,255,0); // Grün
-    Color[3]=wxColour(0,230,246); // Hellblau
-    Color[4]=wxColour(255,116,0); // Orange
-    Color[5]=wxColour(238,0,255); // Lila
-    Color[6]=wxColour(125,125,125);  // Grau
-    BackgroundColor = wxColour(255,255,255);
+    defaultpaintcolor = wxColour(0,0,255);  // blue
+    Color[0]=wxColour(0,0,255);// blue
+    Color[1]=wxColour(255,0,0); // red
+    Color[2]=wxColour(0,255,0); // green
+    Color[3]=wxColour(0,230,246); // light blue
+    Color[4]=wxColour(255,116,0); // orange
+    Color[5]=wxColour(238,0,255); // violet
+    Color[6]=wxColour(125,125,125);  // grey
+    BackgroundColor = wxColour(255,255,255);  // white
     axis_color=wxColour(0,0,0);
     grid_color=wxColour(191,191,191);
     axis_pen=2;grid_pen=1;
@@ -2067,7 +2067,7 @@ void PlotFunctionFrame::OnMenuTools(wxCommandEvent &event)
     if (id==7010) {  // Regression:
         std::string s;
         for (i=0;i<f_menu.length();++i) {
-            if (f_menu[i]->IsChecked() && F[i].IsPoints()) {
+            if (f_menu[i]->IsChecked() && (F[i].IsPoints() || F[i].IsPolygon())) {
                 j=i; ++naktiv;
                 s = F[i].getinfixnotation();
                 if (s.length()>=50) {
@@ -3703,8 +3703,25 @@ void PlotFunctionFrame::SendNotification(const std::string& s)
 
 void PlotFunctionFrame::OnZoom(wxCommandEvent &event)
 {
+    int id = event.GetId();
+    if (active_function != -1) {
+        if (id == 20001) ++pen[active_function];
+        else --pen[active_function];
+        if (pen[active_function] < 0) pen[active_function] = 0;
+        if (pen[active_function] > 100) pen[active_function] = 100;
+        if (F[active_function].IsText()) {
+            int fs = Font[active_function].GetPointSize();
+            if (id == 20001) ++fs;
+            else --fs;
+            if (fs < 0) fs = 0;
+            if (fs >100) fs = 100;
+            Font[active_function].SetPointSize(fs);
+        }
+        Paint();
+        return;
+    }
     if (!yset) return;
-    if (event.GetId()==20001) zoom*=0.96;
+    if (id == 20001) zoom*=0.96;
     else zoom*=1.04;
     if (!iscomputing) {
         iscomputing=1;
@@ -3751,16 +3768,19 @@ void PlotFunctionFrame::OnMove(wxCommandEvent &event)
         movex = movey = 0;
         // Change menu-text
         {
-            std::string t,s = F[active_function].getinfixnotation();
-            if (active_function<=8) t="\tCtrl-Alt-" + val::ToString(active_function+1);
-            else t="";
+            std::string tf = "", tc = "", s = F[active_function].getinfixnotation();
+            if (active_function<=8) {
+                tf = "\tAlt-" + val::ToString(active_function+1);
+                tc = "\tCtrl-" + val::ToString(active_function+1);
+            }
+            //else t="";
             if (s.length()>40) {
                 s.resize(40);
                 s+="...";
             }
-            s+=t;
-            f_menu[active_function]->SetItemLabel(s);
-            c_menu[active_function]->SetItemLabel(s);
+            //s+=t;
+            f_menu[active_function]->SetItemLabel(s + tf);
+            c_menu[active_function]->SetItemLabel(s + tc);
         }
         iscomputing=1;
         //std::cout<<"\n F = "<<F[active_function].getinfixnotation()<<std::endl;

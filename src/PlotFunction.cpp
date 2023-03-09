@@ -1213,16 +1213,21 @@ void computerotation(const val::d_array<myfunction*> F,std::string input)
 
 void computeregression(const myfunction& f,int degree)
 {
-    if (!f.IsPoints()) return;
+    if (!f.IsPoints() && !f.IsPolygon()) return;
     val::d_array<double> d_f = f.getPolygonPoints();
-    int n = d_f.length();
+    double minx = val::Inf, maxx = -val::Inf;
+    int n = d_f.length(), i;
     if (n<=0) return;
 
     if (n<=5) degree=1;
 
+    for (i = 0; i < n; i += 2) {
+        minx = val::Min(minx,d_f[i]);
+        maxx = val::Max(maxx,d_f[i]);
+    }
+
     MyThreadEvent event(MY_EVENT,IdRefresh);
     if (degree==1) {
-        int i;
         double y=0,x=0,m=0,q=0,b;
 
         for (i=0;i<n;i+=2) {
@@ -1245,7 +1250,7 @@ void computeregression(const myfunction& f,int degree)
         }
     }
     else {
-        int i,j,N=n/2;
+        int j,N=n/2;
         degree = val::Min(N,degree);
         val::d_array<val::vector<double> > g(degree+1);
         val::vector<double> y(N);
@@ -1273,6 +1278,9 @@ void computeregression(const myfunction& f,int degree)
         for (i=0;i<=degree;++i) f.insert(X(0,i),i);
         if (f.iszero()) return;
         fstring += ";\n" + val::PolToString(f);
+    }
+    if (f.IsPolygon()) {
+        fstring += "[" + val::ToString(minx) + " , " + val::ToString(maxx) + "]";
     }
 
     if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event.Clone() );
@@ -1856,7 +1864,7 @@ const myfunction& myfunction::infix_to_postfix(const std::string &s)
         }
 
 
-        else if (s[i] == 't' && i < n-1 && s[i+1] != 'a' && s[i+1] != 'e' && s[i+1] != 'r') {
+        else if (s[i] == 't' && (i == n-1 || ( i < n-1 && s[i+1] != 'a' && s[i+1] != 'e' && s[i+1] != 'r'))) {
 			t = s_stack("t",s_stack::NUMBER);
             withpar=1;
 			++i;

@@ -148,7 +148,7 @@ class PlotFunctionFrame: public wxFrame
         val::d_array<int> pen,islinear;
         //val::d_array<val::pol<double>> F;
         val::Glist<myfunction> F;
-        val::Glist<val::rational> Parameter;
+        val::Glist<val::rational> Parameter{val::rational(1)};
         val::Glist<val::GPair<double> > x_range;
         val::d_array<std::string> functionstring{30};
         //
