@@ -1021,7 +1021,7 @@ std::string compute_partialfraction(const val::valfunction &f)
     pol<rational> fp;
     d_array<int> denomexp;
     d_array<pol<rational>> numpol, denompol;
-    if (!partialfraction(f,cont,fp,numpol,denompol,denomexp,1)) {
+    if (!partialfraction(f,cont,fp,numpol,denompol,denomexp)) {
         //std::cout<<"\nPartial fraction decomposition failed!";
         return os;
     }
