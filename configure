@@ -32,7 +32,7 @@ for arg in "$@"; do
     esac
 done
 
-ICONPATH="std::string iconpath = \"${prefix}/share/icons/PlotFunction/MV_Plot.xpm\","
+ICONPATH="iconpath = \"${prefix}/share/icons/PlotFunction/MV_Plot.xpm\","
 DESKICON="Icon=${prefix}/share/icons/PlotFunction/MV_Plot.png" 
 
 echo 'changing PlotFuncion.cpp'
