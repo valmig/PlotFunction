@@ -35,6 +35,10 @@ int has_pi_or_parameter(const std::string& s)
 	for (int i = 0; i < n-1; ++i) {
 		if (s[i] == 'P' && s[i+1] == 'I') is = 1;
 		if (s[i] == 't' && s[i+1] != 'a') is = 1;
+		if (s[i] == 'r' && s[i+1] == 't') {  //  case sqrt
+			++i;
+			continue;
+		}
 	}
 	if (s[n-1] == 't') is = 1;
 	return is;
@@ -48,6 +52,12 @@ std::string replace_pi_t(const std::string &s)
 		if (s[i] == 'P' && s[i+1] == 'I') {
 			rs += "y";
 			++i;
+		}
+		if (s[i] == 'r' && s[i+1] == 't') {  //  case sqrt
+			rs += s[i];
+			++i;
+			rs += s[i];
+			continue;
 		}
 		else if (s[i] == 't' && s[i+1] != 'a') rs += "z";
 		else rs += s[i];
@@ -825,12 +835,13 @@ val::valfunction integral(const val::valfunction &f)
 	}
 	else if (firstop == "log" && gislin) {
 		//F = valfunction(ToString(a))/valfunction(PolToString(gp));
-		F = valfunction(s_a)/valfunction(PolToString(gp));
+		//F = valfunction(s_a)/valfunction(PolToString(gp));
+		F = valfunction(s_a)*(g*f - g);
 	}
 	else if (firstop == "sqrt") {
 		if (gislin) {
-            std::string sf = PolToString(gp);
-            sf = "(" + sf + ")^3";
+            std::string sf = "(" + g.getinfixnotation() + ")^3";
+            //sf = "(" + sf + ")^3";
             //F = valfunction("2/3*" + ToString(a)) * valfunction("sqrt(x)")(valfunction(sf));
             F = valfunction("2/3*" + s_a) * valfunction("sqrt(x)")(valfunction(sf));
 		}
