@@ -567,17 +567,17 @@ void PlotFunctionFrame::GetSizeSettings()
 
 void PlotFunctionFrame::ResetColours()
 {
-    defaultpaintcolor = wxColour(0,0,255);  // blue
-    Color[0]=wxColour(0,0,255);// blue
-    Color[1]=wxColour(255,0,0); // red
-    Color[2]=wxColour(0,255,0); // green
-    Color[3]=wxColour(0,230,246); // light blue
-    Color[4]=wxColour(255,116,0); // orange
-    Color[5]=wxColour(238,0,255); // violet
-    Color[6]=wxColour(125,125,125);  // grey
-    BackgroundColor = wxColour(255,255,255);  // white
-    axis_color=wxColour(0,0,0);
-    grid_color=wxColour(191,191,191);
+    defaultpaintcolor = defaultcolors[BLUE]; //wxColour(0,0,255);  // blue
+    Color[0] = defaultcolors[BLUE]; //wxColour(0,0,255);// blue
+    Color[1] = defaultcolors[RED]; //wxColour(255,0,0); // red
+    Color[2] = defaultcolors[GREEN]; //wxColour(0,255,0); // green
+    Color[3] = defaultcolors[LBLUE]; //wxColour(0,230,246); // light blue
+    Color[4] = defaultcolors[ORANGE]; //wxColour(255,116,0); // orange
+    Color[5] = defaultcolors[VIOLET];  //wxColour(238,0,255); // violet
+    Color[6] = defaultcolors[GREY]; //wxColour(125,125,125);  // grey
+    BackgroundColor = defaultcolors[WHITE]; //wxColour(255,255,255);  // white
+    axis_color = defaultcolors[BlACK]; //wxColour(0,0,0);
+    grid_color = defaultcolors[LGREY]; //wxColour(191,191,191);
     axis_pen=2;grid_pen=1;
     DrawPanel->SetBackgroundColour(BackgroundColor);
     for (int i=0;i<pen.length();++i) pen[i] =2;
@@ -694,14 +694,17 @@ void PlotFunctionFrame::GetSettings()
     s="";
     if (fstring=="") {setfunctionsmenu(); return;}
     val::d_array<char> ignore({'\n'});
+    val::Glist<int> colorindezes;
+    int cindex;
 
     svalues = getwordsfromstring(fstring,separators,0,ignore);
     for (auto& v : svalues) {
-        getfunctionfromstring(v,f_s,xr.x,xr.y);
+        cindex = getfunctionfromstring(v,f_s,xr.x,xr.y);
         f = myfunction(f_s);
         if (!f.iszero()) {
             F.push_back(std::move(f));
             x_range.push_back(xr);
+            colorindezes.push_back(cindex);
             N++;
         }
     }
@@ -748,6 +751,13 @@ void PlotFunctionFrame::GetSettings()
             Color[i] = Color[i%7];
         }
     }
+
+    i = 0;
+    for (const auto &v : colorindezes) {
+        if (v != -1) Color[i] = defaultcolors[v];
+        ++i;
+    }
+
     if (N>Font.length()) {
         int i,l=Font.length();
         Font.resize(N);

@@ -38,9 +38,9 @@ val::d_array<std::string> analyze_output(4);
 val::d_array<val::d_array<val::GPair<double>>> Points(3);
 
 
-val::d_array<std::string> WordList{"PI", "exp", "log", "line", "sinh", "sqrt", "cosh", "circle", "tanh", "text", "triangle", "polygon", "points",
+const val::d_array<std::string> WordList{"PI", "exp", "log", "line", "sinh", "sqrt", "cosh", "circle", "tanh", "text", "triangle", "polygon", "points",
                                    "inf", "fill", "abs", "arcsin", "arccos", "arctan", "rectangle", "sin", "cos", "tan",
-                                   "arsinh", "arcosh", "artanh"};
+                                   "arsinh", "arcosh", "artanh", "blue", "red", "green", "lblue", "orange", "violet", "grey", "white", "black", "lgrey"};
 
 
 val::d_array<std::string> sfunctionlist({"sqrt", "exp", "log", "abs", "sinh", "cosh", "tanh", "arsinh", "arcosh", "artanh",
@@ -51,6 +51,12 @@ functionpairs ({ {"sqrt",val::sqrt}, {"abs",val::abs}, {"exp", val::exp}, {"log"
 					{"tan", val::tan}, {"arcsin", val::arcsin}, {"arccos", val::arccos}, {"arctan", val::arctan}, {"sinh", val::sinh},
 					{"cosh", val::cosh}, {"tanh", val::tanh}, {"arsinh", val::arsinh}, {"arcosh", val::arcosh}, {"artanh", val::artanh}	});
 
+
+const val::d_array<wxColour> defaultcolors{wxColour(0,0,255), wxColour(255,0,0), wxColour(0,255,0), wxColour(0,236,246),
+                                      wxColour(255,116,0), wxColour(238,0,255), wxColour(125,125,125), wxColour(255,255,255),
+                                      wxColour(0,0,0), wxColour(191,191,191) };
+
+const val::d_array<std::string> defaultcolornames{"blue", "red", "green", "lblue", "orange", "violet", "grey", "white", "black", "lgrey"};
 
 
 wxDEFINE_EVENT(MY_EVENT,MyThreadEvent);
@@ -411,13 +417,47 @@ void gettangentvalues(const myfunction &f,const double &x,double &m,double &b,in
 }
 
 
-void getfunctionfromstring(const std::string &fstring,std::string& f_s,double &x1,double &x2)
+std::string extractstringfrombrackets(std::string &sf,const char lb, const char rb)
+{
+    std::string s = "", sb = "";
+    int i, n = sf.length();
+
+    if (n == 0) return sb;
+    for (i = 0; i < n; ++i) {
+        if (sf[i] == lb) break;
+        s += sf[i];
+    }
+    for (++i; i < n ; ++i) {
+        if (sf[i] == rb) break;
+        sb += sf[i];
+    }
+    for (++i; i < n; ++i) s += sf[i];
+    sf = s;
+    return sb;
+}
+
+
+int getfunctionfromstring(std::string &fstring,std::string& f_s,double &x1,double &x2)
 {
     x1=x2=0;
     val::rational factor;
     std::string ns="";
     f_s="";
-    int i,n=fstring.size();
+    int i, n, colorindex = -1;
+
+    ns = extractstringfrombrackets(fstring,'<','>');
+
+    i = 0;
+    for (const auto& v : defaultcolornames) {
+        if (v == ns) {
+            colorindex = i;
+            break;
+        }
+        ++i;
+    }
+
+    ns = "";
+    n = fstring.size();
 
     for (i=0;i<n;++i) {
         if (fstring[i]=='[') break;
@@ -427,7 +467,7 @@ void getfunctionfromstring(const std::string &fstring,std::string& f_s,double &x
         if (fstring[i]==',') break;
         ns+=fstring[i];
     }
-    if (ns.size()==0) return;
+    if (ns.size()==0) return colorindex;
     if (!getpiscale(ns,factor,x1,0))  x1=val::FromString<double>(delcharfromstring(ns));
     x2 = x1;
     ns="";
@@ -435,8 +475,9 @@ void getfunctionfromstring(const std::string &fstring,std::string& f_s,double &x
         if (fstring[i]==']') break;
         ns+=fstring[i];
     }
-    if (ns.size()==0) return;
+    if (ns.size()==0) return colorindex;
     if (!getpiscale(ns,factor,x2,0)) x2=val::FromString<double>(delcharfromstring(ns));
+    return colorindex;
 }
 
 
@@ -2171,6 +2212,7 @@ const myfunction& myfunction::infix_to_postfix(const std::string &s)
             Gdat.inserttoend(myfunction::token(s+t.data,0));
             s="";
         }
+
         return *this;
     }
 

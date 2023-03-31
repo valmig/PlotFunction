@@ -137,7 +137,7 @@ class PlotFunctionFrame: public wxFrame
         wxSize bitmapsize,actualPanelsize; //DialogInputSize{wxDefaultSize};
         wxBitmap actualBitmapBackground;
         wxImage BackgroundImage;
-        wxColour axis_color{0,0,0},grid_color{191,191,191}, defaultpaintcolor{0,0,255};
+        wxColour axis_color ,grid_color, defaultpaintcolor;
         val::d_array<val::d_array<double> > farray;
         val::d_array<val::d_array<val::d_array<double> > > curvearray;
         //val::d_array<val::d_array<val::d_array<double> > > y_curvearray;

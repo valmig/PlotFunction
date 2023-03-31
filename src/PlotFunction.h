@@ -29,13 +29,17 @@ extern val::d_array<val::Glist<val::GPair<double>>> critpoints;//,undef_interval
 extern val::d_array<val::d_array<double>> critx;
 extern val::d_array<std::string> analyze_output;
 extern val::d_array<val::d_array<val::GPair<double>>> Points;
+extern const val::d_array<wxColour> defaultcolors;
+extern const val::d_array<std::string> defaultcolornames;
 
-extern val::d_array<std::string> WordList;
+extern const val::d_array<std::string> WordList;
 
 static std::mutex computemutex;
 
 class MyThreadEvent;
 class myfunction;
+
+enum val_colors{BLUE,RED,GREEN,LBLUE,ORANGE,VIOLET,GREY,WHITE,BlACK,LGREY};
 
 wxDECLARE_EVENT(MY_EVENT, MyThreadEvent);
 
@@ -72,8 +76,8 @@ namespace val
 {
 //double round(const double& x,int k=4); // Rundet auf 1e-4
 //template <class T> T power(const T &x,int n);
-template <class T> T myabs(const T&);
-template <> val::rational myabs(const val::rational&);
+//template <class T> T myabs(const T&);
+//template <> val::rational myabs(const val::rational&);
 val::rational abs(const val::rational&);
 int operator <(const val::GPair<double>& p,const val::GPair<double>& q);
 }
@@ -105,7 +109,10 @@ val::rational eval(const val::rationalfunction &F,const val::rational &x);
 
 void gettangentvalues(const myfunction &f,const double &x,double &m,double &b,int tangent=1);
 
-void getfunctionfromstring(const std::string &fstring,std::string& f_s,double &x1,double &x2);
+std::string extractstringfrombrackets(std::string &sf,const char lb, const char rb);
+
+// Returns color index if specified, -1 else.
+int getfunctionfromstring(std::string &fstring,std::string& f_s,double &x1,double &x2);
 
 val::Glist<double> getdoublevaluesfromstring(const std::string &sf,const val::d_array<char>& separators, int emptystring = 0);
 
