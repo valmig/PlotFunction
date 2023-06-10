@@ -439,12 +439,27 @@ void AnalysisDialog::Paint(int i)
 
 InputFunctionDialog::InputFunctionDialog(wxWindow *parent,const val::d_array<std::string> &Wlist,const wxString &value,
                                          const wxString &s_text, const wxString& title, const wxSize &size,int fonts)
-                                            : BaseDialog(parent,0,wxDefaultPosition,title)
+                                            : BaseDialog(parent,0,wxDefaultPosition,title),
+                                            input(new val::CompleteTextCtrl(this,30,Wlist,value,size,wxDefaultPosition,wxTE_MULTILINE|wxVSCROLL|wxHSCROLL))
+{
+    Build(s_text,fonts);
+}
+
+InputFunctionDialog::InputFunctionDialog(wxWindow *parent,const val::trie_type<std::string> &Wlist,const wxString &value,
+                                         const wxString &s_text, const wxString& title, const wxSize &size,int fonts)
+                                            : BaseDialog(parent,0,wxDefaultPosition,title),
+                                            input(new val::CompleteTextCtrl(this,30,Wlist,value,size,wxDefaultPosition,wxTE_MULTILINE|wxVSCROLL|wxHSCROLL))
+{
+    Build(s_text,fonts);
+}
+
+
+void InputFunctionDialog::Build(const wxString& s_text, int fonts)
 {
     wxBoxSizer *PBoxSizer = new wxBoxSizer(wxVERTICAL);
     wxStaticText *st_text = new wxStaticText(this,20,s_text);
     PBoxSizer->Add(st_text,0,wxALL,5);
-    input = new val::CompleteTextCtrl(this,30,Wlist,value,size,wxDefaultPosition,wxTE_MULTILINE|wxVSCROLL|wxHSCROLL);
+    //input = new val::CompleteTextCtrl(this,30,Wlist,value,size,wxDefaultPosition,wxTE_MULTILINE|wxVSCROLL|wxHSCROLL);
 
     if (fonts < 10) fonts = 10;
     if (fonts > 20) fonts = 20;
@@ -462,6 +477,56 @@ InputFunctionDialog::InputFunctionDialog(wxWindow *parent,const val::d_array<std
     //n_SetAccelerator();
 
 	BoxSizer->SetSizeHints(this);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+InputDialog::InputDialog(wxWindow *parent, wxWindowID id, const val::trie_type<std::string> &list, const wxString& value,
+                         const wxSize &size, const wxPoint& pos, int fonts) : wxDialog(parent,id,"",wxDefaultPosition,wxDefaultSize,wxBORDER_RAISED), Parent(parent), Identity(id)
+{
+    Move(pos);
+#ifdef _WIN32
+    input = new val::CompleteTextCtrl(this,101,list,value,size,wxDefaultPosition,wxTE_MULTILINE|wxTE_PROCESS_ENTER); // _WIN32
+#else
+    input = new val::CompleteTextCtrl(this,101,list,value,size,wxDefaultPosition,wxTE_PROCESS_ENTER);
+#endif // _WIN32
+
+    if (fonts < 10) fonts = 10;
+    if (fonts > 20) fonts = 20;
+    wxFont myfont = input->GetFont();
+    myfont.SetPointSize(fonts);
+    input->SetFont(myfont);
+
+
+    wxBoxSizer *BoxSizer = new wxBoxSizer(wxVERTICAL);
+    //wxBoxSizer *TextSizer = new wxBoxSizer(wxHORIZONTAL);
+    //TextSizer->Add(input,1,wxEXPAND|wxALL,0);
+    BoxSizer->Add(input,1,wxALL|wxEXPAND,0);
+    //input = new wxTextCtrl(this,101,value,pos,size);
+    Bind(wxEVT_TEXT_ENTER,&InputDialog::OnEnterhit,this,101);
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&InputDialog::OnEnterhit,this,102);
+
+    wxAcceleratorEntry entries[1];
+    entries[0].Set(wxACCEL_NORMAL,WXK_ESCAPE,102);
+    wxAcceleratorTable accel(1,entries);
+    SetAcceleratorTable(accel);
+
+    SetSizer(BoxSizer);
+	BoxSizer->Fit(this);
+	BoxSizer->SetSizeHints(this);
+
+}
+
+void InputDialog::OnEnterhit(wxCommandEvent &event)
+{
+    int id = event.GetId();
+    event.Skip();
+    if (id == 101) {
+        EndModal(wxID_OK);
+    }
+    else EndModal(wxID_CANCEL);
 }
 
 

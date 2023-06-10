@@ -17,7 +17,11 @@
 #include <MyTime.h>
 #include <function_parser.h>
 #include <mutex>
+#include <trie.h>
 
+
+class MyThreadEvent;
+class myfunction;
 
 
 extern wxFrame *MyFrame;
@@ -25,21 +29,32 @@ extern std::string fstring,xstring,ystring,filesep,filedir,sizestring,tablestrin
                    openfiledir,handcursor,RecentFilesPath,alticonpath;
 
 //extern std::mutex compute_mutex;
+extern myfunction global_function;
 extern val::d_array<val::Glist<val::GPair<double>>> critpoints;//,undef_intervals;
 extern val::d_array<val::d_array<double>> critx;
 extern val::d_array<std::string> analyze_output;
 extern val::d_array<val::d_array<val::GPair<double>>> Points;
 extern const val::d_array<wxColour> defaultcolors;
 extern const val::d_array<std::string> defaultcolornames;
+extern const val::d_array<std::string> CommandsList;
+extern const val::d_array<std::string> SettingsList;
+//extern const val::d_array<std::string> InputDialogList;
 
 extern const val::d_array<std::string> WordList;
+extern const val::trie_type<std::string> WordTree;
+extern const val::trie_type<std::string> InputDialogTree;
+
 
 static std::mutex computemutex;
 
-class MyThreadEvent;
-class myfunction;
 
-enum val_colors{BLUE,RED,GREEN,LBLUE,ORANGE,VIOLET,GREY,WHITE,BlACK,LGREY};
+enum val_colors{BLUE,RED,GREEN,LBLUE,ORANGE,VIOLET,GREY,WHITE,BlACK,LGREY,YELLOW,DGREEN,BEIGE};
+
+enum val_settings{AXIS_SCALE,AXIS_COLOR,GRID_SCALE,GRID_COLOR,VALUES_NUMBER,AXIS_RANGE,SHOW_X_AXIS,SHOW_Y_AXIS,SHOW_GRID,SHOW_X_SCALE,
+                    SHOW_Y_SCALE,RESET_COLORS,FONT_SIZE,FUNCTION_COLOR,PANEL_SIZE,AXIS_NAMES,REGRESSION_DEGREE,POINT_DECIMALS,
+                    SHOW_FUNCTION,BACKGROND_COLOR,PARAMETER_VALUES,FUNCTION_SIZE,MARGIN,AXIS_FONTSIZE};
+
+enum val_commands{DERIVE,ANALYZE,TANGENT,NORMAL,INTERPOLATION,REGRESSION,TABLE,INTEGRAL,ARCLENGTH,ZERO_ITERATION,MOVE,EVALUATE};
 
 wxDECLARE_EVENT(MY_EVENT, MyThreadEvent);
 
@@ -63,7 +78,7 @@ private:
 	std::string message;
 };
 
-enum {IdPaint,IdTable,IdIntegral,IdRefresh,IdIteration,IdAnalyze,IdInfo};
+enum {IdPaint,IdTable,IdIntegral,IdRefresh,IdIteration,IdAnalyze,IdInfo,IdEval};
 
 /*
 void computepoints(const val::d_array<val::pol<double>> &F,val::d_array<val::d_array<double>> &farray,
@@ -145,6 +160,8 @@ void computepoints(const val::Glist<myfunction> &F,val::d_array<val::d_array<dou
 void computetable(const myfunction& f,double x1,double x2,double dx);
 
 void computetable_rat(const myfunction& f,val::rational x1,val::rational x2,val::rational dx);
+
+void computeevaluation(const myfunction& f, double par);
 
 //void computeintegral(const myfunction& f,val::rational x1,val::rational x2,double delta,int n,int dez,int arclength=0);
 

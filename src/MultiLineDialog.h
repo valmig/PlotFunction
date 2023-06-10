@@ -119,6 +119,8 @@ class InputFunctionDialog : public val::BaseDialog
 public:
     InputFunctionDialog(wxWindow *parent,const val::d_array<std::string> &Wlist,const wxString &value="", const wxString &s_text="", const wxString& title="",
                         const wxSize &size = wxDefaultSize,int fonts = 10);
+    InputFunctionDialog(wxWindow *parent,const val::trie_type<std::string> &Wlist,const wxString &value="", const wxString &s_text="", const wxString& title="",
+                        const wxSize &size = wxDefaultSize,int fonts = 10);
 
     ~InputFunctionDialog() {}
     wxString GetValue() const {return input->GetValue();}
@@ -127,7 +129,33 @@ public:
     wxSize GetInputSize() const {return input->GetSize();}
     void SetMinInputSize(const wxSize& s) {input->SetMinSize(s);}
 private:
+    void Build(const wxString &s_text,int fonts);
     val::CompleteTextCtrl *input = nullptr;
+};
+
+
+// -------------------------------------------------------------------------------------------------------------------------------------------
+
+class InputDialog : public wxDialog
+{
+public:
+    InputDialog(wxWindow *parent,wxWindowID id,const val::trie_type<std::string> &list,const wxString &value = "",const wxSize &size = wxDefaultSize,
+                    const wxPoint &pos = wxDefaultPosition, int fonts = 10);
+    ~InputDialog() {}
+    void Clear() {input->Clear();}
+    void SetSize(int x,int y) {input->SetSize(x,y);Fit();}
+    wxFont GetFont() const {return input->GetFont();}
+    bool SetFont(const wxFont &font) {return input->SetFont(font);}
+    void SetFocus() {input->SetFocus();}
+    void SetTextValue(const wxString& s) {input->SetValue(s);}
+    const wxString GetTextValue() const {return input->GetValue();}
+
+private:
+    wxWindow *Parent = nullptr;
+    wxWindowID  Identity = 0;
+    val::CompleteTextCtrl *input = nullptr;
+    //wxTextCtrl *input = nullptr;
+    void OnEnterhit(wxCommandEvent&);
 };
 
 

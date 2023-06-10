@@ -213,6 +213,9 @@ class DLL_PUBLIC CompleteTextCtrl : public wxTextCtrl
 public:
     CompleteTextCtrl(wxWindow *parent,wxWindowID id,const val::d_array<std::string> &list,const wxString &value = "",const wxSize &size = wxDefaultSize,
                     const wxPoint &pos = wxDefaultPosition,long style = 0);
+ 
+    CompleteTextCtrl(wxWindow *parent,wxWindowID id,const val::trie_type<std::string> &list,const wxString &value = "",const wxSize &size = wxDefaultSize,
+                    const wxPoint &pos = wxDefaultPosition,long style = 0);
     ~CompleteTextCtrl();
     bool SetFont(const wxFont& font);
     void SetCloseBrackets(bool v = true) {closebrackets = v;}
@@ -224,12 +227,17 @@ private:
     wxWindowID identity;
     TopListbox *listbox = nullptr;
     val::d_array<std::string> CandList;
-    val::trie_type<std::string,58> WordList;
+    val::trie_type<std::string> WordList;
+    char beg = 65, end = 122; 
+    const val::trie_type<std::string> *WordListPointer = nullptr;
     std::string actualword;
     int selection = 0, isactiv=0, n_candidates = 0, fontsize, actuallength = 0, formerlength=0;
     bool closebrackets = false, enablecomplete = true;
     wxString bracket = ")";
     wxAcceleratorTable *parenttable = nullptr, *accel = nullptr;
+    void BuildObject();
+    int isalphabetical(char s) const;
+    std::string findword(const std::string &s, int pos) const;
     void OnInputChanged(wxCommandEvent &event);
     void OnListBoxSelected(wxCommandEvent &event);
     void OnCompleteBrackets(wxCommandEvent &);

@@ -12,7 +12,7 @@ void analize_rationalfunction(val::valfunction& f,const double& eps=1e-9,int dec
 
 void analyzefunction(const myfunction &f,std::string input);
 
-val::valfunction integral(const val::valfunction &f);
+val::valfunction integral(const val::valfunction &f, int k = 1);
 
 void computeintegral(const myfunction& f,val::rational x1,val::rational x2,double delta,int n,int dez,int arclength=0);
 

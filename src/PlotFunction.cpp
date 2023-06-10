@@ -32,6 +32,8 @@ std::string RecentFilesPath = settingsdir + filesep + "recent.txt";
 //std::mutex compute_mutex;
 //std::atomic<int> iscomputing(0);
 
+myfunction global_function;
+
 val::d_array<val::Glist<val::GPair<double>>> critpoints;// undef_intervals;
 val::d_array<val::d_array<double>> critx;
 val::d_array<std::string> analyze_output(4);
@@ -40,7 +42,7 @@ val::d_array<val::d_array<val::GPair<double>>> Points(3);
 
 const val::d_array<std::string> WordList{"PI", "exp", "log", "line", "sinh", "sqrt", "cosh", "circle", "tanh", "text", "triangle", "polygon", "points",
                                    "inf", "fill", "abs", "arcsin", "arccos", "arctan", "rectangle", "sin", "cos", "tan",
-                                   "arsinh", "arcosh", "artanh", "blue", "red", "green", "lblue", "orange", "violet", "grey", "white", "black", "lgrey"};
+                                   "arsinh", "arcosh", "artanh" };
 
 
 val::d_array<std::string> sfunctionlist({"sqrt", "exp", "log", "abs", "sinh", "cosh", "tanh", "arsinh", "arcosh", "artanh",
@@ -54,9 +56,25 @@ functionpairs ({ {"sqrt",val::sqrt}, {"abs",val::abs}, {"exp", val::exp}, {"log"
 
 const val::d_array<wxColour> defaultcolors{wxColour(0,0,255), wxColour(255,0,0), wxColour(0,255,0), wxColour(0,236,246),
                                       wxColour(255,116,0), wxColour(238,0,255), wxColour(125,125,125), wxColour(255,255,255),
-                                      wxColour(0,0,0), wxColour(191,191,191) };
+                                      wxColour(0,0,0), wxColour(191,191,191), wxColour(255,255,0), wxColour(0,128,0), wxColour(245,245,220) };
 
-const val::d_array<std::string> defaultcolornames{"blue", "red", "green", "lblue", "orange", "violet", "grey", "white", "black", "lgrey"};
+const val::d_array<std::string> defaultcolornames{"blue", "red", "green", "lblue", "orange", "violet", "grey", "white", "black",
+                                "lgrey", "yellow", "dgreen", "beige" };
+
+const val::d_array<std::string> SettingsList({"axis-scale", "axis-color", "grid-scale", "grid-color", "values-number", "axis-range", "show-x-axis",
+                                "show-y-axis", "show-grid" , "show-x-scale", "show-y-scale" , "reset-colors", "font-size", "function-color", "panel-size", "axis-names", "regression-degree",
+                                "point-decimals", "show-function", "background-color", "parameter-values", "function-size", "margin",
+                                "axis-fontsize" });
+
+const val::d_array<std::string> CommandsList({"derive", "analyze", "tangent", "normal", "interpolation", "regression", "table", "integral",
+                                             "arclength", "zero-iteration", "move", "evaluate" });
+
+//const val::d_array<std::string> InputDialogList(SettingsList);
+
+const val::trie_type<std::string> WordTree(WordList + defaultcolornames, 58, int('A'));
+
+
+const val::trie_type<std::string> InputDialogTree(SettingsList + CommandsList + defaultcolornames, 78, int('-'));
 
 
 wxDEFINE_EVENT(MY_EVENT,MyThreadEvent);
@@ -1101,59 +1119,38 @@ void computetable_rat(const myfunction& f,val::rational x1,val::rational x2,val:
      if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event.Clone() );
 }
 
-/*
-void computeintegral(const myfunction& f,val::rational x1,val::rational x2,double delta,int n,int dez,int arclength)
+
+
+void computeevaluation(const myfunction& f, double par)
 {
     using namespace val;
-    MyThreadEvent event(MY_EVENT,IdIntegral);
-    int k=isderived(f),ispol=0;
-    double a=double(x1),b=double(x2),wert;
-    val::rational r_wert;
-    //val::DoubleFunction g;
-    val::valfunction g;
-    std::string name="";
+    d_array<char> sep({';', ' '});
+    Glist<std::string> wlist = getwordsfromstring(tablestring,sep);
 
-    if (arclength) {
-        if (f.isdifferentiable()) {
-            val::valfunction h("sqrt(x)"),g(f.getinfixnotation());
-            g=g.derive(); g=g*g; g+=val::valfunction("1");
-            h=h(g);
-            //name = h.getinfixnotation() + "  ;";
-            wert=integral(h,a,b,b,delta);
-        }
-        else {
-            //val::DoubleFunction g1=val::DoubleFunction(val::doublefunction(std::bind(std::cref(f),std::placeholders::_1))).derive();
-            val::valfunction g1(val::valfunction(f.getinfixnotation()).derive());
-            g1 = g1*g1;
-            //g1 += val::DoubleFunction(1);
-            g1 += val::valfunction("1");
-            //g = DoubleFunction(sqrt)(g1);
-            g = val::valfunction("sqrt")(g1);
-            wert = integral(g,a,b,b,delta);
-        }
-        name+="arclength( ";
-        //g = val::DoubleFunction(sqrt) (val::DoubleFunction(val::doublefunction(std::bind(std::cref(f),std::placeholders::_1))).derive() + val::DoubleFunction(1));
-    }
-    else if (f.numberofvariables()<=1 && f.ispolynomialfunction()) {
-        ispol=1;
-        val::pol<val::rational> p=f.getpol(val::rational(0),'y');
-        r_wert=p.integrate(x1,x2);
-    }
-    if (!arclength) {
-        if (k) {
-            wert=derive(f,b,k-1) - derive(f,a,k-1);
-        }
-        else wert=integral(f,a,b,n,delta);
-        name="integral( ";
-    }
-    tablestring = name + f.getinfixnotation() + " ; " + ToString(x1) + " ; " + ToString(x2) + " ) =\n     ";
-    if (ispol) tablestring+= ToString(r_wert) + "\n\n double:   ";
-    tablestring+=ToString(val::round(wert,dez),12);
-    if (k==0) tablestring+= "\nPrecision : " + ToString(delta) + " , Round to decimal: " + ToString(dez) + "\nIterations : " + ToString(n);
+    if (wlist.isempty()) return;
 
-    if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event.Clone() );
+    valfunction F(f.getinfixnotation()), g, h;
+    double x, y;
+
+    //F.setparameter(par);
+
+    tablestring = "f(x) = " + f.getinfixnotation() + "\n";
+
+    for (const auto & w : wlist) {
+        g = valfunction(w);
+        h = F(g);
+        g.setparameter(par);
+        h.setparameter(par);
+        tablestring += "\n x = " + w + ":" + "\nSymbolic evaluation:\n f(" + w + ") = " + h.getinfixnotation();
+        x = val::round(g(0),8);  y = val::round(h(0),8);
+        tablestring += "\nDouble evaluation:\n f(" + w + ") = " + ToString(y);
+        tablestring += "\nPoint in graph: \n" + ToString(x) + "  " + ToString(y) + "\n";
+    }
+    MyThreadEvent event(MY_EVENT,IdEval);
+    if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event.Clone());
 }
-*/
+
+
 
 void computezeroiteration(const myfunction&f,double x1,double x2,double eps,int n,int dez)
 {
