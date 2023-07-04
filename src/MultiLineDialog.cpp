@@ -5,6 +5,8 @@
 #include "valDialogs.cpp"
 #include "valControls.cpp"
 
+
+
 // --------------------------------------------------------------------------------------------------------------------------
 
 
@@ -16,7 +18,8 @@
 
 
 
-FunctionColorDialog::FunctionColorDialog(wxWindow *parent,const wxColour& color,const int linewidth) : Color(color) , LineWidth(linewidth)
+FunctionColorDialog::FunctionColorDialog(wxWindow *parent,const wxColour& color,const wxColour& backgroundcolor
+                                         ,const int linewidth) : Color(color), BackgroundColor(backgroundcolor), LineWidth(linewidth)
 {
     Create(parent,wxID_ANY,_T("Choose color and width"));
     //
@@ -93,6 +96,7 @@ void FunctionColorDialog::OnButtonClick(wxCommandEvent& event)
 void FunctionColorDialog::Paint() const
 {
     wxClientDC dc(DrawPanel);
+    dc.SetBackground(BackgroundColor);
     dc.Clear();
     dc.SetPen(wxPen(Color,LineWidth));
     dc.DrawLine(10,sy/2,sx-10,sy/2);

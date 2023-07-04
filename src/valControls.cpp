@@ -905,7 +905,7 @@ CompleteTextCtrl::CompleteTextCtrl(wxWindow *parent, wxWindowID id,const val::d_
 
 
 CompleteTextCtrl::CompleteTextCtrl(wxWindow *parent, wxWindowID id,const val::trie_type<std::string> &list,const wxString &value, const wxSize &size,
-                                   const wxPoint &pos,long style) : wxTextCtrl(parent,id,value,pos,size,style), Parent(parent), identity(id), 
+                                   const wxPoint &pos,long style) : wxTextCtrl(parent,id,value,pos,size,style), Parent(parent), identity(id),
                                    beg(list.first_valid_char()), end(list.last_valid_char()), WordListPointer(&list)
 {
 	BuildObject();
@@ -1009,11 +1009,12 @@ void CompleteTextCtrl::OnInputChanged(wxCommandEvent &tevent)
     std::string word = std::string(GetValue());
     int n = GetInsertionPoint();
     if (!IsSingleLine()) --n;
-    //wxMessageBox(val::ToString(n));
+    //wxMessageBox(word + " , = " +val::ToString(n));
     if (n<0) n = 0;
 
     formerlength = actuallength;
     actuallength = word.length();
+    if (n > actuallength - 1) n = actuallength - 1;
 #ifdef _WIN32
     int line = 0;
     for (int i= 0; i<n; ++i) {

@@ -1965,7 +1965,7 @@ void PlotFunctionFrame::OnMenuColours(wxCommandEvent &event)
 
         if (evid==4401) { col = axis_color; pen = axis_pen;}
         else {col = grid_color; pen = grid_pen;}
-        FunctionColorDialog Dialog(this,col,pen);
+        FunctionColorDialog Dialog(this,col,BackgroundColor,pen);
         if (Dialog.ShowModal()==wxID_OK) {
             col=Dialog.GetColor();
             pen=Dialog.GetLineWith();
@@ -2007,7 +2007,7 @@ void PlotFunctionFrame::OnMenuColours(wxCommandEvent &event)
         return;
     }
     else {
-        FunctionColorDialog Dialog(this,Color[i],pen[i]);
+        FunctionColorDialog Dialog(this,Color[i],BackgroundColor,pen[i]);
         if (Dialog.ShowModal()==wxID_OK) {
             Color[i]=Dialog.GetColor();
             pen[i]=Dialog.GetLineWith();
@@ -2541,7 +2541,7 @@ void PlotFunctionFrame::ChangeSettings(int command, const std::string &svalue, i
             separators[0] = ';';
             separators.push_back(' ');
             if (!s_values.isempty())  {
-                values = getdoublevaluesfromstring(s_values[0],separators,1);
+                values = getdoublevaluesfromstring(s_values[0],separators,0);
                 if (values.length() >= 2) {
                     d1 = values[0]; d2 = values[1];
                 }
@@ -2585,7 +2585,7 @@ void PlotFunctionFrame::ChangeSettings(int command, const std::string &svalue, i
                     Compute();
                     return;
                 }
-                values = getdoublevaluesfromstring(s_values[1],separators,1);
+                values = getdoublevaluesfromstring(s_values[1],separators,0);
                 if (values.length() >= 2) {
                     d1 = values[0]; d2 = values[1];
                 }
@@ -4246,7 +4246,7 @@ void PlotFunctionFrame::SendNotification(const std::string& s)
     using namespace std::chrono_literals;
     val::InfoWindow *notification = new val::InfoWindow(this,nchildwindows,s,wxDefaultPosition,wxSize(300,100),"Info",20,0);
     notification->Show();
-    for (int i=0;i<1000;++i) wxYield();
+    for (int i=0;i<5000;++i) wxYield();
     std::this_thread::sleep_for(500ms);
     notification->Destroy();
 }

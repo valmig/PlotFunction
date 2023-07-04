@@ -16,7 +16,7 @@
 class FunctionColorDialog : public wxDialog
 {
 public:
-	FunctionColorDialog(wxWindow *parent,const wxColour& color= *wxBLACK,const int linewidth=2);
+	FunctionColorDialog(wxWindow *parent,const wxColour& color= *wxBLACK, const wxColour& backgroundcolor = *wxWHITE, const int linewidth=2);
 	virtual ~FunctionColorDialog();
 	const wxColor& GetColor() const {return Color;}
 	int GetLineWith() const {return LineWidth;}
@@ -26,7 +26,7 @@ private:
     //wxColourPickerCtrl *ColorPicker=nullptr;
     wxButton *ColorButton=nullptr;
     wxColourData *ColorData=nullptr;
-    wxColor Color;
+    wxColor Color, BackgroundColor;
     int LineWidth;
     void OnButtonClick(wxCommandEvent& event);
     void OnDrawPanelPaint(wxPaintEvent& event);

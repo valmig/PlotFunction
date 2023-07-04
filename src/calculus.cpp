@@ -599,7 +599,7 @@ val::valfunction getrationalfrom_oprat(const val::valfunction &f, const std::str
 
     std::string op=f.getfirstoperator();
     if (op==oper) return val::valfunction("1");
-    if (op=="m") return val::valfunction("-1");
+    if (op=="m") return -getrationalfrom_oprat(-f,oper);
     if (op=="*") return f.getfirstargument()*getrationalfrom_oprat(f.getsecondargument(),oper);
     if (op=="/") return (getrationalfrom_oprat(f.getfirstargument(),oper)/f.getsecondargument());
 
@@ -1695,6 +1695,7 @@ void analyze_exprationalfunction(const val::valfunction &f,const double &eps=1e-
     else {
         analyze_output[2] += PolfractionToString(F_r) + "*" + "exp(" + Exp.getinfixnotation() + ").\n";
     }
+
 
     f_r /= val::gcd(f_r,f_r.derive());
     f_d = val::ToDoublePolynom(f_r);
