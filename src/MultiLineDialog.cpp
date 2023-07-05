@@ -265,7 +265,7 @@ wxDEFINE_EVENT(P_EVENT,ParentEvent);
 AnalysisDialog::AnalysisDialog(wxWindow *parent,int &nchild,const val::d_array<std::string> &output,const val::d_array<val::d_array<val::GPair<double>>> &Point,
                                 const wxSize &Size,const wxPoint &Pos,int fonts) : Parent(parent), N_child(&nchild) , Points(&Point), fontsize(fonts)
 {
-    Create(parent, wxID_ANY,_T("Analyze function"), wxDefaultPosition, wxDefaultSize, wxDEFAULT_DIALOG_STYLE, _T("wxID_ANY"));
+    Create(parent, wxID_ANY,_T("Analyze function"), wxDefaultPosition, wxDefaultSize, wxRESIZE_BORDER, _T("wxID_ANY"));
     ++(*N_child);
     Move(Pos);
     int n_point=Point.length(),i,n_output=output.length();
@@ -312,7 +312,7 @@ AnalysisDialog::AnalysisDialog(wxWindow *parent,int &nchild,const val::d_array<s
             checkbox[i] = new val::SwitchCtrl(this,2000+i);
             checkbox[i]->SetValue(false);
             BoxSizerButton[i]->AddStretchSpacer(1);
-            BoxSizerButton[i]->Add(checkbox[i],0,wxALL|wxALIGN_RIGHT,5);
+            BoxSizerButton[i]->Add(checkbox[i],0,wxALL,5);
             //BoxSizerButton[i]->Add(checkbox[i],1,wxALL,0);
             //Bind(wxEVT_CHECKBOX,&AnalysisDialog::OnButtonClicked,this,2000+i);
             Bind(val_EVENT_SWITCH,&AnalysisDialog::OnButtonClicked,this,2000+i);
@@ -452,7 +452,7 @@ InputFunctionDialog::InputFunctionDialog(wxWindow *parent,const val::d_array<std
 InputFunctionDialog::InputFunctionDialog(wxWindow *parent,const val::trie_type<std::string> &Wlist,const wxString &value,
                                          const wxString &s_text, const wxString& title, const wxSize &size,int fonts)
                                             : BaseDialog(parent,0,wxDefaultPosition,title),
-                                            input(new val::CompleteTextCtrl(this,30,Wlist,value,size,wxDefaultPosition,wxTE_MULTILINE|wxVSCROLL|wxHSCROLL))
+                                            input(new val::CompleteTextCtrl(surface,30,Wlist,value,size,wxDefaultPosition,wxTE_MULTILINE|wxVSCROLL|wxHSCROLL))
 {
     Build(s_text,fonts);
 }
@@ -461,7 +461,7 @@ InputFunctionDialog::InputFunctionDialog(wxWindow *parent,const val::trie_type<s
 void InputFunctionDialog::Build(const wxString& s_text, int fonts)
 {
     wxBoxSizer *PBoxSizer = new wxBoxSizer(wxVERTICAL);
-    wxStaticText *st_text = new wxStaticText(this,20,s_text);
+    wxStaticText *st_text = new wxStaticText(surface,20,s_text);
     PBoxSizer->Add(st_text,0,wxALL,5);
     //input = new val::CompleteTextCtrl(this,30,Wlist,value,size,wxDefaultPosition,wxTE_MULTILINE|wxVSCROLL|wxHSCROLL);
 

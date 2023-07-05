@@ -836,7 +836,7 @@ void PlotFunctionFrame::GetSettings()
             if (F[i].IsPoints()) pen[i]=6;
             else pen[i]=2;
 #else
-            if (F[i].IsPoints()) pen[i]=8;
+            if (F[i].IsPoints()) pen[i]=4;
             else pen[i]=2;
 #endif // _WIN32
         }
@@ -1350,9 +1350,10 @@ void PlotFunctionFrame::plotpoints(wxDC& dc,const val::d_array<double> &f,int co
     int i,n=f.length();
     if (n<2) return;
 
-    int ix,iy;
+    int ix,iy, r = val::Max(1,pen[colour]/2);
 
     dc.SetPen(wxPen(Color[colour],pen[colour]));
+    dc.SetBrush(wxBrush(Color[colour]));
 
     for (i=0;i<n;i+=2) {
         if (isInf(f[i]) || isInf(f[i+1]) || val::isNaN(f[i]) || val::isNaN(f[i+1])) continue;
@@ -1363,12 +1364,13 @@ void PlotFunctionFrame::plotpoints(wxDC& dc,const val::d_array<double> &f,int co
         if (active_function == colour && i == pointactive) {
             dc.SetPen(wxPen(Color[colour],pen[colour]+3));
         }
-#ifdef _WIN32
-        dc.DrawCircle(ix,iy,1);
-#else
+//#ifdef _WIN32
+        dc.DrawCircle(ix,iy,r);
+        //dc.FloodFill(ix,iy,dc.GetBackground().GetColour());
+//#else
         //dc.DrawCircle(ix,iy,1);
-        dc.DrawPoint(ix,iy);
-#endif // _WIN32
+        //dc.DrawPoint(ix,iy);
+//#endif // _WIN32
         if (active_function == colour && i == pointactive) {
             dc.SetPen(wxPen(Color[colour],pen[colour]));
         }

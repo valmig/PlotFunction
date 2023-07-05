@@ -280,7 +280,8 @@ IntervalSlider::IntervalSlider(wxWindow *parent,wxWindowID id,int p_size,int b_h
     RSpin = new wxSpinCtrl(this,202,val::ToString(rightvalue),wxDefaultPosition,wxSize(120,35),0x4000|wxALIGN_RIGHT,lvalue,uvalue,rightvalue);
     VBoxSizer->Add(LSpin,0,wxALL|wxALIGN_LEFT,2);
     VBoxSizer->AddStretchSpacer(1);
-    VBoxSizer->Add(RSpin,0,wxALL|wxALIGN_RIGHT,2);
+    //VBoxSizer->Add(RSpin,0,wxALL|wxALIGN_RIGHT,2);
+    VBoxSizer->Add(RSpin,0,wxALL,2);
     BoxSizer->Add(VBoxSizer,0,wxALL|wxEXPAND);
     SetSizer(BoxSizer);
     BoxSizer->Fit(this);
@@ -356,9 +357,15 @@ void IntervalSlider::plotbar(wxDC &dc)
     dc.DrawLine(x1,dy+dy/2,x2,dy+dy/2);
     //dc.DrawText(s_lvalue,dx,2*dy);
     dc.DrawText(s_lvalue,dx,height-18);
+    /*
     dc.SetPen(wxPen(pointcolor,barheight));
     dc.DrawPoint(x1,dy+dy/2);
     dc.DrawPoint(x2,dy+dy/2);
+    */
+    dc.SetPen(wxPen(pointcolor,1));
+    dc.SetBrush(wxBrush(pointcolor));
+    dc.DrawCircle(x1,dy+dy/2,barheight/2);
+    dc.DrawCircle(x2,dy+dy/2,barheight/2);
     //dc.DrawText(s_uvalue,dx+barwidth-8*s_uvalue.length(),2*dy);
     dc.DrawText(s_uvalue,dx+barwidth-8*s_uvalue.length(),height-18);
     //dc.DrawLine(dx,dy+dy/2,dx+barwidth,dy+dy/2);
@@ -648,6 +655,7 @@ void SwitchCtrl::Paint()
     //dc.SetFont(dc1.GetFont());
     //dc.SetBackground(wxBrush(barcolor));
     //dc.SetBackground(backgroundcolor);
+    dc.SetBrush(wxBrush(fg_color));
 
     dc.Clear();
 
@@ -655,23 +663,24 @@ void SwitchCtrl::Paint()
     if (is_active) {
         dc.SetPen(wxPen(barcolor_a,17));
         dc.DrawLine(12,11,40,11);
-        dc.SetPen(wxPen(fg_color,16));
-#ifdef _WIN32
-        dc.DrawCircle(38,11,1);
-#else
-        dc.DrawPoint(38,11);
-#endif // _WIN32
+        dc.SetPen(wxPen(fg_color,1));
+//#ifdef _WIN32
+        dc.DrawCircle(38,11,8);
+        //dc.FloodFill(38,11,backgroundcolor);
+//#else
+        //dc.DrawPoint(38,11);
+//#endif // _WIN32
         dc.DrawText(checkmark,10,3);
     }
     else {
         dc.SetPen(wxPen(barcolor_p,17));
         dc.DrawLine(12,11,40,11);
-        dc.SetPen(wxPen(fg_color,16));
-#ifdef _WIN32
-        dc.DrawCircle(14,11,1);
-#else
-        dc.DrawPoint(14,11);
-#endif
+        dc.SetPen(wxPen(fg_color,1));
+//#ifdef _WIN32
+        dc.DrawCircle(14,11,8);
+//#else
+        //dc.DrawPoint(14,11);
+//#endif
         dc.DrawText(xmark,36,3);
     }
 

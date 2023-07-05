@@ -12,7 +12,7 @@ enum {BaseDialog_Esc_Id=32600, BaseDialog_Return_Id, MultiLineDialog_OK_Id, Mult
 
 // ----------------------------------------------------------------------------------------------------------------------------
 
-BaseDialog::BaseDialog(wxWindow *parent,wxWindowID id,const wxPoint& point,const wxString& title) : wxDialog(parent,id,title,point)
+BaseDialog::BaseDialog(wxWindow *parent,wxWindowID id,const wxPoint& point,const wxString& title) : wxDialog(parent,id,title,point,wxDefaultSize,wxRESIZE_BORDER)
 {
     wxButton *CancelButton = new wxButton(this,BaseDialog_Esc_Id,_("Cancel"));
     wxButton *OKButton = new wxButton(this,BaseDialog_Return_Id,_("OK"));
@@ -82,7 +82,7 @@ MultiLineDialog::MultiLineDialog(wxWindow* parent,const std::string &Entry,const
 	wxBoxSizer* BoxSizer3;
 	wxBoxSizer* BoxSizer4;
 
-	Create(parent, wxID_ANY, title,wxDefaultPosition, wxDefaultSize, wxDEFAULT_DIALOG_STYLE, _T("wxID_ANY"));
+	Create(parent, wxID_ANY, title,wxDefaultPosition, wxDefaultSize, wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER, _T("wxID_ANY"));
 	BoxSizer1 = new wxBoxSizer(wxVERTICAL);
 	BoxSizer2 = new wxBoxSizer(wxHORIZONTAL);
 	StaticText1 = new wxStaticText(this, ID_STATICTEXT1,SText, wxDefaultPosition, wxDefaultSize, 0, _T("ID_STATICTEXT1"));
@@ -174,7 +174,7 @@ wxString MultiLineDialog::GetValue() const
 InfoWindow::InfoWindow(wxWindow* parent,const std::string &Entry,const wxPoint &Position,const wxSize &Size,
                   const std::string &title,int fontsize, int multiline)
 {
-    Create(parent, wxID_ANY, title, wxDefaultPosition, wxDefaultSize, wxDEFAULT_DIALOG_STYLE, _T("wxID_ANY"));
+    Create(parent, wxID_ANY, title, wxDefaultPosition, wxDefaultSize, wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER, _T("wxID_ANY"));
     wxBoxSizer *BoxSizer1 = new wxBoxSizer(wxVERTICAL);
     int style = wxVSCROLL|wxHSCROLL|wxTE_READONLY;
     if (multiline) style = style | wxTE_MULTILINE;
@@ -275,7 +275,7 @@ ListDialog::ListDialog(wxWindow* parent,const val::Glist<std::string> &Choices,c
 	wxBoxSizer* BoxSizer41;
 	wxBoxSizer* BoxSizer5;
 
-	Create(parent, wxID_ANY, title,wxDefaultPosition, wxDefaultSize, wxDEFAULT_DIALOG_STYLE, _T("wxID_ANY"));
+	Create(parent, wxID_ANY, title,wxDefaultPosition, wxDefaultSize, wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER, _T("wxID_ANY"));
 	BoxSizer1 = new wxBoxSizer(wxVERTICAL);
 
 	if (!Choices.isempty()) {
