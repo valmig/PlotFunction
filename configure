@@ -36,7 +36,7 @@ ICONPATH="iconpath = \"${prefix}/share/icons/PlotFunction/MV_Plot.xpm\","
 DESKICON="Icon=${prefix}/share/icons/PlotFunction/MV_Plot.png" 
 
 echo 'changing PlotFuncion.cpp'
-sed -i "25s#.*#${ICONPATH}#" "${HERE}/src/PlotFunction.cpp"
+sed -i "26s#.*#${ICONPATH}#" "${HERE}/src/PlotFunction.cpp"
 
 echo 'changing PlotFuncion.desktop'
 sed -i "7s#.*#${DESKICON}#" "${HERE}/desktop/PlotFunction.desktop"

@@ -24,7 +24,7 @@
 #include <val_basics.h>
 #include <rational.h>
 #include <string>
-#include <val_wx/valControls.h>
+#include "valDialogs.h"
 //#include <MyTime.h>
 //#include <wx/fontdata.h>
 
