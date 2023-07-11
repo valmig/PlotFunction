@@ -28,7 +28,7 @@ std::string filesep="/",filedir=val::CurrentHomeDir(), valdir= val::CurrentHomeD
             alticonpath = val::CurrentHomeDir() + "/.local/share/icons/MVPrograms/MV_Plot.xpm";
 #endif
 #ifdef __APPLE__
-std::string filesep="/",filedir=val::CurrentHomeDir(), valdir= val::CurrentHomeDir() + "/Library/Application Support/MVPrograms",
+std::string filesep="/",filedir=val::CurrentHomeDir(), valdir= val::CurrentHomeDir() + "/Library/Application Support",
             settingsdir = valdir + "/PlotFunction", settingsfile=settingsdir + "/settings.conf",
             iconpath = val::CurrentHomeDir() + "/.local/share/icons/MVPrograms/MV_Plot.xpm",
             handcursor = val::CurrentHomeDir() + "/.local/share/icons/MVPrograms/hand.png",

@@ -1,6 +1,8 @@
 CXXFLAGS = -O2 -Wall -pedantic-errors -pedantic -std=c++14 `$(WXC) --cflags` `val-config --cflags` 
 LDFLAGS = -s  `$(WXC) --libs` `val-config --libs`
 ICONDIR = "$(PREFIX)/share/icons/PlotFunction" 
+DESKTOPDIR = "$(PREFIX)/share/applications"
+
 OBJ = obj
 BIN = bin
 
@@ -33,6 +35,7 @@ clean:
 install:
 	mkdir -p $(ICONDIR)
 	mkdir -p $(PREFIX)/bin
+	mkdir -p $(DESKTOPDIR)
 	cp -f $(DIRPATH)/icons/* $(ICONDIR)
 	cp -f $(BIN)/PlotFunction $(PREFIX)/bin/
 
@@ -42,4 +45,5 @@ install:
 uninstall:
 	rm -r $(ICONDIR)
 	rm -f $(PREFIX)/bin/PlotFunction
-
+	rm -f $(DESKTOPDIR)/PlotFunction.desktop
+	
