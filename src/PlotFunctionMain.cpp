@@ -59,6 +59,15 @@ const long PlotFunctionFrame::ID_STATUSBAR1 = 30011;//wxNewId();
 
 
 
+struct quadruple
+{
+    int x1, x2, y, dy;
+    quadruple() = default;
+    quadruple(int ix1, int ix2, int iy, int idy) : x1(ix1), x2(ix2), y(iy), dy(idy) {}
+};
+
+
+
 
 PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
 {
@@ -378,7 +387,11 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     entries[12].Set(wxACCEL_CTRL,WXK_INSERT,1008);
     entries[13].Set(wxACCEL_CTRL,(int) 'V',1009);
     entries[14].Set(wxACCEL_SHIFT,WXK_INSERT,1009);
+#ifdef __APPLE__
+    entries[15].Set(wxACCEL_ALT,WXK_SPACE,1010);
+#else
     entries[15].Set(wxACCEL_CTRL,WXK_SPACE,1010);
+#endif // __APPLE__
     entries[16].Set(wxACCEL_ALT,WXK_RIGHT,20009);
     entries[17].Set(wxACCEL_ALT,WXK_LEFT,20010);
     wxAcceleratorTable accel(18,entries);
@@ -908,6 +921,132 @@ void PlotFunctionFrame::GetSettings()
 }
 
 
+void PlotFunctionFrame::valFloodFill(wxDC& dc, int x, int y, const wxColour &bgc)
+{
+    wxColour pcolor;
+    int xmin = abst, xmax = sizex + abst, ymin = abst, ymax = sizey + abst, paint;
+    int x1, x2, xstart, dy;
+    quadruple s;
+    val::Glist<quadruple> S;
+
+    S.push_back(quadruple(x,x,y,1));
+    S.push_back(quadruple(x,x,y-1,-1));
+
+    while (!S.isempty()) {
+        s = S.getelement(); S.skiphead();
+        x = x1 = s.x1; x2 = s.x2; y = s.y; dy = s.dy;
+        paint = 0;
+        dc.GetPixel(x,y,&pcolor);
+        if (x <= xmax && x>=xmin && y <= ymax && y >= ymin && pcolor == bgc) {
+            while (x-1 >= xmin) {
+                dc.GetPixel(x-1,y,&pcolor);
+                if (pcolor != bgc) break;
+                if (!paint) {
+                    paint = 1;
+                    xstart = x -1;
+                }
+                --x;
+            }
+            if (paint) dc.DrawLine(x,y,xstart,y);
+            if (x < x1) S.push_back(quadruple(x, x1-1, y-dy, -dy));
+        }
+        while (x1 <= x2) {
+            paint = 0;
+            while (1) {
+                if (x1 < xmin || x1 > xmax || y < ymin || y > ymax) break;
+                dc.GetPixel(x1,y,&pcolor);
+                if (pcolor != bgc) break;
+                if (!paint) {
+                    paint = 1;
+                    xstart = x1;
+                }
+                ++x1;
+            }
+            if (paint) dc.DrawLine(xstart,y,x1,y);
+            S.push_back(quadruple(x, x1 - 1, y+dy, dy));
+            if (x1 - 1 > x2) S.push_back(quadruple(x2 + 1, x1 - 1, y-dy, -dy));
+            ++x1;
+            while (x1 < x2) {
+                if (x1 > xmax || x1 < xmin || y < ymin || y > ymax) break;
+                dc.GetPixel(x1,y,&pcolor);
+                if (pcolor == bgc) break;
+                ++x1;
+            }
+
+            x = x1;
+        }
+    }
+}
+
+    /*
+    val::Glist<wxPoint> S;
+    wxPoint point1(x,y), point2;
+
+    dc.SetPen(wxPen(fgc,1));
+    S.push(point1);
+
+    while (!S.isempty()) {
+        paint = 0;
+        point1 = S.getelement(); S.skiphead(); // Entfernt das erste Pixel aus der Warteschlange
+        dc.GetPixel(point1,&pcolor);
+        if (pcolor != bgc) // Wenn die Farbe des aktuellen Pixels gleich dem Startpixel ist, wird die nächste Iteration der äußeren while-Schleife ausgeführt
+        {
+            continue;
+        }
+        point2 = wxPoint(point1.x + 1, point1.y); // Speichert das Pixel rechts vom aktuellen Pixel
+        if (point1.x >= xmin) {
+            x1 = point1.x;
+            paint = 1;
+        }
+        while (point1.x >= xmin) // So lange das aktuelle Pixel nicht links vom Rand ist und die Farbe des Startpixels hat
+        {
+            //dc.DrawPoint(point1);
+            if (point1.y > ymin) // Wenn das aktuelle Pixel nicht am linken Rand ist und die Farbe des Startpixels hat
+            {
+                dc.GetPixel(point1.x,point1.y-1,&pcolor);
+                if (pcolor == bgc) S.push_back(wxPoint(point1.x, point1.y - 1)); // Fügt das Pixel über dem aktuellen Pixel der Warteschlange hinzu
+            }
+            if (point1.y < ymax) // Wenn das aktuelle Pixel nicht am rechten Rand ist und die Farbe des Startpixels hat
+            {
+                dc.GetPixel(point1.x,point1.y+1,&pcolor);
+                if (pcolor == bgc) S.push_back(wxPoint(point1.x, point1.y + 1)); // Fügt das Pixel über dem aktuellen Pixel der Warteschlange hinzu
+            }
+            --point1.x; // Verschiebt das aktuelle Pixel um 1 nach links
+            dc.GetPixel(point1,&pcolor);
+            if (pcolor != bgc) break;
+        }
+        if (paint) dc.DrawLine(point1.x,point1.y,x1,point1.y);
+
+        // Die folgende while-Schleife wiederholt den Ablauf mit dem Pixel rechts vom aktuellen Pixel
+        paint = 0;
+        while (point2.x <= xmax)
+        {
+            dc.GetPixel(point2,&pcolor);
+            if (pcolor != bgc) break;
+            else if (!paint) {
+                paint = 1;
+                x1 = point2.x;
+            }
+            //dc.DrawPoint(point2);
+            if (point2.y > ymin)
+            {
+                dc.GetPixel(point2.x,point2.y-1,&pcolor);
+                if (pcolor == bgc) S.push_back(wxPoint(point2.x, point2.y - 1)); // Fügt das Pixel über dem aktuellen Pixel der Warteschlange hinzu
+            }
+            if (point2.y < ymax)
+            {
+                dc.GetPixel(point2.x,point2.y+1,&pcolor);
+                if (pcolor == bgc) S.push_back(wxPoint(point2.x, point2.y + 1)); // Fügt das Pixel über dem aktuellen Pixel der Warteschlange hinzu
+            }
+            point2.x++; // Verschiebt das aktuelle Pixel um 1 nach rechts
+        }
+        if (paint) dc.DrawLine(x1,point2.y,point2.x,point2.y);
+    }
+}
+*/
+
+
+
 void PlotFunctionFrame::plotvertices(wxDC& dc)
 {
     dc.SetTextForeground(axis_color);
@@ -1282,11 +1421,15 @@ void PlotFunctionFrame::plottriangle(wxDC& dc,const val::d_array<double> &f,int 
 
 void PlotFunctionFrame::plotfill(wxDC& dc,const val::d_array<double> &f,int colour)
 {
-    if (!yset) return;
+    if (!yset || bitmapbackground) return;
+#ifdef __APPLE__
+    if (DrawPanel->HasCapture()) return;
+#endif // __APPLE__
+
     if (f[0]<x1 || f[0]>x2 || f[1]<y1 || f[1]>y2) return;
 
     int ix,iy;
-    wxColor &col =Color[colour];
+    wxColor &col =Color[colour], bgc;
 
     if (f[2]!=1.0) {
         char green=col.Green(),blue=col.Blue(),red=col.Red();
@@ -1294,13 +1437,19 @@ void PlotFunctionFrame::plotfill(wxDC& dc,const val::d_array<double> &f,int colo
 
         col = wxColour(red,green,blue,transp);
     }
-    wxBrush brush(col);
-    dc.SetBrush(brush);
 
     ix=abst+int(double(sizex-1)*((f[0]-x1)/(x2-x1)));
     iy=yzero -int((double(sizey-1)/double(y2-y1)) * f[1]);
+    dc.GetPixel(ix,iy,&bgc);
 
-    dc.FloodFill(ix,iy,dc.GetBackground().GetColour());
+#ifndef __APPLE
+    wxBrush brush(col);
+    dc.SetBrush(brush);
+    dc.FloodFill(ix,iy,bgc);
+#else
+    dc.SetPen(wxPen(col,1));
+    valFloodFill(dc,ix,iy,bgc);
+#endif // __APPLE
 }
 
 
@@ -1625,15 +1774,13 @@ void PlotFunctionFrame::Paint()
 
 
     ispainted=1;
-    computemutex.unlock();
+    //computemutex.unlock();
     iscomputing=0;
 }
 
 
 void PlotFunctionFrame::plottomemoryDc(wxMemoryDC &memDC)
 {
-    memDC.SetBackground(wxBrush(BackgroundColor));
-    memDC.Clear();
     memDC.SetFont(DrawPanel->GetFont());
 
     if (bitmapbackground) {
@@ -1644,6 +1791,10 @@ void PlotFunctionFrame::plottomemoryDc(wxMemoryDC &memDC)
             actualBitmapBackground = wxBitmap(image);
         }
         memDC.DrawBitmap(actualBitmapBackground,wxPoint(0,0));
+    }
+    else {
+        memDC.SetBackground(wxBrush(BackgroundColor));
+        memDC.Clear();
     }
 
     fillfunctions=0;
@@ -1705,6 +1856,9 @@ void PlotFunctionFrame::OnAllSettingsSelected(wxCommandEvent& event)
     input+="\n" + fstring;
 
     val::MultiLineDialog dialog(this,input,"x values / y values / number of values / functions:",260,100,"Change Settings",fontsize);
+#ifdef __APPLE__
+    dialog.Centre();
+#endif // __APPLE__
     if (dialog.ShowModal()==wxID_CANCEL) return;
     // else OK:
     output=dialog.GetSettingsText();
@@ -1839,6 +1993,9 @@ void PlotFunctionFrame::OnMenuSizeSelected(wxCommandEvent& event)
 
 
      val::MultiLineDialog dialog(this,hsizestring,stattext,240,2*fontsize+6,title,fontsize,1,wxTE_RIGHT);
+#ifdef __APPLE__
+    dialog.Centre();
+#endif // __APPLE__
      if (dialog.ShowModal()!=wxID_OK) return;
      std::string svalue = dialog.GetSettingsText();
      ChangeSettings(PANEL_SIZE,svalue,id);
@@ -1860,6 +2017,9 @@ void PlotFunctionFrame::OnMenunewfunction(wxCommandEvent &event)
         std::string input="",output="";
         input=fstring;
         InputFunctionDialog dialog(this,WordTree,input,"Enter or delete functions:","Add/Remove functions",wxSize(240,100),fontsize);
+#ifdef __APPLE__
+        dialog.Centre();
+#endif // __APPLE__
         //dialog.SetSize(DialogInputSize);
         if (dialog.ShowModal()==wxID_CANCEL) return;
         // sonst OK:
@@ -1951,6 +2111,9 @@ void PlotFunctionFrame::OnMenuColours(wxCommandEvent &event)
         data.SetColour(BackgroundColor);
         wxColourDialog dialog(this,&data);
         dialog.SetLabel(_("Choose background colour"));
+#ifdef __APPLE__
+        dialog.Centre();
+#endif // __APPLE__
         if (dialog.ShowModal()==wxID_OK) {
             BackgroundColor = dialog.GetColourData().GetColour();
             DrawPanel->SetBackgroundColour(BackgroundColor);
@@ -1968,6 +2131,9 @@ void PlotFunctionFrame::OnMenuColours(wxCommandEvent &event)
         if (evid==4401) { col = axis_color; pen = axis_pen;}
         else {col = grid_color; pen = grid_pen;}
         FunctionColorDialog Dialog(this,col,BackgroundColor,pen);
+#ifdef __APPLE__
+        Dialog.Centre();
+#endif // __APPLE__
         if (Dialog.ShowModal()==wxID_OK) {
             col=Dialog.GetColor();
             pen=Dialog.GetLineWith();
@@ -1981,6 +2147,9 @@ void PlotFunctionFrame::OnMenuColours(wxCommandEvent &event)
         wxColourData *cdata = new wxColourData();
         cdata->SetColour(defaultpaintcolor);
         wxColourDialog dialog(this,cdata);
+#ifdef __APPLE__
+        dialog.Centre();
+#endif // __APPLE__
         if (dialog.ShowModal() == wxID_OK) defaultpaintcolor = dialog.GetColourData().GetColour();
         delete cdata;
         return;
@@ -1989,6 +2158,9 @@ void PlotFunctionFrame::OnMenuColours(wxCommandEvent &event)
         wxFontData data;
         data.SetInitialFont(defaultFont);
         wxFontDialog dialog(this,data);
+#ifdef __APPLE__
+        dialog.Centre();
+#endif // __APPLE__
         if (dialog.ShowModal()==wxID_OK) {
             data=dialog.GetFontData();
             defaultFont=data.GetChosenFont();
@@ -2042,6 +2214,9 @@ void PlotFunctionFrame::OnMenuFontSize(wxCommandEvent& event)
     }
 
     val::MultiLineDialog fontsizedialog(this,val::ToString(fs),"Entry Size",240,2*fontsize+6,title,fontsize,1,wxTE_RIGHT);
+#ifdef __APPLE__
+    fontsizedialog.Centre();
+#endif // __APPLE__
     if (fontsizedialog.ShowModal()==wxID_OK) {
         std::string svalue = fontsizedialog.GetSettingsText();
         ChangeSettings(cmd,svalue);
@@ -2057,6 +2232,9 @@ void PlotFunctionFrame::OnMenuParameter(wxCommandEvent &event)
     int i,n,anz=0;
     std::string pars,hs,fs=F[0].getinfixnotation(),xrs="";
     val::MultiLineDialog pardialog(this,"","Entry Values separated by ;",240,2*fontsize+6,"Set Parameter Values",fontsize,1);
+#ifdef __APPLE__
+    pardialog.Centre();
+#endif // __APPLE__
 
     if (pardialog.ShowModal()==wxID_CANCEL) return;
     Parameter.dellist();
@@ -2097,6 +2275,9 @@ void PlotFunctionFrame::OnMenuTools(wxCommandEvent &event)
 
     if (id==7006) {  //interpolation
         MultiLineDialog dialog(this,"","Enter Points:",240,80,"Interpolation",fontsize);
+#ifdef __APPLE__
+        dialog.Centre();
+#endif // __APPLE__
         if (dialog.ShowModal()==wxID_CANCEL) return;
         ExecuteCommand(INTERPOLATION,-1,dialog.GetSettingsText());
         return;
@@ -2124,6 +2305,9 @@ void PlotFunctionFrame::OnMenuTools(wxCommandEvent &event)
         if (naktiv>1) {
             //val::SingleChoiceDialog dialog(this,"Available functions:","Rotate...",List);
             val::MultiChoiceDialog dialog(this,"Available functions:","Rotate...",List);
+#ifdef __APPLE__
+            dialog.Centre();
+#endif // __APPLE__
             if (dialog.ShowModal()==wxID_OK) {
                 //j = indezes[dialog.GetSelection()];
                 val::d_array<int> sel = dialog.GetSelections();
@@ -2134,6 +2318,9 @@ void PlotFunctionFrame::OnMenuTools(wxCommandEvent &event)
         }
         else ind.push_back(j);
         MultiLineDialog dialog(this,"","Enter alpha; x0;y0",240,80,"Rotate...",fontsize);
+#ifdef __APPLE__
+        dialog.Centre();
+#endif // __APPLE__
         if (dialog.ShowModal()==wxID_CANCEL) return;
 
         val::d_array<myfunction*> H;
@@ -2164,6 +2351,9 @@ void PlotFunctionFrame::OnMenuTools(wxCommandEvent &event)
         if (naktiv==0) return;
         if (naktiv>1) {
             val::SingleChoiceDialog dialog(this,"Available functions:","Regression",List);
+#ifdef __APPLE__
+            dialog.Centre();
+#endif // __APPLE__
             if (dialog.ShowModal()==wxID_OK) {
                 j = indezes[dialog.GetSelection()];
             }
@@ -2192,6 +2382,9 @@ void PlotFunctionFrame::OnMenuTools(wxCommandEvent &event)
         Entry += "1e-9\n" + val::ToString(sizex) + "\n" + "4";
 
         ListDialog ldialog(this,List,"Analyze Function",Entry,240,100,fontsize);
+#ifdef __APPLE__
+        ldialog.Centre();
+#endif // __APPLE__
         if (ldialog.ShowModal()==wxID_CANCEL) return;
         j=ldialog.GetSelection();
         if (j<0) j=0;
@@ -2215,6 +2408,9 @@ void PlotFunctionFrame::OnMenuTools(wxCommandEvent &event)
             default: break;
         }
         val::SingleChoiceDialog dialog(this,"Available functions:",title,List);
+#ifdef __APPLE__
+        dialog.Centre();
+#endif // __APPLE__
         if (dialog.ShowModal()==wxID_OK) {
             j = indezes[dialog.GetSelection()];
         }
@@ -2234,6 +2430,9 @@ void PlotFunctionFrame::OnMenuTools(wxCommandEvent &event)
             //tangent=0;
         }
         MultiLineDialog tangentdialog(this,"","Entry x-value or point",240,2*fontsize+6,"Set Point for " + type,fontsize,1);
+#ifdef __APPLE__
+        tangentdialog.Centre();
+#endif // __APPLE__
         if (tangentdialog.ShowModal()==wxID_CANCEL) return;
         input=tangentdialog.GetSettingsText();
         //input+=" ";
@@ -2248,6 +2447,9 @@ void PlotFunctionFrame::OnMenuTools(wxCommandEvent &event)
         if (nchildwindows) return;
 
         MultiLineDialog tabledialog(this,xstring + " ; 0.5" ,"Entry x1,x2,dx:",240,2*fontsize+6,"Set Values for Table",fontsize,1);
+#ifdef __APPLE__
+        tabledialog.Centre();
+#endif // __APPLE__
         if (tabledialog.ShowModal()==wxID_CANCEL) return;
         ExecuteCommand(TABLE,j,tabledialog.GetSettingsText());
         return;
@@ -2267,6 +2469,9 @@ void PlotFunctionFrame::OnMenuTools(wxCommandEvent &event)
         std::string text=val::ToString(dez) + "\n" + val::ToString(iter) + "\n" + val::ToString(delta) + "\n";
 
         MultiLineDialog integraldialog(this,text,param,240,100,title,fontsize);
+#ifdef __APPLE__
+        integraldialog.Centre();
+#endif // __APPLE__
 
         integraldialog.SetPosition(wxPoint(Point.x,Point.y+10));
 
@@ -2285,6 +2490,9 @@ void PlotFunctionFrame::OnChangeParmeterMenu(wxCommandEvent & event)
 
     if (id==23) {// Set Regression Degree:
         val::MultiLineDialog dialog(this,val::ToString(regressiondegree),"Entry Regression Degree:",240,2*fontsize+6,"Set Regression Degree",fontsize,1,wxTE_RIGHT);
+#ifdef __APPLE__
+        dialog.Centre();
+#endif // __APPLE__
         if (dialog.ShowModal()==wxID_CANCEL) return;
         std::string svalue = dialog.GetSettingsText();
         ChangeSettings(REGRESSION_DEGREE,svalue);
@@ -2293,6 +2501,9 @@ void PlotFunctionFrame::OnChangeParmeterMenu(wxCommandEvent & event)
 
     if (id==24) { // Round-decimals for points
         val::MultiLineDialog dialog(this,val::ToString(rounddrawingpoints),"Entry round-decimals: (-1 = no rounding)",240,2*fontsize+6,"Set Round-decimals",fontsize,1,wxTE_RIGHT);
+#ifdef __APPLE__
+        dialog.Centre();
+#endif // __APPLE__
         if (dialog.ShowModal()==wxID_CANCEL) return;
         std::string svalue = dialog.GetSettingsText();
         ChangeSettings(POINT_DECIMALS,svalue);
@@ -2308,6 +2519,9 @@ void PlotFunctionFrame::OnChangeParmeterMenu(wxCommandEvent & event)
     }
 
     val::MultiLineDialog pardialog(this,pars,"Entry Values separated by ;",240,2*fontsize+6,"Set Parameter Values",fontsize,1);
+#ifdef __APPLE__
+    pardialog.Centre();
+#endif // __APPLE__
     if (pardialog.ShowModal()==wxID_CANCEL) return;
     //Parameter.dellist();
 
@@ -2330,6 +2544,9 @@ void PlotFunctionFrame::OnRangeMenu(wxCommandEvent &event)
         entry=ystring;info="Entry y-Values(empty string = default";title="Set y-Range Values";
     }
     val::MultiLineDialog rangedialog(this,entry,info,240,2*fontsize+6,title,fontsize,1,wxTE_RIGHT);
+#ifdef __APPLE__
+    rangedialog.Centre();
+#endif // __APPLE__
     if (rangedialog.ShowModal()==wxID_CANCEL) return;
     svalue = rangedialog.GetSettingsText();
 
@@ -2345,6 +2562,9 @@ void PlotFunctionFrame::OnScaleMenu(wxCommandEvent &event)
     std::string svalue = val::ToString(x_scale) +";\n" + val::ToString(y_scale) + ";\n" + val::ToString(abst) +
                         ";\n" + x_axis + "\n" + y_axis;
     val::MultiLineDialog scaledialog(this,svalue,"Entry x-scale-, y-scale-units, margin",240,100,"Scale-Settings",fontsize);
+#ifdef __APPLE__
+    scaledialog.Centre();
+#endif // __APPLE__
     if (scaledialog.ShowModal()==wxID_CANCEL) return;
     svalue=scaledialog.GetSettingsText();
     if (svalue=="") return;
@@ -2357,6 +2577,9 @@ void PlotFunctionFrame::OnGridMenu(wxCommandEvent &event)
 {
     std::string svalue = sgx_scale +";" + sgy_scale;
     val::MultiLineDialog griddialog(this,svalue,"Entry x-Grid-scale-, y-Grid-scale-units",240,2*fontsize+6,"Grid-Settings",fontsize,1);
+#ifdef __APPLE__
+    griddialog.Centre();
+#endif // __APPLE__
     if (griddialog.ShowModal()==wxID_CANCEL) return;
     svalue=griddialog.GetSettingsText();
     if (svalue=="") return;
@@ -2379,6 +2602,11 @@ void PlotFunctionFrame::OnInputDialog(wxCommandEvent&)
     point.x += 10;
     size.y = 30;
     size.x -= 20;
+
+#ifdef __APPLE__
+    point.y -= 30;
+#endif // __APPLE__
+
 
     if (SideText_isshown) {
         size.x -= (widthSideText + 10);
@@ -2730,7 +2958,7 @@ void PlotFunctionFrame::ChangeSettings(int command, const std::string &svalue, i
             WriteText();
         }
         break;
-    case SHOW_X_AXIS: case SHOW_Y_AXIS: case SHOW_GRID: case SHOW_X_SCALE: case SHOW_Y_SCALE:
+    case SHOW_X_AXIS: case SHOW_Y_AXIS: case SHOW_GRID: case SHOW_X_SCALE: case SHOW_Y_SCALE: case SHOW_FUNCTION:
         {
             bool show;
             wxMenuItem *menu = nullptr;
@@ -2744,6 +2972,12 @@ void PlotFunctionFrame::ChangeSettings(int command, const std::string &svalue, i
             case SHOW_GRID: menu = gridactiv; break;
             case SHOW_X_SCALE: menu = x_scaleactiv; break;
             case SHOW_Y_SCALE: menu = y_scaleactiv; break;
+            case SHOW_FUNCTION:
+                {
+                    if (id > N) return;
+                    menu = f_menu[id-1];
+                }
+                break;
             default:
                 break;
             }
@@ -3056,6 +3290,9 @@ void PlotFunctionFrame::OnMoveMenu(wxCommandEvent &)
     svalue += " ; " + val::ToString(movedy);
     if (moveinpointsy) svalue += " p";
     val::MultiLineDialog movedialog(this,svalue,"Entry x-increment ; y-increment [p for pixels]",240,2*fontsize+6,"Move Increments",fontsize,1);
+#ifdef __APPLE__
+    movedialog.Centre();
+#endif // __APPLE__
     if (movedialog.ShowModal() == wxID_CANCEL) return;
     svalue=movedialog.GetSettingsText();
     if (svalue=="") return;
@@ -3341,6 +3578,9 @@ void PlotFunctionFrame::OnMenuFill(wxCommandEvent &event)
         }
 
         val::MultiLineDialog cdialog(this,entry,descr,240,fontsize+15,title,fontsize,1);
+#ifdef __APPLE__
+        cdialog.Centre();
+#endif // __APPLE__
 
         if (cdialog.ShowModal()==wxID_OK) {
             if (fstring[n]!=';') fstring+=";";
@@ -3359,6 +3599,9 @@ void PlotFunctionFrame::OnMenuFill(wxCommandEvent &event)
         wxColourData ColorData;
         ColorData.SetColour(Color[N]);
         wxColourDialog dialog(this,&ColorData);
+#ifdef __APPLE__
+        dialog.Centre();
+#endif // __APPLE__
         if (dialog.ShowModal()==wxID_OK) {
             //ColorData=dialog.GetColourData();
             Color[N] = dialog.GetColourData().GetColour();
@@ -3975,7 +4218,6 @@ void PlotFunctionFrame::OnMouseReleased(wxMouseEvent &event)
     //DrawPanel->SetCursor(*wxSTANDARD_CURSOR);
     DrawPanel->SetCursor(wxCursor (wxCURSOR_HAND));
     if (DrawPanel->HasCapture()) DrawPanel->ReleaseMouse();
-
     //if (iscomputing) return;
 
     if (active_function != -1) {
@@ -3998,6 +4240,9 @@ void PlotFunctionFrame::OnMouseReleased(wxMouseEvent &event)
         GetSettings();
         Compute();
     }
+#ifdef __APPLE__
+    else Paint();
+#endif // __APPLE__
 }
 
 
@@ -4562,12 +4807,12 @@ void PlotFunctionFrame::WriteText()
     val::d_array<char> separfunc{';'};
     val::Glist<std::string> s_functions = getwordsfromstring(fstring,separfunc,0,val::d_array<char>{'\n'});
     int n = val::Min(s_functions.length(),N);
-#ifdef _WIN32
+#ifndef __LINUX__
     wxTextAttr Style = SideText->GetDefaultStyle();
-#endif // _WIN32
+#endif // __LINUX__
 
     for (int i = 0; i < n; ++i) {
-#ifdef _WIN32
+#ifndef __LINUX__
         Style.SetTextColour(Color[i]);
         SideText->SetDefaultStyle(Style);
         SideText->WriteText("#" + val::ToString(i+1) + ": ");

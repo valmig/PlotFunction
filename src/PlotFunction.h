@@ -16,7 +16,7 @@
 #include <fraction.h>
 #include <MyTime.h>
 #include <function_parser.h>
-#include <mutex>
+//#include <mutex>
 #include <trie.h>
 
 
@@ -45,7 +45,7 @@ extern const val::trie_type<std::string> WordTree;
 extern const val::trie_type<std::string> InputDialogTree;
 
 
-static std::mutex computemutex;
+//static std::mutex computemutex;
 
 
 enum val_colors{BLUE,RED,GREEN,LBLUE,ORANGE,VIOLET,GREY,WHITE,BlACK,LGREY,YELLOW,DGREEN,BEIGE};

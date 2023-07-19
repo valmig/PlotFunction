@@ -34,6 +34,7 @@ bool PlotFunctionApp::OnInit()
         exit(0);
     }
     */
+#ifndef __APPLE__
     if (argc>=2) {
         fstring=std::string(argv[1]);
         if (fstring == "-h" || fstring == "--help") {
@@ -47,6 +48,8 @@ bool PlotFunctionApp::OnInit()
     if (argc>=4) {
         ystring=std::string(argv[3]);
     }
+#endif // __APPLE__
+
     //(*AppInitialize
     bool wxsOK = true;
     wxInitAllImageHandlers();
