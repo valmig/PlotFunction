@@ -1415,7 +1415,7 @@ void analize_rationalfunction(val::valfunction& F,const double& eps,int dec)
         }
         analyze_output[0]+="\nBehavior :\n";
         for (int i = 0;i<N;++i) {
-            if (val::abs(f_dred(zeros[i])) > eps) {
+            if (val::abs(f_dred(zeros[i])) > 5*eps) {
                 analyze_output[0]+="lim f("+val::ToString(val::round(zeros[i],dec))+") = " + val::ToString(val::round(F(zeros[i]),dec)) + "\n";
                 continue;
             }

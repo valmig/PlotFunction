@@ -34,6 +34,7 @@
 #include <wx/intl.h>
 #include <wx/string.h>
 #include <wx/clipbrd.h>
+#include <wx/rawbmp.h>
 //#include <wx/dataobj.h>
 //#include <wx/base64.h>
 //#include <wx/mstream.h>
@@ -57,7 +58,7 @@ const long PlotFunctionFrame::idMenuAbout = 30010;//wxNewId();
 const long PlotFunctionFrame::ID_STATUSBAR1 = 30011;//wxNewId();
 //*)
 
-
+wxBitmap *cpaper;
 
 struct quadruple
 {
@@ -455,14 +456,15 @@ PlotFunctionFrame::~PlotFunctionFrame()
         file<<MySize.x<<endl;
         file<<MySize.y<<endl;
         file<<fontsize<<endl;
+        file<<axis_fontsize<<endl;
         file<<filedir<<endl;
         file<<openfiledir<<endl;
         file<<savefiledir<<endl;
-#ifdef _WIN32
+#ifndef __LINUX__
         file<<defaultFont.GetNativeFontInfoUserDesc()<<endl;
 #else
         file<<defaultFont.GetNativeFontInfoDesc()<<endl;
-#endif // _WIN32
+#endif // __LINUX__
         file<<SideText_isshown<<endl;
         file<<widthSideText<<endl<<endl;
         file.close();
@@ -599,13 +601,13 @@ void PlotFunctionFrame::GetSizeSettings()
     int i=0;
     std::string line;
     settings=1;
-    file>>Posx>>Posy>>clientsize_x>>clientsize_y>>fontsize;
+    file>>Posx>>Posy>>clientsize_x>>clientsize_y>>fontsize>>axis_fontsize;
 	if (clientsize_x == 0) clientsize_x = 400;
 	if (clientsize_y == 0) clientsize_y = 400;
 	if (fontsize < 8) fontsize = 8;
 	file.clear();
 	file.seekg(0,std::ios::beg);
-	while (file && i<=4) {
+	while (file && i<=5) {
         getline(file,line);
         ++i;
 	}
@@ -921,13 +923,16 @@ void PlotFunctionFrame::GetSettings()
 }
 
 
-void PlotFunctionFrame::valFloodFill(wxDC& dc, int x, int y, const wxColour &bgc)
+/*
+void PlotFunctionFrame::valFloodFill(wxMemoryDC& dc, int x, int y)
 {
-    wxColour pcolor;
+    wxColour pcolor, bgc;
     int xmin = abst, xmax = sizex + abst, ymin = abst, ymax = sizey + abst, paint;
     int x1, x2, xstart, dy;
     quadruple s;
     val::Glist<quadruple> S;
+
+    dc.GetPixel(x,y,&bgc);
 
     S.push_back(quadruple(x,x,y,1));
     S.push_back(quadruple(x,x,y-1,-1));
@@ -978,72 +983,98 @@ void PlotFunctionFrame::valFloodFill(wxDC& dc, int x, int y, const wxColour &bgc
     }
 }
 
-    /*
-    val::Glist<wxPoint> S;
-    wxPoint point1(x,y), point2;
+*/
 
-    dc.SetPen(wxPen(fgc,1));
-    S.push(point1);
+
+
+
+
+void PlotFunctionFrame::valFloodFill(wxMemoryDC& dc, int x, int y, const wxColour &fgc)
+{
+    //wxNativePixelData data(*cpaper);
+    wxNativePixelData data(dc.GetSelectedBitmap());
+
+    if (!data) return;
+
+    wxNativePixelData::Iterator p(data);
+    wxColour pcolor, bgc;
+    int xmin = abst, xmax = sizex + abst, ymin = abst, ymax = sizey + abst;
+    int x1, x2, dy;
+    char red = fgc.Red(), green = fgc.Green(), blue = fgc.Blue();
+    quadruple s;
+    val::Glist<quadruple> S;
+
+    //dc.GetPixel(x,y,&bgc);
+    p.MoveTo(data,x,y);
+    bgc = wxColour(p.Red(),p.Green(),p.Blue());
+
+    S.push_back(quadruple(x,x,y,1));
+    S.push_back(quadruple(x,x,y-1,-1));
+
+    //std::cout << int(bgc.Red()) << " , " << int(bgc.Green()) << " , " << int(bgc.Blue()) << std::endl;
+    //std::cout << xmin << " , " << xmax << std::endl;
+    //return;
 
     while (!S.isempty()) {
-        paint = 0;
-        point1 = S.getelement(); S.skiphead(); // Entfernt das erste Pixel aus der Warteschlange
-        dc.GetPixel(point1,&pcolor);
-        if (pcolor != bgc) // Wenn die Farbe des aktuellen Pixels gleich dem Startpixel ist, wird die nächste Iteration der äußeren while-Schleife ausgeführt
-        {
-            continue;
-        }
-        point2 = wxPoint(point1.x + 1, point1.y); // Speichert das Pixel rechts vom aktuellen Pixel
-        if (point1.x >= xmin) {
-            x1 = point1.x;
-            paint = 1;
-        }
-        while (point1.x >= xmin) // So lange das aktuelle Pixel nicht links vom Rand ist und die Farbe des Startpixels hat
-        {
-            //dc.DrawPoint(point1);
-            if (point1.y > ymin) // Wenn das aktuelle Pixel nicht am linken Rand ist und die Farbe des Startpixels hat
-            {
-                dc.GetPixel(point1.x,point1.y-1,&pcolor);
-                if (pcolor == bgc) S.push_back(wxPoint(point1.x, point1.y - 1)); // Fügt das Pixel über dem aktuellen Pixel der Warteschlange hinzu
-            }
-            if (point1.y < ymax) // Wenn das aktuelle Pixel nicht am rechten Rand ist und die Farbe des Startpixels hat
-            {
-                dc.GetPixel(point1.x,point1.y+1,&pcolor);
-                if (pcolor == bgc) S.push_back(wxPoint(point1.x, point1.y + 1)); // Fügt das Pixel über dem aktuellen Pixel der Warteschlange hinzu
-            }
-            --point1.x; // Verschiebt das aktuelle Pixel um 1 nach links
-            dc.GetPixel(point1,&pcolor);
-            if (pcolor != bgc) break;
-        }
-        if (paint) dc.DrawLine(point1.x,point1.y,x1,point1.y);
+        s = S.getelement(); S.skiphead();
+        x = x1 = s.x1; x2 = s.x2; y = s.y; dy = s.dy;
+        //paint = 0;
+        //dc.GetPixel(x,y,&pcolor);
+        p.MoveTo(data,x,y); pcolor = wxColour(p.Red(),p.Green(),p.Blue());
 
-        // Die folgende while-Schleife wiederholt den Ablauf mit dem Pixel rechts vom aktuellen Pixel
-        paint = 0;
-        while (point2.x <= xmax)
-        {
-            dc.GetPixel(point2,&pcolor);
-            if (pcolor != bgc) break;
-            else if (!paint) {
-                paint = 1;
-                x1 = point2.x;
+        if (x <= xmax && x>=xmin && y <= ymax && y >= ymin && pcolor == bgc) {
+            while (x-1 >= xmin) {
+                //dc.GetPixel(x-1,y,&pcolor);
+                p.MoveTo(data,x-1,y); pcolor = wxColour(p.Red(),p.Green(),p.Blue());
+                if (pcolor != bgc) break;
+                p.Red() = red; p.Green() = green; p.Blue() = blue;
+                /*
+                if (!paint) {
+                    paint = 1;
+                    xstart = x -1;
+                }
+                */
+
+                --x;
             }
-            //dc.DrawPoint(point2);
-            if (point2.y > ymin)
-            {
-                dc.GetPixel(point2.x,point2.y-1,&pcolor);
-                if (pcolor == bgc) S.push_back(wxPoint(point2.x, point2.y - 1)); // Fügt das Pixel über dem aktuellen Pixel der Warteschlange hinzu
-            }
-            if (point2.y < ymax)
-            {
-                dc.GetPixel(point2.x,point2.y+1,&pcolor);
-                if (pcolor == bgc) S.push_back(wxPoint(point2.x, point2.y + 1)); // Fügt das Pixel über dem aktuellen Pixel der Warteschlange hinzu
-            }
-            point2.x++; // Verschiebt das aktuelle Pixel um 1 nach rechts
+            //if (paint) dc.DrawLine(x,y,xstart,y);
+            if (x < x1) S.push_back(quadruple(x, x1-1, y-dy, -dy));
         }
-        if (paint) dc.DrawLine(x1,point2.y,point2.x,point2.y);
+        while (x1 <= x2) {
+            //paint = 0;
+            while (1) {
+                if (x1 < xmin || x1 > xmax || y < ymin || y > ymax) break;
+                //dc.GetPixel(x1,y,&pcolor);
+                p.MoveTo(data,x1,y); pcolor = wxColour(p.Red(),p.Green(),p.Blue());
+                if (pcolor != bgc) break;
+                /*
+                if (!paint) {
+                    paint = 1;
+                    xstart = x1;
+                }
+                */
+                p.Green() = green; p.Red() = red; p.Blue() = blue;
+                ++x1;
+            }
+            //if (paint) dc.DrawLine(xstart,y,x1,y);
+            S.push_back(quadruple(x, x1 - 1, y+dy, dy));
+            if (x1 - 1 > x2) S.push_back(quadruple(x2 + 1, x1 - 1, y-dy, -dy));
+            ++x1;
+            while (x1 < x2) {
+                if (x1 > xmax || x1 < xmin || y < ymin || y > ymax) break;
+                //dc.GetPixel(x1,y,&pcolor);
+                p.MoveTo(data,x1,y); pcolor = wxColour(p.Red(),p.Green(),p.Blue());
+                if (pcolor == bgc) break;
+                ++x1;
+            }
+
+            x = x1;
+        }
     }
+    dc.SelectObject(wxNullBitmap);
+    dc.SelectObject(*cpaper);
 }
-*/
+
 
 
 
@@ -1419,7 +1450,7 @@ void PlotFunctionFrame::plottriangle(wxDC& dc,const val::d_array<double> &f,int 
 }
 
 
-void PlotFunctionFrame::plotfill(wxDC& dc,const val::d_array<double> &f,int colour)
+void PlotFunctionFrame::plotfill(wxMemoryDC& dc,const val::d_array<double> &f,int colour)
 {
     if (!yset || bitmapbackground) return;
 #ifdef __APPLE__
@@ -1440,16 +1471,20 @@ void PlotFunctionFrame::plotfill(wxDC& dc,const val::d_array<double> &f,int colo
 
     ix=abst+int(double(sizex-1)*((f[0]-x1)/(x2-x1)));
     iy=yzero -int((double(sizey-1)/double(y2-y1)) * f[1]);
-    dc.GetPixel(ix,iy,&bgc);
 
-#ifndef __APPLE
+    //dc.SetPen(wxPen(col,1));
+    //valFloodFill(dc,ix,iy,col);
+
+#ifndef __APPLE__
+    dc.GetPixel(ix,iy,&bgc);
     wxBrush brush(col);
     dc.SetBrush(brush);
     dc.FloodFill(ix,iy,bgc);
 #else
     dc.SetPen(wxPen(col,1));
-    valFloodFill(dc,ix,iy,bgc);
+    valFloodFill(dc,ix,iy,col);
 #endif // __APPLE
+
 }
 
 
@@ -1688,7 +1723,7 @@ void PlotFunctionFrame::plotcurve(wxDC& dc,const val::d_array<val::d_array<doubl
 }
 
 
-void PlotFunctionFrame::plotallfunctions(wxDC& dc)
+void PlotFunctionFrame::plotallfunctions(wxMemoryDC& dc)
 {
     int i_f=0,i_c=0;// i_rf = 0;
 
@@ -1739,6 +1774,8 @@ void PlotFunctionFrame::Paint()
     wxClientDC dc1(DrawPanel);
 
     wxBitmap paper = wxBitmap(DrawPanel->GetSize());
+
+    cpaper = &paper;
 
     // Create a memory Device Context
     wxMemoryDC dc;

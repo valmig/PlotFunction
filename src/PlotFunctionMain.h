@@ -24,10 +24,7 @@
 #include <val_basics.h>
 #include <rational.h>
 #include <string>
-#include "valDialogs.h"
-//#include <MyTime.h>
-//#include <wx/fontdata.h>
-
+#include "valControls.h"
 
 
 class MyThreadEvent;
@@ -173,21 +170,21 @@ class PlotFunctionFrame: public wxFrame
         void OnMyEvent(MyThreadEvent& event);
         void OnParentEvent(ParentEvent& event);
 
-        void valFloodFill(wxDC& dc, int x, int y, const wxColour &bgc);
+        void valFloodFill(wxMemoryDC& dc, int x, int y, const wxColour &fgc);
         void plotvertices(wxDC& dc);
         void plotfunction(wxDC& dc,const val::d_array<double> &f,int colour=0);
         void plotline(wxDC& dc,const val::d_array<double> &f,int colour=0);
         void plotcircle(wxDC& dc,const val::d_array<double> &f,int colour=0);
         void plotrectangle(wxDC& dc,const val::d_array<double> &f,int colour=0);
         void plottriangle(wxDC& dc,const val::d_array<double> &f,int colour=0);
-        void plotfill(wxDC& dc,const val::d_array<double> &f,int colour=0);
+        void plotfill(wxMemoryDC& dc,const val::d_array<double> &f,int colour=0);
         void plotpolygon(wxDC& dc,const val::d_array<double> &f,int colour=0);
         void plotpoints(wxDC& dc,const val::d_array<double> &f,int colour=0);
         void plottext(wxDC& dc,const val::d_array<double> &f,const wxString& text,int colour=0);
         //void plotcurve(wxDC& dc,const val::d_array<val::d_array<double> > &c,const val::d_array<val::d_array<double> > &y_c,int colour=0);
         void plotcurve(wxDC& dc,const val::d_array<val::d_array<double> > &c,const val::Glist<val::GPair<double>>& critpoints
                        ,const val::d_array<double> &critx,int colour=0);
-        void plotallfunctions(wxDC& dc);
+        void plotallfunctions(wxMemoryDC& dc);
         void plottomemoryDc(wxMemoryDC &memDC);
         void refreshfunctionstring();
         void savefile(const std::string& dirname,const std::string& filename);
