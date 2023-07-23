@@ -1393,6 +1393,7 @@ void PlotFunctionFrame::plotcircle(wxDC& dc,const val::d_array<double> &f,int co
     int slice;
     F[colour].getCirclePoints(x,y,r,a1,a2,slice);
 
+    if (r <= 0) return;
 
 
     if (active_function == colour) dc.SetPen(wxPen(Color[colour],pen[colour]+3));
