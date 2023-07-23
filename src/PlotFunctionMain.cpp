@@ -58,7 +58,6 @@ const long PlotFunctionFrame::idMenuAbout = 30010;//wxNewId();
 const long PlotFunctionFrame::ID_STATUSBAR1 = 30011;//wxNewId();
 //*)
 
-wxBitmap *cpaper;
 
 struct quadruple
 {
@@ -112,7 +111,11 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     //
     MenuBar1 = new wxMenuBar();
     Menu1 = new wxMenu();
+#ifdef __APPLE__
+    Menu1->Append(101,_("New\tRawCtrl-N"));
+#else
     Menu1->Append(101,_("New\tCtrl-N"));
+#endif // __APPLE__
     Menu1->Append(102,_("Open file...\tCtrl-O"));
     MenuRecentfiles = new wxMenu();
     MenuRecentfiles->AppendSeparator();
@@ -231,7 +234,11 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     submenuaxis->Append(axisfontmenu);
     x_scaleactiv->Check(); y_scaleactiv->Check();
     //
+#ifdef __APPLE__
+    addfunction=new wxMenuItem(Menu_functions,3000,"Add/Remove new functions...\tCtrl-N", wxEmptyString);
+#else
     addfunction=new wxMenuItem(Menu_functions,3000,"Add/Remove new functions...\tAlt-N", wxEmptyString);
+#endif // __APPLE__
     hideallmenu= new wxMenuItem(Menu_functions,3001,"Hide All \tAlt-H", wxEmptyString);
     showallmenu= new wxMenuItem(Menu_functions,3002,"Show All \tAlt-S", wxEmptyString);
     deletelastmenu = new wxMenuItem(Menu_functions,3003,"Delete Last \tAlt-Del", wxEmptyString);
@@ -991,10 +998,15 @@ void PlotFunctionFrame::valFloodFill(wxMemoryDC& dc, int x, int y)
 
 void PlotFunctionFrame::valFloodFill(wxMemoryDC& dc, int x, int y, const wxColour &fgc)
 {
-    //wxNativePixelData data(*cpaper);
-    wxNativePixelData data(dc.GetSelectedBitmap());
+    if (cpaper == nullptr) return;
+    dc.SelectObject(wxNullBitmap);
+    wxNativePixelData data(*cpaper);
+    //wxNativePixelData data(dc.GetSelectedBitmap());
 
-    if (!data) return;
+    if (!data) {
+        dc.SelectObject(*cpaper);
+        return;
+    }
 
     wxNativePixelData::Iterator p(data);
     wxColour pcolor, bgc;
@@ -1071,7 +1083,6 @@ void PlotFunctionFrame::valFloodFill(wxMemoryDC& dc, int x, int y, const wxColou
             x = x1;
         }
     }
-    dc.SelectObject(wxNullBitmap);
     dc.SelectObject(*cpaper);
 }
 
@@ -1378,10 +1389,16 @@ void PlotFunctionFrame::plotcircle(wxDC& dc,const val::d_array<double> &f,int co
     if (!yset || sizex <= 10 || sizey <=10 ) return;
 
     int ix0,iy0,ix1,iy1;
+    double x,y,r,a1,a2,lx,ly;
+    int slice;
+    F[colour].getCirclePoints(x,y,r,a1,a2,slice);
+
+
+
     if (active_function == colour) dc.SetPen(wxPen(Color[colour],pen[colour]+3));
     else dc.SetPen(wxPen(Color[colour],pen[colour]));
-    wxBrush brush;
-    brush.SetStyle(wxBrushStyle::wxBRUSHSTYLE_TRANSPARENT);
+    wxBrush brush(Color[colour]);
+    if (slice < 2) brush.SetStyle(wxBrushStyle::wxBRUSHSTYLE_TRANSPARENT);
     dc.SetBrush(brush);
 
     ix0=abst+int(double(sizex-1)*((f[0]-x1)/(x2-x1)));
@@ -1392,9 +1409,27 @@ void PlotFunctionFrame::plotcircle(wxDC& dc,const val::d_array<double> &f,int co
     iy1-=iy0;
 
     dc.DrawEllipticArc(ix0,iy0,ix1,iy1,f[4],f[5]);
+
+    if (slice == 1) {
+        ix0=abst+int(double(sizex-1)*((x-x1)/(x2-x1)));
+        iy0=yzero -int((double(sizey-1)/double(y2-y1)) * y);
+        lx = x + r * val::cos(a1 * val::PI/180.0);
+        ly = y + r * val::sin(a1 * val::PI/180.0);
+        ix1 = abst+int(double(sizex-1)*((lx-x1)/(x2-x1)));
+        iy1=yzero -int((double(sizey-1)/double(y2-y1)) * ly);
+        dc.DrawLine(ix0,iy0,ix1,iy1);
+        lx = x + r * val::cos(a2 * val::PI/180.0);
+        ly = y + r * val::sin(a2 * val::PI/180.0);
+        ix1 = abst+int(double(sizex-1)*((lx-x1)/(x2-x1)));
+        iy1=yzero -int((double(sizey-1)/double(y2-y1)) * ly);
+        dc.DrawLine(ix0,iy0,ix1,iy1);
+    }
+
+
     if (active_function == colour) {
-        double x,y,r,a1,a2;
-        F[colour].getCirclePoints(x,y,r,a1,a2);
+        //double x,y,r,a1,a2;
+        //int slice;
+        //F[colour].getCirclePoints(x,y,r,a1,a2,slice);
         ix0=abst+int(double(sizex-1)*((x-x1)/(x2-x1)));
         iy0=yzero -int((double(sizey-1)/double(y2-y1)) * y);
         dc.DrawPoint(ix0,iy0);
@@ -1807,6 +1842,7 @@ void PlotFunctionFrame::Paint()
      // this frees up "paper" so that it can write itself to a file.
     dc.SelectObject( wxNullBitmap );
     dc1.DrawBitmap(paper,0,0);
+    cpaper = nullptr;
     //delete paper;
 
 
@@ -1966,12 +2002,14 @@ void PlotFunctionFrame::OnMenuSaveSelected(wxCommandEvent& event)
     wxSize size;
     if (defaultsize) size=DrawPanel->GetSize();
     else size = bitmapsize;
-    wxBitmap *paper = new wxBitmap(size);
+    wxBitmap paper(size);
+
+    cpaper = &paper;
 
     // Create a memory Device Context
     wxMemoryDC memDC;
     // Tell memDC to write on “paper”.
-    memDC.SelectObject( *paper );
+    memDC.SelectObject( paper );
     //memDC.SetBackground(wxBrush(BackgroundColor));
     //memDC.Clear();
     //memDC.SetFont(DrawPanel->GetFont());
@@ -2002,9 +2040,9 @@ void PlotFunctionFrame::OnMenuSaveSelected(wxCommandEvent& event)
     memDC.SelectObject( wxNullBitmap );
 
     // Put the contents of "paper” into a png and into a jpeg file.
-    paper->SaveFile(filename, wxBITMAP_TYPE_PNG,(wxPalette*)NULL );
+    paper.SaveFile(filename, wxBITMAP_TYPE_PNG,(wxPalette*)NULL );
+    cpaper = nullptr;
     //paper->SaveFile( _T("RedSquare.jpg"), wxBITMAP_TYPE_JPEG,(wxPalette*)NULL );
-    delete paper;
 }
 
 
@@ -2650,6 +2688,8 @@ void PlotFunctionFrame::OnInputDialog(wxCommandEvent&)
         point.x += widthSideText +10;
     }
     InputDialog input(this,1,InputDialogTree,"",size,point,fontsize);
+    input.SetComLists(CommandsList,CommandsParList);
+    input.SetParLists(SettingsList,SettingsParList);
 
     if (input.ShowModal() == wxID_CANCEL) return;
 
@@ -3051,6 +3091,7 @@ void PlotFunctionFrame::ChangeSettings(int command, const std::string &svalue, i
             abst = val::FromString<int>(svalue);
             if (abst < 10) abst = 10;
             if (abst > 60) abst = 60;
+            Paint();
         }
         break;
     default:
@@ -3745,7 +3786,7 @@ void PlotFunctionFrame::savefile(const std::string &dirname,const std::string &f
         }
         m=Font.length();
         file<<m<<std::endl;
-#ifdef _WIN32
+#ifndef __LINUX__
         for (i=0;i<m;++i) {
             file<<Font[i].GetNativeFontInfoDesc()<<std::endl;
         }
@@ -3753,7 +3794,7 @@ void PlotFunctionFrame::savefile(const std::string &dirname,const std::string &f
         for (i=0;i<m;++i) {
             file<<Font[i].GetNativeFontInfoDesc()<<std::endl;
         }
-#endif // _WIN32
+#endif // __LINUX__
         //
 
         if (bitmapbackground) {
@@ -3778,6 +3819,7 @@ void PlotFunctionFrame::savefile(const std::string &dirname,const std::string &f
             nfilename += ".png";
             BackgroundImage.SaveFile(nfilename);
         }
+        else file<<0<<std::endl;
 
         file.close();
 }
@@ -3979,11 +4021,11 @@ int PlotFunctionFrame::findactivefunction(int x, int y)
             {
                 double mx,my,r,a1,a2,angle,px,py;
                 val::GPair<double> D;
-                int dx, dy;
+                int dx, dy,slice;
 
                 px = (x2-x1)*double(x-abst)/double(sizex -1) + x1;
                 py = double(yzero-y)*(y2-y1)/double(sizey-1);
-                F[i].getCirclePoints(mx,my,r,a1,a2);
+                F[i].getCirclePoints(mx,my,r,a1,a2,slice);
                 angle = degree_angle(px-mx,py-my);
                 if (angle < a1 -3 || angle >a2 +3) {++i_f; break;}
                 D = coordinatesdistance(mx,my,px,py,r,angle);
@@ -4359,10 +4401,11 @@ void PlotFunctionFrame::displacefunction(int i,const double &dx1,const double &d
         case myfunction::CIRCLE :
             {
                 double x,y,r,a1,a2;
+                int slice;
                 std::string nf = "circle ";
 
-                F[i].getCirclePoints(x,y,r,a1,a2);
-                nf += val::ToString(x+dx) + " " + val::ToString(y+dy) + " " + val::ToString(r) + " " + val::ToString(a1) + " " + val::ToString(a2);
+                F[i].getCirclePoints(x,y,r,a1,a2,slice);
+                nf += val::ToString(x+dx) + " " + val::ToString(y+dy) + " " + val::ToString(r) + " " + val::ToString(a1) + " " + val::ToString(a2) + " " + val::ToString(slice);
                 F[i].infix_to_postfix(nf);
             }
             break;
@@ -4581,7 +4624,7 @@ void PlotFunctionFrame::OnMove(wxCommandEvent &event)
         if (!SideText_isshown) return;
         if (id == 20009) widthSideText += 5;
         else widthSideText -= 5;
-        if (widthSideText > 200) widthSideText = 200;
+        //if (widthSideText > 200) widthSideText = 200;
         if (widthSideText < 100) widthSideText = 100;
         wxSize Size = DrawPanel->GetSize(), TextSize = SideText->GetSize();
 

@@ -139,7 +139,7 @@ class PlotFunctionFrame: public wxFrame
         std::string SideText_Word;
         wxFont defaultFont;
         wxSize bitmapsize,actualPanelsize; //DialogInputSize{wxDefaultSize};
-        wxBitmap actualBitmapBackground;
+        wxBitmap actualBitmapBackground, *cpaper = nullptr;
         wxImage BackgroundImage;
         wxColour axis_color ,grid_color, defaultpaintcolor;
         val::d_array<val::d_array<double> > farray;

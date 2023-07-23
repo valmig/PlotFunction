@@ -149,13 +149,19 @@ public:
     void SetFocus() {input->SetFocus();}
     void SetTextValue(const wxString& s) {input->SetValue(s);}
     const wxString GetTextValue() const {return input->GetValue();}
+    void SetComLists(const val::d_array<std::string> &CL, const val::d_array<std::string> &CPL) {CommandsList = &CL; CommandsParList = &CPL;}
+    void SetParLists(const val::d_array<std::string> &SL, const val::d_array<std::string> &SPL) {SettingsList = &SL; SettingsParList = &SPL;}
 
 private:
     wxWindow *Parent = nullptr;
     wxWindowID  Identity = 0;
     val::CompleteTextCtrl *input = nullptr;
+    wxTextCtrl *tooltip = nullptr;
+    wxBoxSizer *BoxSizer = nullptr;
+    const val::d_array<std::string> *CommandsParList = nullptr, *CommandsList = nullptr, *SettingsList = nullptr, *SettingsParList = nullptr;
     //wxTextCtrl *input = nullptr;
     void OnEnterhit(wxCommandEvent&);
+    void OnHelp(wxCommandEvent&);
 };
 
 

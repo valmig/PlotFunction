@@ -503,24 +503,29 @@ InputDialog::InputDialog(wxWindow *parent, wxWindowID id, const val::trie_type<s
     myfont.SetPointSize(fonts);
     input->SetFont(myfont);
 
+    tooltip = new wxTextCtrl(this,201,wxEmptyString,wxDefaultPosition,wxDefaultSize,wxTE_MULTILINE|wxTE_READONLY);
 
-    wxBoxSizer *BoxSizer = new wxBoxSizer(wxVERTICAL);
+
+    BoxSizer = new wxBoxSizer(wxVERTICAL);
     //wxBoxSizer *TextSizer = new wxBoxSizer(wxHORIZONTAL);
     //TextSizer->Add(input,1,wxEXPAND|wxALL,0);
-    BoxSizer->Add(input,1,wxALL|wxEXPAND,0);
+    BoxSizer->Add(input,0,wxALL|wxEXPAND,0);
+    BoxSizer->Add(tooltip,0,wxALL|wxEXPAND,5);
+    tooltip->Hide();
     //input = new wxTextCtrl(this,101,value,pos,size);
     Bind(wxEVT_TEXT_ENTER,&InputDialog::OnEnterhit,this,101);
     Bind(wxEVT_COMMAND_MENU_SELECTED,&InputDialog::OnEnterhit,this,102);
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&InputDialog::OnHelp,this,103);
 
-    wxAcceleratorEntry entries[1];
+    wxAcceleratorEntry entries[2];
     entries[0].Set(wxACCEL_NORMAL,WXK_ESCAPE,102);
-    wxAcceleratorTable accel(1,entries);
+    entries[1].Set(wxACCEL_CTRL,(int) 'H',103);
+    wxAcceleratorTable accel(2,entries);
     SetAcceleratorTable(accel);
 
     SetSizer(BoxSizer);
 	BoxSizer->Fit(this);
 	BoxSizer->SetSizeHints(this);
-
 }
 
 void InputDialog::OnEnterhit(wxCommandEvent &event)
@@ -530,7 +535,64 @@ void InputDialog::OnEnterhit(wxCommandEvent &event)
     if (id == 101) {
         EndModal(wxID_OK);
     }
+    else if (tooltip->IsShown()) {
+        tooltip->Hide();
+        BoxSizer->Fit(this);
+        BoxSizer->SetSizeHints(this);
+    }
     else EndModal(wxID_CANCEL);
 }
+
+void InputDialog::OnHelp(wxCommandEvent &)
+{
+    if (tooltip->IsShown()) return;
+    if (CommandsParList == nullptr || CommandsList == nullptr || SettingsList == nullptr || SettingsParList == nullptr) return;
+
+    wxTextAttr Style = tooltip->GetDefaultStyle();
+    std::string firstword, text = std::string(input->GetValue());
+    int n = text.length(), i, com = -1;
+
+    // get first word:
+    for (i = 0; i < n; ++i) {
+        if (text[i] == ' ') break;
+        firstword += text[i];
+    }
+
+    // match firstword in lists:
+    for (i = 0; i < CommandsList->length(); ++i) {
+        if (firstword == (*CommandsList)[i]) {
+            com = i;
+            break;
+        }
+    }
+    if (com != -1) {
+        Style.SetFontStyle(wxFONTSTYLE_ITALIC);
+        tooltip->SetDefaultStyle(Style);
+        tooltip->SetValue((*CommandsParList)[com]);
+    }
+    else {
+        for (i = 0; i < SettingsList->length(); ++i) {
+            if (firstword == (*SettingsList)[i]) {
+                com = i;
+                break;
+            }
+        }
+        if (com != -1) {
+            Style.SetFontStyle(wxFONTSTYLE_ITALIC);
+            tooltip->SetDefaultStyle(Style);
+            tooltip->SetValue((*SettingsParList)[com]);
+        }
+    }
+
+
+    //text = input->GetValue();
+
+    tooltip->Show();
+    input->SetFocus();
+    BoxSizer->Fit(this);
+    BoxSizer->SetSizeHints(this);
+
+}
+
 
 

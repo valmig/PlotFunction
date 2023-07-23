@@ -74,8 +74,39 @@ const val::d_array<std::string> SettingsList({"axis-scale", "axis-color", "grid-
                                 "point-decimals", "show-function", "background-color", "parameter-values", "function-size", "margin",
                                 "axis-fontsize" });
 
+const val::d_array<std::string> SettingsParList({"axis-scale sx [sy] \t<Shift-Alt-S>",
+                                              "axis-color def. color / Red Green Blue \t<Shift-Ctrl-A>", "grid-scale sx [sy] \t<Ctrl-G>",
+                                              "grid-color def. color / Red Green Blue \t<Shift-Ctrl-G>",
+                                              "values-number unsigned int", "axis-range x1 x2 [: y1 y2] \t<Ctrl-X>/<Ctrl-Y>",
+                                              "show-x-axis 0/1 \t<Alt-X>", "show-y-axis 0/1 \t<Alt-Y>", "show-grid 0/1 \t<Alt-G>",
+                                              "show-x-scale 0/1 \t<Shift-Alt-X>", "show-y-scale 0/1 \t<Shift-Alt-Y",
+                                              "reset-colors \t<Ctrl-Alt-R>", "font-size unsigned int \t<Ctrl-F>",
+                                              "function-color [#nr = 1] def. color / Red Green Blue \t<Ctrl-nr>",
+                                              "panel-size sx sy \t<F8>", "axis-names string string \t<Shift-Alt-S>",
+                                              "regression-degree unsigned int \t<Shift-Alt-A>", "point-decimals int \t<Ctrl-D>",
+                                              "show-function [#nr = 1] 0/1 \t<Alt-nr>", "background-color def. color / Red Green Blue \t<Shift-Ctrl-A>",
+                                              "parameter-values double ...  \t<Ctrl-P>", "function-size [#nr = 1] unsigned int \t<Ctrl-nr>",
+                                              "margin unsigned int \t<Shift-Alt-S>", "axis-fontsize unsigned int \t<Shift-Ctrl-F>"
+                                             });
+
 const val::d_array<std::string> CommandsList({"derive", "analyze", "tangent", "normal", "interpolation", "regression", "table", "integral",
                                              "arclength", "zero-iteration", "move", "evaluate" });
+
+const val::d_array<std::string> CommandsParList({"derive [#nr = 1]",
+                                                 "analyze [#nr = 1] [x1 x2] [prec = 1e-09] [iterations] [decimals] \t<Ctrl-A>",
+                                                 "tangent [#nr = 1] x / x y \t<Alt-T>",
+                                                 "normal [#nr = 1] x / x y \t<Shit-Alt-N>",
+                                                 "interpolation #nr / points for f; [points for f']; [points for f''] \t<Ctrl-I>" ,
+                                                 "regression #nr [ = 1]/points [degree = regression-degree] \t<Alt-A>",
+                                                 "table [#nr = 1] [x1 x2] [dx = 0.5] [;] \t<Ctrl-T>",
+                                                 "integral [#nr = 1] [decimals iterations precision] [x1 x2] \t<Alt-I>",
+                                                 "arclength [#nr = 1] [decimals iterations precision] [x1 x2] \t<Shift-Alt-I>",
+                                                 "zero-iteration [#nr = 1] [decimals iterations precision] [x1 x2] \t<Alt-Z>",
+                                                 "move [#nr = 1] x y",
+                                                 "evaluate [#nr = 1] expressions"
+                                                 });
+
+
 
 //const val::d_array<std::string> InputDialogList(SettingsList);
 
@@ -939,8 +970,9 @@ void computepoints(const val::Glist<myfunction> &F,val::d_array<val::d_array<dou
             }
             else if (F[i].IsCircle()) {
                 double x,y,r,a1,a2;
+                int slice;
                 farray[i_f].reserve(6);
-                F[i].getCirclePoints(x,y,r,a1,a2);
+                F[i].getCirclePoints(x,y,r,a1,a2,slice);
                 if (r<0) r*=-1;
                 farray[i_f][0]=x-r;farray[i_f][1]=y+r;farray[i_f][2]=x+r;farray[i_f][3]=y-r;
                 farray[i_f][4]=a1;farray[i_f][5]=a2;
@@ -1963,196 +1995,7 @@ const myfunction& myfunction::infix_to_postfix(const std::string &s)
                 else i+= sf.length();
 			}
 		}
-		/*
-
-        else if (s[i]=='e') {
-            if (foundpattern(s,"exp",i)) {
-                t = s_stack("exp",s_stack::OPERATOR,5);//G.inserttoend(s_stack("exp",s_stack::OPERATOR,5));
-                //nG++;
-                isrational=0;
-            }
-            else syntax=0;
-        }
-        else if (s[i]=='l') {
-            j=i;
-            if (foundpattern(s,"log",i)) {
-                t = s_stack("log",s_stack::OPERATOR,5);//G.inserttoend(s_stack("log",s_stack::OPERATOR,5));
-                //nG++;
-                isrational=0;
-            }
-            else {
-                i=j;
-                if (foundpattern(s,"line",i)) {
-                    t = s_stack("line",s_stack::OPERATOR,5);//G.inserttoend(s_stack("line",s_stack::OPERATOR,5));
-                    //nG++;
-                    isrational=0;
-                    isline=1;
-                    mode=LINE;
-                }
-                else syntax=0;
-            }
-        }
-        else if (s[i]=='s') {
-            j=i;
-            if (foundpattern(s,"sin",i)) {
-                t = s_stack("sin",s_stack::OPERATOR,5);//G.inserttoend(s_stack("sin",s_stack::OPERATOR,5));
-                //nG++;
-                isrational=0;
-            }
-            else {
-                i=j;
-                if (foundpattern(s,"sqrt",i)) {
-                    t = s_stack("sqrt",s_stack::OPERATOR,5);//G.inserttoend(s_stack("sqrt",s_stack::OPERATOR,5));
-                    //nG++;
-                    isrational=0;
-                }
-                else syntax=0;
-            }
-        }
-
-        else if (s[i]=='c') {
-            j=i;
-            if (foundpattern(s,"cos",i)) {
-                t = s_stack("cos",s_stack::OPERATOR,5);//G.inserttoend(s_stack("cos",s_stack::OPERATOR,5));
-                //nG++;
-                isrational=0;
-            }
-            else {
-                i=j;
-                if (foundpattern(s,"circle",i)) {
-                    t = s_stack("circle",s_stack::OPERATOR,5);//G.inserttoend(s_stack("circle",s_stack::OPERATOR,5));
-                    //nG++;
-                    mode=CIRCLE;
-                }
-                else syntax=0;
-            }
-        }
-        else if (s[i]=='t') {
-            l=k=j=i;
-            if (foundpattern(s,"tan",i)) {
-                t = s_stack("tan",s_stack::OPERATOR,5);//G.inserttoend(s_stack("tan",s_stack::OPERATOR,5));
-                isrational=0;
-            }
-            else if (foundpattern(s,"text",j)) {
-                t = s_stack("text",s_stack::OPERATOR,5);//G.inserttoend(s_stack("text",s_stack::OPERATOR,5));
-                isrational=0;
-                istext=1;
-                mode=TEXT;
-                for (i=j;i<n;++i) {
-                    if (s[i]=='}') {
-                        ++i;
-                        break;
-                    }
-                }
-            }
-            else if (foundpattern(s,"triangle",l)) {
-                t = s_stack("triangle",s_stack::OPERATOR,5);//G.inserttoend(s_stack("circle",s_stack::OPERATOR,5));
-                mode=TRIANGLE;
-                i=l;
-            }
-            else {
-                if (!istext) {
-                    t = s_stack("t",s_stack::NUMBER);//G.inserttoend(s_stack("t",s_stack::NUMBER));
-                    withpar=1;
-                }
-                i=k+1;
-            }
-            //nG++;
-        }
-        else if (s[i]=='P') {
-            if (foundpattern(s,"PI",i)) {
-                t = s_stack(val::ToString(val::PI,20),s_stack::NUMBER);//G.inserttoend(s_stack("PI",s_stack::NUMBER));
-                //nG++;
-                isrational=0;
-            }
-            else syntax=0;
-        }
-        else if (s[i]=='p') {
-            j=i;
-            if (foundpattern(s,"polygon",i)) {
-                t = s_stack("polygon",s_stack::OPERATOR,5);//G.inserttoend(s_stack("PI",s_stack::NUMBER));
-                mode=POLYGON;
-                isrational=0;
-            }
-            else if (foundpattern(s,"points",j)) {
-                t = s_stack("points",s_stack::OPERATOR,5);//G.inserttoend(s_stack("PI",s_stack::NUMBER));
-                mode=POINTS;
-                isrational=0;
-                i=j;
-            }
-            else syntax=0;
-        }
-        else if (s[i]=='i') {
-            if (foundpattern(s,"inf",i)) {
-                t = s_stack("inf",s_stack::NUMBER);//G.inserttoend(s_stack("PI",s_stack::NUMBER));
-                //nG++;
-                isrational=0;
-            }
-            else syntax=0;
-        }
-        else if (s[i]=='f') {
-            if (foundpattern(s,"fill",i)) {
-                t = s_stack("fill",s_stack::OPERATOR,5);//G.inserttoend(s_stack("fill",s_stack::OPERATOR,5));
-                //nG++;
-                mode=FILL;
-                isrational=0;
-            }
-            else syntax=0;
-        }
-        else if (s[i]=='a') {
-            if (i!=n-1 && s[i+1]=='b') {
-                if (foundpattern(s,"abs",i)) {
-                    t = s_stack("abs",s_stack::OPERATOR,5);//G.inserttoend(s_stack("abs",s_stack::OPERATOR,5));
-                    //nG++;
-                }
-                else syntax=0;
-            }
-            else if (foundpattern(s,"arc",i)) {
-                syntax=0;
-                if (s[i]=='s') {
-                    if (foundpattern(s,"sin",i)) {
-                        t = s_stack("arcsin",s_stack::OPERATOR,5);//G.inserttoend(s_stack("arcsin",s_stack::OPERATOR,5));
-                        //nG++;
-                        syntax=1;
-                        isrational=0;
-                    }
-                }
-                else if (s[i]=='c') {
-                    if (foundpattern(s,"cos",i)) {
-                        t = s_stack("arccos",s_stack::OPERATOR,5);//G.inserttoend(s_stack("arccos",s_stack::OPERATOR,5));
-                        //nG++;
-                        syntax=1;
-                        isrational=0;
-                    }
-                }
-                else if (s[i]=='t') {
-                    if (foundpattern(s,"tan",i)) {
-                        t = s_stack("arctan",s_stack::OPERATOR,5);//G.inserttoend(s_stack("arctan",s_stack::OPERATOR,5));
-                        //nG++;
-                        syntax=1;
-                        isrational=0;
-                    }
-                }
-            }
-            else syntax=0;
-        }
-        else if (s[i]=='r') {
-            if (foundpattern(s,"rectangle",i)) {
-                t = s_stack("rectangle",s_stack::OPERATOR,5);//G.inserttoend(s_stack("rectangle",s_stack::OPERATOR,5));
-                //nG++;
-                mode=RECTANGLE;
-                isrational=0;
-            }
-            else syntax=0;
-        }
-        */
         else {i++;failed=1;}
-        /*
-        if (!syntax) {
-            s_infix="";
-            return *this;
-        }
-        */
         if (!failed) {
             if (!G.isempty() && mode==FUNCTION) {
                 tlast = &(G[nG-1]);
@@ -2428,7 +2271,7 @@ void myfunction::getTrianglePoints(double &x1,double &y1,double &x2,double &y2,d
 }
 
 
-void myfunction::getCirclePoints(double& x1,double&y1,double &r,double &angle1, double &angle2) const
+void myfunction::getCirclePoints(double& x1,double&y1,double &r,double &angle1, double &angle2, int &slice) const
 {
     using namespace val;
     GlistIterator<myfunction::token> iT;
@@ -2436,6 +2279,7 @@ void myfunction::getCirclePoints(double& x1,double&y1,double &r,double &angle1, 
     iT=Gdat;
     x1=y1=angle1=0;angle2=360;
     r=1.0;
+    slice = 0;
 
 
     while  (iT.actualvalid()) {
@@ -2479,6 +2323,15 @@ void myfunction::getCirclePoints(double& x1,double&y1,double &r,double &angle1, 
         }
         iT.moveactual();
     }
+    while  (iT.actualvalid()) {
+        if (iT().type==0) {
+            slice = FromString<int>(iT().data);
+            iT.moveactual();
+            break;
+        }
+        iT.moveactual();
+    }
+
 }
 
 

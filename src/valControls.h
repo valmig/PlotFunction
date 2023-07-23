@@ -213,7 +213,7 @@ class DLL_PUBLIC CompleteTextCtrl : public wxTextCtrl
 public:
     CompleteTextCtrl(wxWindow *parent,wxWindowID id,const val::d_array<std::string> &list,const wxString &value = "",const wxSize &size = wxDefaultSize,
                     const wxPoint &pos = wxDefaultPosition,long style = 0);
- 
+
     CompleteTextCtrl(wxWindow *parent,wxWindowID id,const val::trie_type<std::string> &list,const wxString &value = "",const wxSize &size = wxDefaultSize,
                     const wxPoint &pos = wxDefaultPosition,long style = 0);
     ~CompleteTextCtrl();
@@ -226,9 +226,10 @@ private:
     wxWindow *Parent = nullptr;
     wxWindowID identity;
     TopListbox *listbox = nullptr;
+    wxMemoryDC dc;
     val::d_array<std::string> CandList;
     val::trie_type<std::string> WordList;
-    char beg = 65, end = 122; 
+    char beg = 65, end = 122;
     const val::trie_type<std::string> *WordListPointer = nullptr;
     std::string actualword;
     int selection = 0, isactiv=0, n_candidates = 0, fontsize, actuallength = 0, formerlength=0;

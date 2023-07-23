@@ -927,6 +927,7 @@ void CompleteTextCtrl::BuildObject()
     fontsize = GetFont().GetPointSize();
     listbox = new TopListbox(this);
     listbox->Show(false);
+    dc.SetFont(GetFont());
 
 
     Bind(wxEVT_TEXT,&CompleteTextCtrl::OnInputChanged,this);
@@ -996,6 +997,7 @@ bool CompleteTextCtrl::SetFont(const wxFont& font)
     lfont.SetPointSize(fontsize-1);
     listbox->SetFont(lfont);
     //wxMessageBox(val::ToString(listbox->GetFont().GetPointSize()));
+    dc.SetFont(font);
     return wxTextCtrl::SetFont(font);
 }
 
@@ -1067,7 +1069,20 @@ void CompleteTextCtrl::OnInputChanged(wxCommandEvent &tevent)
         if (anz > 8) anz =8;
         isactiv = 1;
         for ( const auto & v : CandList) listbox->Append(v);
-        wxPoint pos = PositionToCoords(n), screenpos = GetScreenPosition();
+        //wxPoint pos = PositionToCoords(n), screenpos = GetScreenPosition();
+        wxPoint pos, screenpos = GetScreenPosition();
+        long x,y;
+        int faktor = fontsize - 1;
+        if (faktor < 1) faktor = 1;
+        PositionToXY(n,&x,&y);
+        {
+            wxString line = GetLineText(y);
+            line.resize(int(x) + 1);
+            wxSize size = dc.GetTextExtent(line);
+            pos.x = size.x;
+        }
+        pos.y = int(y)*(faktor + 8);
+
 #ifdef _WIN32
         if (line && n>0 && word[n-1] == '\n') pos = PositionToCoords(n+line);
 #endif // _WIN32

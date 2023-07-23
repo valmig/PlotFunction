@@ -38,7 +38,9 @@ extern const val::d_array<wxColour> defaultcolors;
 extern const val::d_array<std::string> defaultcolornames;
 extern const val::d_array<std::string> CommandsList;
 extern const val::d_array<std::string> SettingsList;
-//extern const val::d_array<std::string> InputDialogList;
+extern const val::d_array<std::string> SettingsParList;
+extern const val::d_array<std::string> CommandsParList;
+//extern const val::d_array<std::string> CommandsManList;
 
 extern const val::d_array<std::string> WordList;
 extern const val::trie_type<std::string> WordTree;
@@ -213,7 +215,7 @@ public:
     void getLinePoints(double& x1,double &y1,double &x2,double &y2) const;
     void getTrianglePoints(double &x1,double &y1,double &x2,double &y2,double &x3,double &y3) const;
     void getTextPoint(double &x1,double &y1) const;
-    void getCirclePoints(double& x1,double&y1,double &r,double &angle1, double &angle2) const;
+    void getCirclePoints(double& x1,double&y1,double &r,double &angle1, double &angle2,int &slice) const;
     void getFillPoints(double& x,double& y, double& transparancy) const;
     val::d_array<double> getPolygonPoints() const;
     const wxString& getTextData() const {return textdata;}
