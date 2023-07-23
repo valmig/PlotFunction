@@ -1084,6 +1084,7 @@ void CompleteTextCtrl::OnInputChanged(wxCommandEvent &tevent)
         wxSize sz = GetClientSize();
         pos.y = int(y)*(faktor + 8);
         if (pos.y > sz.y-20) pos.y = sz.y-20;
+        if (pos.x > sz.x-10) pos.x = sz.x-10;
 
 #ifdef _WIN32
         if (line && n>0 && word[n-1] == '\n') pos = PositionToCoords(n+line);
