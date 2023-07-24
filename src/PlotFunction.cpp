@@ -28,7 +28,7 @@ std::string filesep="/",filedir=val::CurrentHomeDir(), valdir= val::CurrentHomeD
             alticonpath = val::CurrentHomeDir() + "/.local/share/icons/MVPrograms/MV_Plot.xpm";
 #endif
 #ifdef __APPLE__
-std::string filesep="/",filedir=val::CurrentHomeDir(), valdir= val::CurrentHomeDir() + "/Library/Application Support/MVPrograms",
+std::string filesep="/",filedir=val::CurrentHomeDir(), valdir= val::CurrentHomeDir() + "/Library/Application Support",
             settingsdir = valdir + "/PlotFunction", settingsfile=settingsdir + "/settings.conf",
             iconpath = val::CurrentHomeDir() + "/.local/share/icons/MVPrograms/MV_Plot.xpm",
             handcursor = val::CurrentHomeDir() + "/.local/share/icons/MVPrograms/hand.png",
@@ -74,34 +74,34 @@ const val::d_array<std::string> SettingsList({"axis-scale", "axis-color", "grid-
                                 "point-decimals", "show-function", "background-color", "parameter-values", "function-size", "margin",
                                 "axis-fontsize" });
 
-const val::d_array<std::string> SettingsParList({"axis-scale sx [sy] \t<Shift-Alt-S>",
-                                              "axis-color def. color / Red Green Blue \t<Shift-Ctrl-A>", "grid-scale sx [sy] \t<Ctrl-G>",
-                                              "grid-color def. color / Red Green Blue \t<Shift-Ctrl-G>",
-                                              "values-number unsigned int", "axis-range x1 x2 [: y1 y2] \t<Ctrl-X>/<Ctrl-Y>",
-                                              "show-x-axis 0/1 \t<Alt-X>", "show-y-axis 0/1 \t<Alt-Y>", "show-grid 0/1 \t<Alt-G>",
-                                              "show-x-scale 0/1 \t<Shift-Alt-X>", "show-y-scale 0/1 \t<Shift-Alt-Y",
-                                              "reset-colors \t<Ctrl-Alt-R>", "font-size unsigned int \t<Ctrl-F>",
-                                              "function-color [#nr = 1] def. color / Red Green Blue \t<Ctrl-nr>",
-                                              "panel-size sx sy \t<F8>", "axis-names string string \t<Shift-Alt-S>",
-                                              "regression-degree unsigned int \t<Shift-Alt-A>", "point-decimals int \t<Ctrl-D>",
-                                              "show-function [#nr = 1] 0/1 \t<Alt-nr>", "background-color def. color / Red Green Blue \t<Shift-Ctrl-A>",
-                                              "parameter-values double ...  \t<Ctrl-P>", "function-size [#nr = 1] unsigned int \t<Ctrl-nr>",
-                                              "margin unsigned int \t<Shift-Alt-S>", "axis-fontsize unsigned int \t<Shift-Ctrl-F>"
+const val::d_array<std::string> SettingsParList({"axis-scale sx [sy]	<Shift-Alt-S>",
+                                              "axis-color def. color / Red Green Blue	<Shift-Ctrl-A>", "grid-scale sx [sy]	<Ctrl-G>",
+                                              "grid-color def. color / Red Green Blue	<Shift-Ctrl-G>",
+                                              "values-number unsigned int", "axis-range x1 x2 [: y1 y2]		<Ctrl-X>/<Ctrl-Y>",
+                                              "show-x-axis 0/1	<Alt-X>", "show-y-axis 0/1	<Alt-Y>", "show-grid 0/1	<Alt-G>",
+                                              "show-x-scale 0/1		<Shift-Alt-X>", "show-y-scale 0/1		<Shift-Alt-Y",
+                                              "reset-colors		<Ctrl-Alt-R>", "font-size unsigned int	<Ctrl-F>",
+                                              "function-color [#nr = 1] def. color / Red Green Blue    <Ctrl-nr>",
+                                              "panel-size sx sy    <F8>", "axis-names string string    <Shift-Alt-S>",
+                                              "regression-degree unsigned int \t<Shift-Alt-A>", "point-decimals int    <Ctrl-D>",
+                                              "show-function [#nr = 1] 0/1    <Alt-nr>", "background-color def. color / Red Green Blue    <Shift-Ctrl-A>",
+                                              "parameter-values double ...    <Ctrl-P>", "function-size [#nr = 1] unsigned int    <Ctrl-nr>",
+                                              "margin unsigned int    <Shift-Alt-S>", "axis-fontsize unsigned int    <Shift-Ctrl-F>"
                                              });
 
 const val::d_array<std::string> CommandsList({"derive", "analyze", "tangent", "normal", "interpolation", "regression", "table", "integral",
                                              "arclength", "zero-iteration", "move", "evaluate" });
 
 const val::d_array<std::string> CommandsParList({"derive [#nr = 1]",
-                                                 "analyze [#nr = 1] [x1 x2] [prec = 1e-09] [iterations] [decimals] \t<Ctrl-A>",
-                                                 "tangent [#nr = 1] x / x y \t<Alt-T>",
-                                                 "normal [#nr = 1] x / x y \t<Shit-Alt-N>",
-                                                 "interpolation #nr / points for f; [points for f']; [points for f''] \t<Ctrl-I>" ,
-                                                 "regression #nr [ = 1]/points [degree = regression-degree] \t<Alt-A>",
-                                                 "table [#nr = 1] [x1 x2] [dx = 0.5] [;] \t<Ctrl-T>",
-                                                 "integral [#nr = 1] [decimals iterations precision] [x1 x2] \t<Alt-I>",
-                                                 "arclength [#nr = 1] [decimals iterations precision] [x1 x2] \t<Shift-Alt-I>",
-                                                 "zero-iteration [#nr = 1] [decimals iterations precision] [x1 x2] \t<Alt-Z>",
+                                                 "analyze [#nr = 1] [x1 x2] [prec = 1e-09] [iterations] [decimals]    <Ctrl-A>",
+                                                 "tangent [#nr = 1] x / x y    <Alt-T>",
+                                                 "normal [#nr = 1] x / x y    <Shit-Alt-N>",
+                                                 "interpolation #nr / points for f; [points for f']; [points for f'']    <Ctrl-I>" ,
+                                                 "regression #nr [ = 1]/points [degree = regression-degree]    <Alt-A>",
+                                                 "table [#nr = 1] [x1 x2] [dx = 0.5] [;]    <Ctrl-T>",
+                                                 "integral [#nr = 1] [decimals iterations precision] [x1 x2]    <Alt-I>",
+                                                 "arclength [#nr = 1] [decimals iterations precision] [x1 x2]    <Shift-Alt-I>",
+                                                 "zero-iteration [#nr = 1] [decimals iterations precision] [x1 x2]    <Alt-Z>",
                                                  "move [#nr = 1] x y",
                                                  "evaluate [#nr = 1] expressions"
                                                  });

@@ -102,6 +102,7 @@ private:
     val::d_array<val::SwitchCtrl*> checkbox{nullptr,3};
     val::d_array<wxTextCtrl*> TextEdit;
     int fontsize=10;
+    wxPanel *surface = nullptr;
     //
     void OnClose(wxCloseEvent &event);
     void OnButtonClicked(wxCommandEvent &event);
@@ -153,8 +154,8 @@ public:
     void SetParLists(const val::d_array<std::string> &SL, const val::d_array<std::string> &SPL) {SettingsList = &SL; SettingsParList = &SPL;}
 
 private:
-    wxWindow *Parent = nullptr;
-    wxWindowID  Identity = 0;
+    //wxWindow *Parent = nullptr;
+    //wxWindowID  Identity = 0;
     val::CompleteTextCtrl *input = nullptr;
     wxTextCtrl *tooltip = nullptr;
     wxBoxSizer *BoxSizer = nullptr;

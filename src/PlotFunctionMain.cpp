@@ -376,10 +376,11 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMove,this,20006);
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnSelectActiveFunction,this,20007);
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnSelectActiveFunction,this,20008);
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnSelectActiveFunction,this,20011);
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMove,this,20009);
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMove,this,20010);
     //
-    wxAcceleratorEntry entries[18];
+    wxAcceleratorEntry entries[19];
     entries[0].Set(wxACCEL_CTRL, (int) '+',20001);
     entries[1].Set(wxACCEL_CTRL, (int) '-',20002);
     entries[2].Set(wxACCEL_CTRL,WXK_RIGHT,20003);
@@ -402,7 +403,8 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
 #endif // __APPLE__
     entries[16].Set(wxACCEL_ALT,WXK_RIGHT,20009);
     entries[17].Set(wxACCEL_ALT,WXK_LEFT,20010);
-    wxAcceleratorTable accel(18,entries);
+    entries[18].Set(wxACCEL_CTRL,WXK_PAGEUP,20011);
+    wxAcceleratorTable accel(19,entries);
     SetAcceleratorTable(accel);
     //
 
@@ -2092,7 +2094,12 @@ void PlotFunctionFrame::OnMenunewfunction(wxCommandEvent &event)
     if (id==3000) {   // Add/removeFunction
         std::string input="",output="";
         input=fstring;
-        InputFunctionDialog dialog(this,WordTree,input,"Enter or delete functions:","Add/Remove functions",wxSize(240,100),fontsize);
+        int sx = 240, sy = 100;
+#ifdef __APPLE__
+        sx = 300, sy = 150;
+#endif // __APPLE__
+
+        InputFunctionDialog dialog(this,WordTree,input,"Enter or delete functions:","Add/Remove functions",wxSize(sx,sy),fontsize);
 #ifdef __APPLE__
         dialog.Centre();
 #endif // __APPLE__
@@ -2460,6 +2467,7 @@ void PlotFunctionFrame::OnMenuTools(wxCommandEvent &event)
         ListDialog ldialog(this,List,"Analyze Function",Entry,240,100,fontsize);
 #ifdef __APPLE__
         ldialog.Centre();
+        ldialog.SetSelection(0);
 #endif // __APPLE__
         if (ldialog.ShowModal()==wxID_CANCEL) return;
         j=ldialog.GetSelection();
@@ -2691,8 +2699,16 @@ void PlotFunctionFrame::OnInputDialog(wxCommandEvent&)
     InputDialog input(this,1,InputDialogTree,"",size,point,fontsize);
     input.SetComLists(CommandsList,CommandsParList);
     input.SetParLists(SettingsList,SettingsParList);
-
-    if (input.ShowModal() == wxID_CANCEL) return;
+#ifdef __APPLE__
+    StatusBar1->SetStatusText(_T("Type Cmd-H for help"),1);
+#else
+    StatusBar1->SetStatusText(_T("Type Cmd-H for help"),1);
+#endif // __APPLE__
+    if (input.ShowModal() == wxID_CANCEL) {
+        StatusBar1->SetStatusText(_T(""),1);
+        return;
+    }
+    StatusBar1->SetStatusText(_T(""),1);
 
     val::d_array<char> separators({' ', '\n'});
     std::string svalue(input.GetTextValue()), command;
@@ -2702,6 +2718,7 @@ void PlotFunctionFrame::OnInputDialog(wxCommandEvent&)
         svalue.resize(n-1);
         --n;
     }
+
 
     if (!n) return;
     command = val::getfirstwordofstring(svalue,separators);
@@ -3489,7 +3506,7 @@ void PlotFunctionFrame::OnMyEvent(MyThreadEvent& event)
         }
         //x+=dx - sx;
         Point.x = x; Point.y = y;
-        AnalysisDialog *adialog = new AnalysisDialog(this,nanalyzewindows,analyze_output,Points,wxSize(sx,sy),Point);
+        AnalysisDialog *adialog = new AnalysisDialog(this,nanalyzewindows,analyze_output,Points,wxSize(sx,sy),Point,fontsize);
         adialog->Show();
     }
     else if (id == IdIntegral) { // Integral
@@ -3651,7 +3668,7 @@ void PlotFunctionFrame::OnMenuFill(wxCommandEvent &event)
             descr = "Entry radius [start-angle end-angle]";
         }
         else {
-            entry ="text {} "  + val::ToString(x) + " " + val::ToString(y) + " ";
+            entry ="";
             title = "Draw Text";
             descr = "Entry Text";
         }
@@ -3663,7 +3680,8 @@ void PlotFunctionFrame::OnMenuFill(wxCommandEvent &event)
 
         if (cdialog.ShowModal()==wxID_OK) {
             if (fstring[n]!=';') fstring+=";";
-            fstring+=cdialog.GetSettingsText();
+            if (id == 1003) fstring+=cdialog.GetSettingsText();
+            else fstring += "text {" + cdialog.GetSettingsText() + "} " + val::ToString(x) + " " + val::ToString(y) + " ";
             refreshfunctionstring();
             GetSettings();
             Compute();
@@ -4223,6 +4241,7 @@ void PlotFunctionFrame::OnMouseCaptured(wxMouseEvent &event)
 
 void PlotFunctionFrame::OnMouseMoved(wxMouseEvent &event)
 {
+    doubleclicked = 0;
     if (iscomputing) return;
     /*
     if (drawpolygon) {
@@ -4293,6 +4312,10 @@ void PlotFunctionFrame::OnMouseMoved(wxMouseEvent &event)
 void PlotFunctionFrame::OnMouseReleased(wxMouseEvent &event)
 {
     if (drawpoints || drawpolygon || drawline) return;
+    if (doubleclicked) {
+        doubleclicked = 0;
+        return;
+    }
 
     DrawPanel->Unbind(wxEVT_MOTION,&PlotFunctionFrame::OnMouseMoved,this);
     //DrawPanel->SetCursor(*wxSTANDARD_CURSOR);
@@ -4338,6 +4361,15 @@ void PlotFunctionFrame::OnMouseDouble(wxMouseEvent &event)
     }
     else if (drawpoints) {
         addingpoints = 0;
+    }
+    else {
+        mouse_x1=event.GetX(); mouse_y1=event.GetY();
+        //wxMessageBox(val::ToString(mouse_x1) + " " + val::ToString(mouse_y1));
+        active_function = findactivefunction(mouse_x1,mouse_y1);
+        if (active_function == -1) return;
+        doubleclicked = 1;
+        WriteText();
+        Paint();
     }
 }
 
@@ -4690,7 +4722,8 @@ void PlotFunctionFrame::OnSelectActiveFunction(wxCommandEvent &event)
 {
     if (iscomputing) return;
     //wxMessageBox("active Function");
-    if (event.GetId() == 20007) {
+    int id = event.GetId();
+    if (id == 20007 || id == 20011) {
         if (N==0) return;
         int i, j = active_function,n;
 
@@ -4701,8 +4734,9 @@ void PlotFunctionFrame::OnSelectActiveFunction(wxCommandEvent &event)
             }
             n = farray[i_f].length();
             //wxMessageBox(val::ToString(n));
-            pointactive += 2;
-            if (pointactive < n) {
+            if (id == 20007) pointactive += 2;
+            else pointactive -= 2;
+            if (pointactive < n && pointactive >= 0) {
                 iscomputing = 1;
                 Paint();
                 return;
@@ -4720,13 +4754,17 @@ void PlotFunctionFrame::OnSelectActiveFunction(wxCommandEvent &event)
         }
         n = checked.length();
         if (n == 0) return;
-        ++j; j %= N;
+        if (id == 20007) ++j;
+        else --j;
+        j %= N;
+        if (j < 0) j = N-1;
         for (i = 0; i < n; ++i) {
             if (j <= checked[i]) break;
         }
         active_function = checked[i%n];
         StatusBar1->SetStatusText(F[active_function].getinfixnotation());
         iscomputing = 1;
+        WriteText();
         Paint();
     }
     else {
@@ -4746,6 +4784,8 @@ void PlotFunctionFrame::OnSelectActiveFunction(wxCommandEvent &event)
         active_function = -1;
         pointactive = 0;
         iscomputing = 1;
+        doubleclicked = 0;
+        WriteText();
         Paint();
     }
 }
@@ -4888,28 +4928,25 @@ void PlotFunctionFrame::WriteText()
     val::d_array<char> separfunc{';'};
     val::Glist<std::string> s_functions = getwordsfromstring(fstring,separfunc,0,val::d_array<char>{'\n'});
     int n = val::Min(s_functions.length(),N);
-#ifndef __LINUX__
     wxTextAttr Style = SideText->GetDefaultStyle();
-#endif // __LINUX__
 
     for (int i = 0; i < n; ++i) {
-#ifndef __LINUX__
         Style.SetTextColour(Color[i]);
+        if (i == active_function) {
+            Style.SetFontWeight(wxFONTWEIGHT_BOLD);
+            Style.SetFontUnderlined(true);
+        }
+        else {
+            Style.SetFontWeight(wxFONTWEIGHT_NORMAL);
+            Style.SetFontUnderlined(false);
+        }
         SideText->SetDefaultStyle(Style);
         SideText->WriteText("#" + val::ToString(i+1) + ": ");
         Style.SetTextColour(def_color);
         SideText->SetDefaultStyle(Style);
-#else
-        SideText->SetForegroundColour(Color[i]);
-        SideText->WriteText("#" + val::ToString(i+1) + ": ");
-        SideText->SetForegroundColour(def_color);
-#endif
         SideText->WriteText(s_functions[i] + ";\n");
     }
     SideText_Word = SideText->GetValue();
-
-    //SideText->SetForegroundColour(def_color);
-
 }
 
 

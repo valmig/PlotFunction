@@ -264,11 +264,13 @@ wxDEFINE_EVENT(P_EVENT,ParentEvent);
 AnalysisDialog::AnalysisDialog(wxWindow *parent,int &nchild,const val::d_array<std::string> &output,const val::d_array<val::d_array<val::GPair<double>>> &Point,
                                 const wxSize &Size,const wxPoint &Pos,int fonts) : Parent(parent), N_child(&nchild) , Points(&Point), fontsize(fonts)
 {
-    Create(parent, wxID_ANY,_T("Analyze function"), wxDefaultPosition, wxDefaultSize, wxRESIZE_BORDER, _T("wxID_ANY"));
+    Create(parent, wxID_ANY,_T("Analyze function"), wxDefaultPosition, wxDefaultSize, wxRESIZE_BORDER|wxCAPTION, _T("wxID_ANY"));
     ++(*N_child);
     Move(Pos);
     int n_point=Point.length(),i,n_output=output.length();
     if (n_output!=4 || n_point!=3) return;
+
+    surface = new wxPanel(this,100);
 
     TextEdit = val::d_array<wxTextCtrl*>(nullptr,n_output);
     val::d_array<wxBoxSizer*> BoxSizerText(nullptr,n_output);
@@ -276,10 +278,13 @@ AnalysisDialog::AnalysisDialog(wxWindow *parent,int &nchild,const val::d_array<s
     wxStaticText* Text[3];
     //val::d_array<wxButton*> Button(nullptr,n_point);
     wxBoxSizer *BoxSizer = new wxBoxSizer(wxVERTICAL);
+    wxBoxSizer *UpBoxSizer = new wxBoxSizer(wxVERTICAL);
+
+    UpBoxSizer->Add(surface,1,wxALL | wxEXPAND, 0);
     wxFont font;
 
     for (i=0;i<n_output;++i) {
-        TextEdit[i] = new wxTextCtrl(this,1000,output[i], wxDefaultPosition,Size, wxTE_MULTILINE|wxVSCROLL|wxHSCROLL|wxTE_READONLY);
+        TextEdit[i] = new wxTextCtrl(surface,1000,output[i], wxDefaultPosition,Size, wxTE_MULTILINE|wxVSCROLL|wxHSCROLL|wxTE_READONLY);
         font = TextEdit[i]->GetFont();
         font.SetPointSize(fontsize);
         TextEdit[i]->SetFont(font);
@@ -287,9 +292,9 @@ AnalysisDialog::AnalysisDialog(wxWindow *parent,int &nchild,const val::d_array<s
         BoxSizerText[i] = new wxBoxSizer(wxVERTICAL);
         //BoxSizerText[i]->Add(TextEdit[i],1,wxALL|wxEXPAND,5);
     }
-    Text[0] = new wxStaticText(this,11,_T("Zeros:"));
-    Text[1] = new wxStaticText(this,11,_T("Extrema:"));
-    Text[2] = new wxStaticText(this,11,_T("Inflection Points:"));
+    Text[0] = new wxStaticText(surface,11,_T("Zeros:"));
+    Text[1] = new wxStaticText(surface,11,_T("Extrema:"));
+    Text[2] = new wxStaticText(surface,11,_T("Inflection Points:"));
     //
     /*
     for (i=1;i<n_output;++i) {
@@ -308,7 +313,7 @@ AnalysisDialog::AnalysisDialog(wxWindow *parent,int &nchild,const val::d_array<s
             //Button[i] = new wxButton(this,2000+i,_T("Show/Hide"));
             //BoxSizerButton[i]->Add(Button[i],1,wxALL,0);
             //checkbox[i] = new wxCheckBox(this,2000+i,_T("Show"));
-            checkbox[i] = new val::SwitchCtrl(this,2000+i);
+            checkbox[i] = new val::SwitchCtrl(surface,2000+i);
             checkbox[i]->SetValue(false);
             BoxSizerButton[i]->AddStretchSpacer(1);
             BoxSizerButton[i]->Add(checkbox[i],0,wxALL,5);
@@ -345,9 +350,13 @@ AnalysisDialog::AnalysisDialog(wxWindow *parent,int &nchild,const val::d_array<s
     Bind(wxEVT_COMMAND_BUTTON_CLICKED,&AnalysisDialog::OnZoom,this,5002);
 #endif // _WIN32
 
-	SetSizer(BoxSizer);
-	BoxSizer->Fit(this);
-	BoxSizer->SetSizeHints(this);
+    surface->SetSizer(BoxSizer);
+
+	SetSizer(UpBoxSizer);
+	UpBoxSizer->Fit(this);
+	UpBoxSizer->SetSizeHints(this);
+
+
 
     wxAcceleratorEntry entries[6];
 
@@ -487,7 +496,7 @@ void InputFunctionDialog::Build(const wxString& s_text, int fonts)
 
 
 InputDialog::InputDialog(wxWindow *parent, wxWindowID id, const val::trie_type<std::string> &list, const wxString& value,
-                         const wxSize &size, const wxPoint& pos, int fonts) : wxDialog(parent,id,"",wxDefaultPosition,wxDefaultSize,wxBORDER_RAISED), Parent(parent), Identity(id)
+                         const wxSize &size, const wxPoint& pos, int fonts) : wxDialog(parent,id,"",wxDefaultPosition,wxDefaultSize,wxBORDER_RAISED)
 {
     Move(pos);
 #ifdef _WIN32
@@ -503,6 +512,7 @@ InputDialog::InputDialog(wxWindow *parent, wxWindowID id, const val::trie_type<s
     input->SetFont(myfont);
 
     tooltip = new wxTextCtrl(this,201,wxEmptyString,wxDefaultPosition,wxDefaultSize,wxTE_MULTILINE|wxTE_READONLY);
+    tooltip->SetFont(myfont);
 
 
     BoxSizer = new wxBoxSizer(wxVERTICAL);

@@ -651,13 +651,18 @@ void SwitchCtrl::Paint()
     // Tell memDC to write on “paper”.
     dc.SelectObject( paper );
     // Call Repin to draw our picture on memDC
+
+    //backgroundcolor = Parent->GetBackgroundColour();
     dc.SetBackground(wxBrush(backgroundcolor));
     //dc.SetFont(dc1.GetFont());
     //dc.SetBackground(wxBrush(barcolor));
     //dc.SetBackground(backgroundcolor);
-    dc.SetBrush(wxBrush(fg_color));
+    dc.SetBrush(wxBrush(fg_color,wxBRUSHSTYLE_TRANSPARENT));
 
     dc.Clear();
+
+    dc.SetBrush(wxBrush(fg_color));
+
 
     dc.SetTextForeground(fg_color);
     if (is_active) {

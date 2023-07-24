@@ -12,7 +12,7 @@ enum {BaseDialog_Esc_Id=32600, BaseDialog_Return_Id, MultiLineDialog_OK_Id, Mult
 
 // ----------------------------------------------------------------------------------------------------------------------------
 
-BaseDialog::BaseDialog(wxWindow *parent,wxWindowID id,const wxPoint& point,const wxString& title) : wxDialog(parent,id,title,point,wxDefaultSize,wxRESIZE_BORDER)
+BaseDialog::BaseDialog(wxWindow *parent,wxWindowID id,const wxPoint& point,const wxString& title) : wxDialog(parent,id,title,point,wxDefaultSize,wxRESIZE_BORDER|wxCAPTION)
 {
     wxButton *CancelButton = new wxButton(this,BaseDialog_Esc_Id,_("Cancel"));
     wxButton *OKButton = new wxButton(this,BaseDialog_Return_Id,_("OK"));
@@ -346,9 +346,11 @@ std::string ListDialog::GetText() const
 int ListDialog::GetSelection() const
 {
     if (listbox!=nullptr) return listbox->GetSelection();
-    else return 0;
+    else return -1;
     //return 0;
 }
+
+
 
 void ListDialog::OnButtonClick(wxCommandEvent& event)
 {

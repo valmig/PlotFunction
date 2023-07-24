@@ -211,6 +211,7 @@ public:
     virtual ~ListDialog();
     std::string GetText() const;
     int GetSelection() const;
+    void SetSelection(int n) {if (listbox != nullptr) listbox->SetSelection(n);}
 private:
     ListBox *listbox=nullptr;
     wxTextCtrl *TextCtrl1=nullptr;
