@@ -651,8 +651,9 @@ void SwitchCtrl::Paint()
     // Tell memDC to write on “paper”.
     dc.SelectObject( paper );
     // Call Repin to draw our picture on memDC
-
-    //backgroundcolor = Parent->GetBackgroundColour();
+#ifdef __APPLE__
+    backgroundcolor = Parent->GetBackgroundColour();
+#endif // __APPLE__
     dc.SetBackground(wxBrush(backgroundcolor));
     //dc.SetFont(dc1.GetFont());
     //dc.SetBackground(wxBrush(barcolor));
@@ -1074,8 +1075,11 @@ void CompleteTextCtrl::OnInputChanged(wxCommandEvent &tevent)
         if (anz > 8) anz =8;
         isactiv = 1;
         for ( const auto & v : CandList) listbox->Append(v);
-        //wxPoint pos = PositionToCoords(n), screenpos = GetScreenPosition();
         wxPoint pos, screenpos = GetScreenPosition();
+#ifndef __APPLE__
+        if (!IsSingleLine()) pos = PositionToCoords(n), screenpos = GetScreenPosition();
+        else {
+#endif // __APPLE__
         long x,y;
         int faktor = fontsize - 1;
         if (faktor < 1) faktor = 1;
@@ -1090,6 +1094,9 @@ void CompleteTextCtrl::OnInputChanged(wxCommandEvent &tevent)
         pos.y = int(y)*(faktor + 8);
         if (pos.y > sz.y-20) pos.y = sz.y-20;
         if (pos.x > sz.x-10) pos.x = sz.x-10;
+#ifndef __APPLE__
+        }
+#endif // __APPLE__
 
 #ifdef _WIN32
         if (line && n>0 && word[n-1] == '\n') pos = PositionToCoords(n+line);

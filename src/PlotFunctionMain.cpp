@@ -10,6 +10,7 @@
 #include "PlotFunctionMain.h"
 #include <wx/msgdlg.h>
 #include <wx/filedlg.h>
+#include "PlotFunction.h"
 #include "calculus.h"
 #include <thread>
 #include <val_utils.h>
@@ -788,6 +789,10 @@ void PlotFunctionFrame::GetSettings()
     for (auto& v : svalues) {
         cindex = getfunctionfromstring(v,f_s,xr.x,xr.y);
         f = myfunction(f_s);
+        if (f.numberofvariables() > 1) {
+            val::valfunction g(f.getinfixnotation());
+            f = myfunction(g.getinfixnotation());
+        }
         if (!f.iszero()) {
             F.push_back(std::move(f));
             x_range.push_back(xr);
@@ -2702,7 +2707,7 @@ void PlotFunctionFrame::OnInputDialog(wxCommandEvent&)
 #ifdef __APPLE__
     StatusBar1->SetStatusText(_T("Type Cmd-H for help"),1);
 #else
-    StatusBar1->SetStatusText(_T("Type Cmd-H for help"),1);
+    StatusBar1->SetStatusText(_T("Type Ctrl-H for help"),1);
 #endif // __APPLE__
     if (input.ShowModal() == wxID_CANCEL) {
         StatusBar1->SetStatusText(_T(""),1);
@@ -4344,7 +4349,12 @@ void PlotFunctionFrame::OnMouseReleased(wxMouseEvent &event)
         Compute();
     }
 #ifdef __APPLE__
-    else Paint();
+    else {
+        while (iscomputing) {
+            wxYield();
+        }
+        Paint();
+    }
 #endif // __APPLE__
 }
 
@@ -4929,6 +4939,7 @@ void PlotFunctionFrame::WriteText()
     val::Glist<std::string> s_functions = getwordsfromstring(fstring,separfunc,0,val::d_array<char>{'\n'});
     int n = val::Min(s_functions.length(),N);
     wxTextAttr Style = SideText->GetDefaultStyle();
+    Style.SetFontSize(fontsize);
 
     for (int i = 0; i < n; ++i) {
         Style.SetTextColour(Color[i]);
@@ -5029,6 +5040,10 @@ void PlotFunctionFrame::OnSideBarCheck(wxCommandEvent&)
 
 void PlotFunctionFrame::CheckFocus()
 {
+#ifdef __APPLE__
+    return;
+#endif // __APPLE__
+
     if (SideText->HasFocus()) {
         Unbind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1008);         // Copy to Clipboard
         Unbind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1009);         // Paste from Clipboard

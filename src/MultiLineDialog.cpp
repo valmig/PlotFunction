@@ -507,6 +507,7 @@ InputDialog::InputDialog(wxWindow *parent, wxWindowID id, const val::trie_type<s
 
     if (fonts < 10) fonts = 10;
     if (fonts > 20) fonts = 20;
+    fontsize = fonts;
     wxFont myfont = input->GetFont();
     myfont.SetPointSize(fonts);
     input->SetFont(myfont);
@@ -560,6 +561,8 @@ void InputDialog::OnHelp(wxCommandEvent &)
     wxTextAttr Style = tooltip->GetDefaultStyle();
     std::string firstword, text = std::string(input->GetValue());
     int n = text.length(), i, com = -1;
+
+    Style.SetFontSize(fontsize);
 
     // get first word:
     for (i = 0; i < n; ++i) {
