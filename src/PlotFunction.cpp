@@ -58,8 +58,8 @@ val::d_array<std::string> sfunctionlist({"sqrt", "exp", "log", "abs", "sinh", "c
 
 val::d_array<val::GPair<std::string,val::d_function*>>
 functionpairs ({ {"sqrt",val::sqrt}, {"abs",val::abs}, {"exp", val::exp}, {"log", val::log}, {"sin", val::sin}, {"cos", val::cos},
-					{"tan", val::tan}, {"arcsin", val::arcsin}, {"arccos", val::arccos}, {"arctan", val::arctan}, {"sinh", val::sinh},
-					{"cosh", val::cosh}, {"tanh", val::tanh}, {"arsinh", val::arsinh}, {"arcosh", val::arcosh}, {"artanh", val::artanh}	});
+            {"tan", val::tan}, {"arcsin", val::arcsin}, {"arccos", val::arccos}, {"arctan", val::arctan}, {"sinh", val::sinh},
+            {"cosh", val::cosh}, {"tanh", val::tanh}, {"arsinh", val::arsinh}, {"arcosh", val::arcosh}, {"artanh", val::artanh}});
 
 
 const val::d_array<wxColour> defaultcolors{wxColour(0,0,255), wxColour(255,0,0), wxColour(0,255,0), wxColour(0,236,246),

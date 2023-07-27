@@ -3,6 +3,7 @@
 
 #include "valDialogs.h"
 #include "valControls.h"
+#include <val_wx/valControls.h>
 
 
 #include <wx/clrpicker.h>
@@ -131,6 +132,7 @@ public:
     void SetMinInputSize(const wxSize& s) {input->SetMinSize(s);}
 private:
     void Build(const wxString &s_text,int fonts);
+    void OnShortcuts(wxCommandEvent &);
     val::CompleteTextCtrl *input = nullptr;
 };
 

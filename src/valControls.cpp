@@ -1,4 +1,7 @@
 #include "valControls.h"
+#include "wx/event.h"
+#include "wx/msgdlg.h"
+#include <val_wx/valControls.h>
 #include <val_utils.h>
 
 //wxDEFINE_EVENT(IS_EVENT,ISliderEvent);
@@ -13,7 +16,7 @@ namespace val
 
 enum {IntervalSlider_UP_Id = 32500, IntervalSlider_DOWN_Id, IntervalSlider_ALTUP_id, IntervalSlider_ALTDOWN_Id,
         IntervalSlider_CTRLUP_Id, IntervalSlider_CTRLDOWN_Id, CompleteCtrl_UP_Id, CompleteCtrl_DOWN_Id,
-        CompleteCtrl_RETURN_Id, CompleteCtrl_ESCAPE_Id, CompleteCtrl_TAB_Id};
+        CompleteCtrl_RETURN_Id, CompleteCtrl_ESCAPE_Id, CompleteCtrl_TAB_Id, CompleteCtrl_BRACKETS_Id};
 
 int isdarkcolor(const wxColour& color)
 {
@@ -938,6 +941,7 @@ void CompleteTextCtrl::BuildObject()
 
     Bind(wxEVT_TEXT,&CompleteTextCtrl::OnInputChanged,this);
     Bind(val_EVENT_COMPLETE,&CompleteTextCtrl::OnCompleteBrackets,this);
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&CompleteTextCtrl::OnShortCuts,this,101);
 
     wxAcceleratorEntry entries[5];
     entries[0].Set(wxACCEL_NORMAL,WXK_UP,CompleteCtrl_UP_Id);
@@ -950,6 +954,12 @@ void CompleteTextCtrl::BuildObject()
     entries[3].Set(wxACCEL_NORMAL,WXK_ESCAPE,CompleteCtrl_ESCAPE_Id);
     entries[4].Set(wxACCEL_NORMAL,WXK_TAB,CompleteCtrl_TAB_Id);
     accel = new wxAcceleratorTable(5,entries);
+
+    wxAcceleratorEntry t_entries[1];
+    t_entries[0].Set(wxACCEL_CTRL,(int) 'B',101);
+    taccel = new wxAcceleratorTable(1,t_entries);
+
+    SetAcceleratorTable(*taccel);
 
     parenttable = Parent->GetAcceleratorTable();
 }
@@ -1011,12 +1021,13 @@ bool CompleteTextCtrl::SetFont(const wxFont& font)
 CompleteTextCtrl::~CompleteTextCtrl()
 {
     delete accel;
+    delete taccel;
 }
 
 
 void CompleteTextCtrl::OnInputChanged(wxCommandEvent &tevent)
 {
-    tevent.Skip();
+    //tevent.Skip();
     UnbindAll();
     listbox->Show(false);
     listbox->Clear();
@@ -1050,15 +1061,15 @@ void CompleteTextCtrl::OnInputChanged(wxCommandEvent &tevent)
         else if (word[n] == '[') bracket = "]";
         else bracket = "}";
         actualword = "";
-		//if (n!=m && word[m+1] == ')') return;
-		wxCommandEvent event(val_EVENT_COMPLETE,0);
-		wxPostEvent(this,event);
-		if (Parent != nullptr) {
+        //if (n!=m && word[m+1] == ')') return;
+        wxCommandEvent event(val_EVENT_COMPLETE,0);
+        wxPostEvent(this,event);
+        if (Parent != nullptr) {
             wxCommandEvent pevent(wxEVT_TEXT,identity);
             wxPostEvent(Parent,pevent);
-		}
-		return;
-	}
+        }
+        return;
+    }
 
     //if (m!=n-1) wxMessageBox(findword(word,m-1,startpos));
     //if (word[n] >= 97 && word[n] <= 122) {
@@ -1121,6 +1132,17 @@ void CompleteTextCtrl::OnInputChanged(wxCommandEvent &tevent)
 }
 
 
+
+void CompleteTextCtrl::OnShortCuts(wxCommandEvent &event)
+{
+    int id = event.GetId();
+    if (id == 101) {
+        if (closebrackets) closebrackets = false;
+        else closebrackets = true;
+    }
+}
+
+
 void CompleteTextCtrl::OnListBoxSelected(wxCommandEvent &evt)
 {
     if (!isactiv) return;
@@ -1163,7 +1185,7 @@ void CompleteTextCtrl::OnListBoxSelected(wxCommandEvent &evt)
             isactiv = 0;
             UnbindAll();
         }
-
+        break;
     default:
         break;
     }
@@ -1193,6 +1215,8 @@ void CompleteTextCtrl::CompleteBrackets()
 }
 
 
+
+
 void CompleteTextCtrl::BindAll()
 {
     if (parenttable != nullptr)  {
@@ -1209,9 +1233,10 @@ void CompleteTextCtrl::BindAll()
 
 void CompleteTextCtrl::UnbindAll()
 {
+
+    SetAcceleratorTable(*taccel);
     if (parenttable!=nullptr)  {
         Parent->SetAcceleratorTable(*parenttable);
-        SetAcceleratorTable(wxNullAcceleratorTable);
         //SetAcceleratorTable(*oldtable);
     }
     Unbind(wxEVT_COMMAND_MENU_SELECTED,&CompleteTextCtrl::OnListBoxSelected,this,CompleteCtrl_UP_Id);

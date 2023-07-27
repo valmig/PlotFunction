@@ -1,9 +1,10 @@
 #include "MultiLineDialog.h"
+#include "wx/accel.h"
 #include <wx/msgdlg.h>
 #include <analysis.h>
-//
 #include "valDialogs.cpp"
 #include "valControls.cpp"
+
 
 
 // --------------------------------------------------------------------------------------------------------------------------
@@ -485,11 +486,17 @@ void InputFunctionDialog::Build(const wxString& s_text, int fonts)
     input->SetFocus();
     PBoxSizer->Add(input,1,wxALL|wxEXPAND,10);
 	surface->SetSizer(PBoxSizer);
+
+
     SetAccelerator();
     //n_SetAccelerator();
 
 	BoxSizer->SetSizeHints(this);
 }
+
+
+
+
 
 // ---------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -605,6 +612,5 @@ void InputDialog::OnHelp(wxCommandEvent &)
     BoxSizer->SetSizeHints(this);
 
 }
-
 
 

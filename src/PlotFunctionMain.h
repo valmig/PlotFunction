@@ -129,6 +129,7 @@ class PlotFunctionFrame: public wxFrame
         int regressiondegree=1,rounddrawingpoints=-2,nanalyzewindows=0,active_function=-1,pointactive=0,decimalx=0,decimaly=0;
         int moveinpointsx = 0, moveinpointsy = 0, drawpolygon = 0, n_polygonpoints=0, polygonline = 0, drawline = 0, n_linepoints = 0;
         int bitmapbackground = 0, axis_fontsize = 10, SideText_isshown = 0, widthSideText = 200;
+        bool closebrackets = true;
         wxPoint actuallinepoint,actualpolygonpoint;
         val::rational pi_factor_x,pi_factor_y,g_pi_factor_x,g_pi_factor_y;
         void Paint();

@@ -235,13 +235,14 @@ private:
     int selection = 0, isactiv=0, n_candidates = 0, fontsize, actuallength = 0, formerlength=0;
     bool closebrackets = false, enablecomplete = true;
     wxString bracket = ")";
-    wxAcceleratorTable *parenttable = nullptr, *accel = nullptr;
+    wxAcceleratorTable *parenttable = nullptr, *accel = nullptr, *taccel = nullptr;
     void BuildObject();
     int isalphabetical(char s) const;
     std::string findword(const std::string &s, int pos) const;
     void OnInputChanged(wxCommandEvent &event);
     void OnListBoxSelected(wxCommandEvent &event);
     void OnCompleteBrackets(wxCommandEvent &);
+    void OnShortCuts(wxCommandEvent &);
     void CompleteWord();
     void CompleteBrackets();
     void BindAll();

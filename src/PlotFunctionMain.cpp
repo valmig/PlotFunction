@@ -2105,11 +2105,13 @@ void PlotFunctionFrame::OnMenunewfunction(wxCommandEvent &event)
 #endif // __APPLE__
 
         InputFunctionDialog dialog(this,WordTree,input,"Enter or delete functions:","Add/Remove functions",wxSize(sx,sy),fontsize);
+        dialog.SetCloseBrackets(closebrackets);
 #ifdef __APPLE__
         dialog.Centre();
 #endif // __APPLE__
         //dialog.SetSize(DialogInputSize);
         if (dialog.ShowModal()==wxID_CANCEL) return;
+        closebrackets = dialog.GetCloseBrackets();
         // sonst OK:
         //output=dialog.GetSettingsText();
         //DialogInputSize = dialog.GetSize();
@@ -5011,6 +5013,7 @@ void PlotFunctionFrame::OnSideBarCheck(wxCommandEvent&)
         //Move(pos);
         SideText_isshown = 0;
         SideText->Hide();
+        closebrackets = SideText->GetCloseBrackets();
         DrawPanel->SetFocus();
 #ifdef _WIN32
         CheckFocus();
@@ -5028,6 +5031,7 @@ void PlotFunctionFrame::OnSideBarCheck(wxCommandEvent&)
         WriteText();
         SideText->Show();
         SideText->SetFocus();
+        SideText->SetCloseBrackets(closebrackets);
     }
     //Move(pos);
     CheckFocus();
