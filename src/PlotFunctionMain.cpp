@@ -20,6 +20,7 @@
 #include <wx/dcmemory.h>
 #include <wx/colordlg.h>
 #include "MultiLineDialog.h"
+#include "wx/gdicmn.h"
 #include <fstream>
 #include <wx/fontdlg.h>
 #include <pol_arithmetic.h>
@@ -861,13 +862,7 @@ void PlotFunctionFrame::GetSettings()
         pen.resize(N);
 
         for (i=l;i<N;++i) {
-#ifdef _WIN32
-            if (F[i].IsPoints()) pen[i]=6;
-            else pen[i]=2;
-#else
-            if (F[i].IsPoints()) pen[i]=4;
-            else pen[i]=2;
-#endif // _WIN32
+            pen[i] = 2;
         }
 
     }
@@ -1577,9 +1572,10 @@ void PlotFunctionFrame::plotpoints(wxDC& dc,const val::d_array<double> &f,int co
     int i,n=f.length();
     if (n<2) return;
 
-    int ix,iy, r = val::Max(1,pen[colour]/2);
+    int ix,iy, r = val::Max(1,(pen[colour]+2)/2);
 
-    dc.SetPen(wxPen(Color[colour],pen[colour]));
+
+    dc.SetPen(wxPen(Color[colour],pen[colour]+2));
     dc.SetBrush(wxBrush(Color[colour]));
 
     for (i=0;i<n;i+=2) {
@@ -1589,7 +1585,7 @@ void PlotFunctionFrame::plotpoints(wxDC& dc,const val::d_array<double> &f,int co
         if (f[i]<x1 || f[i]>x2) continue;
         if (iy<abst || iy >(abst+sizey)) continue;
         if (active_function == colour && i == pointactive) {
-            dc.SetPen(wxPen(Color[colour],pen[colour]+3));
+            dc.SetPen(wxPen(Color[colour],pen[colour]+4));
         }
 //#ifdef _WIN32
         dc.DrawCircle(ix,iy,r);
@@ -1599,7 +1595,7 @@ void PlotFunctionFrame::plotpoints(wxDC& dc,const val::d_array<double> &f,int co
         //dc.DrawPoint(ix,iy);
 //#endif // _WIN32
         if (active_function == colour && i == pointactive) {
-            dc.SetPen(wxPen(Color[colour],pen[colour]));
+            dc.SetPen(wxPen(Color[colour],pen[colour]+2));
         }
     }
 }
@@ -4616,7 +4612,11 @@ void PlotFunctionFrame::changedrawline()
 void PlotFunctionFrame::SendNotification(const std::string& s)
 {
     using namespace std::chrono_literals;
-    val::InfoWindow *notification = new val::InfoWindow(this,nchildwindows,s,wxDefaultPosition,wxSize(300,100),"Info",20,0);
+    val::InfoWindow *notification = new val::InfoWindow(this,nchildwindows,s,wxDefaultPosition,wxDefaultSize,"Info",20,0);
+    wxPoint pos = GetPosition();
+    pos.x += 10; pos.y += 50;
+    if (SideText_isshown) pos.x += widthSideText;
+    notification->Move(pos);
     notification->Show();
     for (int i=0;i<5000;++i) wxYield();
     std::this_thread::sleep_for(500ms);

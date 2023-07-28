@@ -1,0 +1,31 @@
+#+title: PlotFunction: A C++ graphical program for plotting functions and doing calculus
+#+author: Miguel Valbuena
+
+
+* TABLE OF CONTENTS :toc:
+- [[#required-software][Required software]]
+  - [[#wxwidgets-libraries][wxWidgets libraries]]
+  - [[#libvalmath][libvalmath]]
+- [[#features][Features]]
+  - [[#plotter][Plotter]]
+  - [[#calculus][Calculus]]
+  - [[#rational-interpolation][Rational interpolation]]
+  - [[#regression][Regression]]
+
+* Required software
+** wxWidgets libraries
+As this program uses the wxWidgets library, ~wx-config~ should be available on your system.
+** libvalmath
+You can clone the git repository https://github.com/valmig/PlotFunction.git and build the library
+following the given instructions.
+
+* Features
+** Plotter
+plotting functions, algebraic curves and more geometric objects like points, lines, polygons, circles, etc...
+** Calculus
+analyzes functions (definition gaps, zeros, extreme points, infection points) and computes derivations and
+some stammfunctions.
+** Rational interpolation
+computes the interpolation polynomial to a given set of points.
+** Regression
+computes the regression polynomial of a given degree to a given set of points.
