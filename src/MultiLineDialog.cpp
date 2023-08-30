@@ -608,6 +608,7 @@ void InputDialog::OnHelp(wxCommandEvent &)
             tooltip->SetDefaultStyle(Style);
             tooltip->SetValue((*SettingsParList)[com]);
         }
+        else return;
     }
 
     tooltip->Show();
