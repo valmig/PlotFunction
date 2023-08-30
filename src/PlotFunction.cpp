@@ -1,4 +1,7 @@
 #include "PlotFunction.h"
+#include "fraction.h"
+#include "val_basics.h"
+#include "val_utils.h"
 #include <rational.h>
 #include <vector.h>
 #include <wx/msgdlg.h>
@@ -75,18 +78,29 @@ const val::d_array<std::string> SettingsList({"axis-scale", "axis-color", "grid-
                                 "axis-fontsize" });
 
 const val::d_array<std::string> SettingsParList({"axis-scale sx [sy]	<Shift-Alt-S>",
-                                              "axis-color def. color / Red Green Blue	<Shift-Ctrl-A>", "grid-scale sx [sy]	<Ctrl-G>",
+                                              "axis-color def. color / Red Green Blue	<Shift-Ctrl-A>",
+                                              "grid-scale sx [sy]	<Ctrl-G>",
                                               "grid-color def. color / Red Green Blue	<Shift-Ctrl-G>",
-                                              "values-number unsigned int", "axis-range x1 x2 [: y1 y2]		<Ctrl-X>/<Ctrl-Y>",
-                                              "show-x-axis 0/1	<Alt-X>", "show-y-axis 0/1	<Alt-Y>", "show-grid 0/1	<Alt-G>",
-                                              "show-x-scale 0/1		<Shift-Alt-X>", "show-y-scale 0/1		<Shift-Alt-Y",
-                                              "reset-colors		<Ctrl-Alt-R>", "font-size unsigned int	<Ctrl-F>",
+                                              "values-number unsigned int",
+                                              "axis-range x1 x2 [: y1 y2]		<Ctrl-X>/<Ctrl-Y>",
+                                              "show-x-axis 0/1	<Alt-X>",
+                                              "show-y-axis 0/1	<Alt-Y>",
+                                              "show-grid 0/1	<Alt-G>",
+                                              "show-x-scale 0/1		<Shift-Alt-X>",
+                                              "show-y-scale 0/1		<Shift-Alt-Y",
+                                              "reset-colors		<Ctrl-Alt-R>",
+                                              "font-size unsigned int	<Ctrl-F>",
                                               "function-color [#nr = 1] def. color / Red Green Blue    <Ctrl-nr>",
-                                              "panel-size sx sy    <F8>", "axis-names string string    <Shift-Alt-S>",
-                                              "regression-degree unsigned int \t<Shift-Alt-A>", "point-decimals int    <Ctrl-D>",
-                                              "show-function [#nr = 1] 0/1    <Alt-nr>", "background-color def. color / Red Green Blue    <Shift-Ctrl-A>",
-                                              "parameter-values double ...    <Ctrl-P>", "function-size [#nr = 1] unsigned int    <Ctrl-nr>",
-                                              "margin unsigned int    <Shift-Alt-S>", "axis-fontsize unsigned int    <Shift-Ctrl-F>"
+                                              "panel-size sx [sy]    <F8>",
+                                              "axis-names string string    <Shift-Alt-S>",
+                                              "regression-degree unsigned int \t<Shift-Alt-A>",
+                                              "point-decimals int    <Ctrl-D>",
+                                              "show-function [#nr = 1] 0/1    <Alt-nr>",
+                                              "background-color def. color / Red Green Blue    <Shift-Ctrl-B>",
+                                              "parameter-values double ...    <Ctrl-P>",
+                                              "function-size [#nr = 1] unsigned int    <Ctrl-nr>",
+                                              "margin unsigned int    <Shift-Alt-S>",
+                                              "axis-fontsize unsigned int    <Shift-Ctrl-F>"
                                              });
 
 const val::d_array<std::string> CommandsList({"derive", "analyze", "tangent", "normal", "interpolation", "regression", "table", "integral",
@@ -103,7 +117,7 @@ const val::d_array<std::string> CommandsParList({"derive [#nr = 1]",
                                                  "arclength [#nr = 1] [decimals iterations precision] [x1 x2]    <Shift-Alt-I>",
                                                  "zero-iteration [#nr = 1] [decimals iterations precision] [x1 x2]    <Alt-Z>",
                                                  "move [#nr = 1] x y",
-                                                 "evaluate [#nr = 1] expressions"
+                                                 "evaluate [#nr = 1] expressions [ddecimals[ = 4 ]]"
                                                  });
 
 
@@ -283,6 +297,14 @@ int decimal(const double& x)
         factor*=0.1;
     }
     return k;
+}
+
+
+int intdigits(double x)
+{
+    x = val::abs(x);
+    if (x == 0.0) return 1;
+    return int(val::log(10.0,x)) + 1;
 }
 
 std::string head(const std::string &s,int l)
@@ -678,7 +700,13 @@ double derive(const myfunction &f,const double& x,int n)
 
 val::rationalfunction derive(const val::rationalfunction &f)
 {
-    return val::rationalfunction(f.nominator().derive()*f.denominator()-f.nominator()*f.denominator().derive(),f.denominator()*f.denominator());
+    val::pol<val::rational> nom = f.nominator().derive()*f.denominator()-f.nominator()*f.denominator().derive(), denom = f.denominator() * f.denominator();
+    val::rational contnom = val::content(nom), contdenom = val::content(denom);
+    nom /= contnom; denom /= contdenom;
+    contnom /= contdenom;
+    nom *= contnom;
+    return val::rationalfunction(nom,denom);
+    //return val::rationalfunction(f.nominator().derive()*f.denominator()-f.nominator()*f.denominator().derive(),f.denominator()*f.denominator());
 }
 
 
@@ -1069,7 +1097,7 @@ void computetable(const myfunction& g, double x1,double x2, double dx)
      Glist<GPair<double>> MP,PM;
      Glist<double> Zeros;
      double y0=g(x1),y1,x0=x1,eps=1e-4;
-     int k=4,m=isderived(g);
+     int k=4,m=isderived(g), digits, ydigits;
 
      //for (int i=0;i<m;++i) f=f.derive();
 
@@ -1086,29 +1114,43 @@ void computetable(const myfunction& g, double x1,double x2, double dx)
         if (val::abs(y1)<eps) Zeros.inserttoend(x);
         else if (y0<0 && y1>0) MP.inserttoend(GPair<double>(x0,x));
         else if (y0>0 && y1<0) PM.inserttoend(GPair<double>(x0,x));
-        if (!val::isNaN(y1)) tablestring += ToString(val::round(x,k)) + "          " + ToString(val::round(y1,k)) + "\n";
-        else tablestring += ToString(val::round(x,k)) + "          undefined" + "\n";
+        digits = intdigits(x) + k;
+        digits = val::Min(digits,val::MaxPrec);
+        ydigits = intdigits(y1) + k;
+        ydigits = val::Min(ydigits,val::MaxPrec);
+        if (!val::isNaN(y1)) tablestring += ToString(val::round(x,k),digits) + "          " + ToString(val::round(y1,k),ydigits) + "\n";
+        else tablestring += ToString(val::round(x,k), digits) + "          undefined" + "\n";
         x0=x;
         y0=y1;
      }
 
      if (!Zeros.isempty()) {
         tablestring += "\nPossible Zeros at: \n";
-        for (const auto& el:Zeros) {
-            tablestring += ToString(el) + "\n";
+        for (const auto& el : Zeros) {
+            digits = intdigits(el) + k;
+            digits = val::Min(digits,val::MaxPrec);
+            tablestring += ToString(el,digits) + "\n";
         }
      }
      if (!MP.isempty()) {
         tablestring += "\nChange Sign -/+ at: \n";
-        for (const auto& el:MP) {
-            tablestring += ToString(el.x) + " ; " + ToString(el.y) +"\n";
+        for (const auto& el : MP) {
+            digits = intdigits(el.x) + k;
+            digits = val::Min(digits,val::MaxPrec);
+            ydigits = intdigits(el.y) + k;
+            ydigits = val::Min(ydigits,val::MaxPrec);
+            tablestring += ToString(el.x,digits) + " ; " + ToString(el.y,ydigits) +"\n";
         }
      }
 
      if (!PM.isempty()) {
         tablestring += "\nChange Sign +/- at: \n";
         for (const auto& el:PM) {
-            tablestring += ToString(el.x) + " ; " + ToString(el.y) +"\n";
+            digits = intdigits(el.x) + k;
+            digits = val::Min(digits,val::MaxPrec);
+            ydigits = intdigits(el.y) + k;
+            ydigits = val::Min(ydigits,val::MaxPrec);
+            tablestring += ToString(el.x,digits) + " ; " + ToString(el.y,ydigits) +"\n";
         }
      }
 
@@ -1168,9 +1210,21 @@ void computeevaluation(const myfunction& f, double par)
     Glist<std::string> wlist = getwordsfromstring(tablestring,sep);
 
     if (wlist.isempty()) return;
+    int n = wlist.length(), decimals = 4;
+
+    if (wlist[n-1][0] == 'd') {
+        wlist[n-1] = val::tailofstring(wlist[n-1], wlist[n-1].length()-1);
+        decimals = val::FromString<int>(wlist[n-1]);
+        decimals = val::Max(decimals, 0);
+        decimals = val::Min(decimals, 12);
+        wlist.delelement(n-1);
+    }
+
+    if (wlist.isempty()) return;
 
     valfunction F(f.getinfixnotation()), g, h;
     double x, y;
+    int precision, yprecision;
 
     //F.setparameter(par);
 
@@ -1182,9 +1236,11 @@ void computeevaluation(const myfunction& f, double par)
         g.setparameter(par);
         h.setparameter(par);
         tablestring += "\n x = " + w + ":" + "\nSymbolic evaluation:\n f(" + w + ") = " + h.getinfixnotation();
-        x = val::round(g(0),8);  y = val::round(h(0),8);
-        tablestring += "\nDouble evaluation:\n f(" + w + ") = " + ToString(y);
-        tablestring += "\nPoint in graph: \n" + ToString(x) + "  " + ToString(y) + "\n";
+        x = val::round(g(0),decimals);  y = val::round(h(0),decimals);
+        precision = intdigits(x) + decimals; yprecision = intdigits(y) + decimals;
+        precision = val::Min(precision,val::MaxPrec); yprecision = val::Min(yprecision, val::MaxPrec);
+        tablestring += "\n\nDouble evaluation:\n f(" + w + ") = " + ToString(y,yprecision);
+        tablestring += "\nPoint in graph: \n" + ToString(x,precision) + "  " + ToString(y,yprecision) + "\n";
     }
     MyThreadEvent event(MY_EVENT,IdEval);
     if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event.Clone());
@@ -1196,17 +1252,19 @@ void computezeroiteration(const myfunction&f,double x1,double x2,double eps,int 
 {
     using namespace val;
     MyThreadEvent event(MY_EVENT,IdIteration);
-    int res;
+    int res, precision;
     tablestring="Zero approximation of:\n f(x) = " + f.getinfixnotation() + ".\n\n";
 
     tablestring+="Start-interval:  [ " + ToString(x1) + " ; " + ToString(x2) + " ]\nMax. number of Iterations: " + ToString(n) +
         "\nPrecision: " + ToString(eps) + "\nRound to decimal: " + ToString(dez) + "\n";
     res = SecantMethod(f,x1,x2,eps,n);
+    precision = intdigits(x2) + dez;
+    precision = val::Min(precision, val::MaxPrec);
     if (res>=0) {
-        tablestring+="\nSecant-method successful!\nNumber of Iterations: " + val::ToString(res) + "\n x = " + ToString(val::round(x2,dez),12);
+        tablestring+="\nSecant-method successful!\nNumber of Iterations: " + val::ToString(res) + "\n x = " + ToString(val::round(x2,dez),precision);
     }
     else if (res==-1) {
-        tablestring+= "\nSecant-method failed!\n x = " + ToString(val::round(x2,dez),12);
+        tablestring+= "\nSecant-method failed!\n x = " + ToString(val::round(x2,dez),precision);
     }
     else tablestring+="\nSecant-method failed!";
 
@@ -1947,8 +2005,7 @@ const myfunction& myfunction::infix_to_postfix(const std::string &s)
             withpar=1;
 			++i;
 		}
-
-		else if ((sf = getstringfunction(s,i)) != "") {
+        else if ((sf = getstringfunction(s,i)) != "") {
 			isrational = 0;
 			if (sf == "PI") {
                 t = s_stack(val::ToString(val::PI,20),s_stack::NUMBER);
@@ -2424,14 +2481,16 @@ void myfunction::settextdata()
     textdata = "";
     int i,l=s_infix.size();
 
-    for (i=0;i<l;++i)
-    if (s_infix[i]=='{') {
-        ++i;
-        break;
+    for (i=0;i<l;++i) {
+        if (s_infix[i]=='{') {
+            ++i;
+            break;
+        }
     }
-    for (;i<l;++i)
+    for (; i<l; ++i) {
         if (s_infix[i]!='}') textdata+= s_infix[i];
         else break;
+    }
     if (textdata == "\\alpha") textdata = L"\u03B1";
     else if (textdata == "\\beta") textdata = L"\u03B2";
     else if (textdata == "\\gamma") textdata = L"\u03B3";

@@ -1,6 +1,7 @@
 #include "valControls.h"
 #include "wx/event.h"
 #include "wx/msgdlg.h"
+#include "wx/string.h"
 #include <val_wx/valControls.h>
 #include <val_utils.h>
 
@@ -942,6 +943,7 @@ void CompleteTextCtrl::BuildObject()
     Bind(wxEVT_TEXT,&CompleteTextCtrl::OnInputChanged,this);
     Bind(val_EVENT_COMPLETE,&CompleteTextCtrl::OnCompleteBrackets,this);
     Bind(wxEVT_COMMAND_MENU_SELECTED,&CompleteTextCtrl::OnShortCuts,this,101);
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&CompleteTextCtrl::OnShortCuts,this,102);
 
     wxAcceleratorEntry entries[5];
     entries[0].Set(wxACCEL_NORMAL,WXK_UP,CompleteCtrl_UP_Id);
@@ -955,9 +957,10 @@ void CompleteTextCtrl::BuildObject()
     entries[4].Set(wxACCEL_NORMAL,WXK_TAB,CompleteCtrl_TAB_Id);
     accel = new wxAcceleratorTable(5,entries);
 
-    wxAcceleratorEntry t_entries[1];
+    wxAcceleratorEntry t_entries[2];
     t_entries[0].Set(wxACCEL_CTRL,(int) 'B',101);
-    taccel = new wxAcceleratorTable(1,t_entries);
+    t_entries[1].Set(wxACCEL_CTRL,(int) 'D',102);
+    taccel = new wxAcceleratorTable(2,t_entries);
 
     SetAcceleratorTable(*taccel);
 
@@ -1048,7 +1051,7 @@ void CompleteTextCtrl::OnInputChanged(wxCommandEvent &tevent)
     for (int i= 0; i<n; ++i) {
         if (word[i] == '\n') {
             line++;
-            n--;
+            //n--;
             //if (n<0) n = 0;
             //break;
         }
@@ -1088,7 +1091,7 @@ void CompleteTextCtrl::OnInputChanged(wxCommandEvent &tevent)
         for ( const auto & v : CandList) listbox->Append(v);
         wxPoint pos, screenpos = GetScreenPosition();
 #ifndef __APPLE__
-        if (!IsSingleLine()) pos = PositionToCoords(n), screenpos = GetScreenPosition();
+        if (!IsSingleLine()) pos = PositionToCoords(n);
         else {
 #endif // __APPLE__
         long x,y;
@@ -1132,6 +1135,37 @@ void CompleteTextCtrl::OnInputChanged(wxCommandEvent &tevent)
 }
 
 
+void CompleteTextCtrl::DuplicateLine()
+{
+    if (IsSingleLine()) return;
+    wxString value = GetValue();
+    if (value.length() == 0) return;
+    long n = GetInsertionPoint(), x, y, linenumber = 1;
+
+    PositionToXY(n, &x, &y);
+
+    wxString line = GetLineText(y), nvalue = "";
+
+    if (line.length() == 0) return;
+    // Get line number;
+    for (unsigned i = 0; i < value.length(); ++i) {
+        if (value[i] == '\n') ++linenumber;
+    }
+    long i;
+    //wxMessageBox(val::ToString(y) + " " + val::ToString(linenumber));
+    for (i = 0; i <= y; ++i) nvalue += GetLineText(i) + "\n";
+    nvalue += line;
+    for (; i < linenumber; ++i) nvalue += "\n" + GetLineText(i);
+
+    bool stat = enablecomplete;
+
+    enablecomplete = false;
+    SetValue(nvalue);
+    SetInsertionPoint(XYToPosition(0,y+1));
+    enablecomplete = stat;
+}
+
+
 
 void CompleteTextCtrl::OnShortCuts(wxCommandEvent &event)
 {
@@ -1139,6 +1173,9 @@ void CompleteTextCtrl::OnShortCuts(wxCommandEvent &event)
     if (id == 101) {
         if (closebrackets) closebrackets = false;
         else closebrackets = true;
+    }
+    else if (id == 102) {
+    	DuplicateLine();
     }
 }
 

@@ -1,4 +1,5 @@
 #include "calculus.h"
+#include "PlotFunction.h"
 #include <vector.h>
 #include <analysis.h>
 #include <polfactor.h>
@@ -8,6 +9,8 @@
 
 namespace val
 {
+
+
 std::istream& operator >>(std::istream& is,valfunction &f)
 {
 	std::string s;
@@ -1167,16 +1170,15 @@ val::valfunction integral(const val::valfunction &f, int k)
         valfunction h = f.getsecondargument();
         int g_const = g.isconst(k), h_const = h.isconst(k);
         if (!g_const && !h_const) {
-			//std::cout<<"\nHere!";
-			F = hintegral::integral_product_subst(g,h,k,firstop);
-		}
-		else if (g_const) {
-			if (firstop == "*") return g * integral(h,k);
-		}
-		else if (h_const) {
-			if (firstop == "*") return h * integral(g,k);
-			else return integral(g,k)/h;
-		}
+            F = hintegral::integral_product_subst(g,h,k,firstop);
+        }
+        else if (g_const) {
+            if (firstop == "*") return g * integral(h,k);
+        }
+        else if (h_const) {
+            if (firstop == "*") return h * integral(g,k);
+            else return integral(g,k)/h;
+        }
 	}
 	else if (firstop == "^") {
 		valfunction h = f.getsecondargument();
@@ -1264,8 +1266,8 @@ void computeintegral(const myfunction& f,val::rational x1,val::rational x2,doubl
     }
     tablestring = name + f.getinfixnotation() + " ; " + ToString(x1) + " ; " + ToString(x2) + " ) =\n     ";
     if (ispol) tablestring+= ToString(r_wert) + "\n\ndouble:   ";
-    else if (exact) tablestring += ToString(val::round(exwert,dez),12) + " (over stammfunction), \n\ndouble:   ";
-    tablestring+=ToString(val::round(wert,dez),12);
+    else if (exact) tablestring += ToString(val::round(exwert,dez),val::MaxPrec) + " (over stammfunction), \n\ndouble:   ";
+    tablestring+=ToString(val::round(wert,dez),val::MaxPrec);
     if (k==0) tablestring+= "\nPrecision : " + ToString(delta) + " , Round to decimal: " + ToString(dez) + "\nIterations : " + ToString(n);
 
     if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event.Clone() );
@@ -1334,7 +1336,7 @@ std::string compute_partialfraction(const val::valfunction &f)
 void analize_rationalfunction(val::valfunction& F,const double& eps,int dec)
 {
 
-    int N=0,N_r=0,rat=1,klammer=0;
+    int N=0,N_r=0,rat=1,klammer=0, digits;
 
     //val::rationalfunction::setreduced(0);
     val::vector<double> zeros;
@@ -1401,7 +1403,9 @@ void analize_rationalfunction(val::valfunction& F,const double& eps,int dec)
         analyze_output[0]+="Number of gaps of definition: " + val::ToString(N) + "\n";
         for (int i=0;i<N;++i) {
             if (zeros[i]==0) zeros[i] = 0.0;
-            analyze_output[0]+= "  " + val::ToString(val::round(zeros[i],dec));
+            digits = intdigits(zeros[i]) + dec;
+            digits = val::Min(digits,val::MaxPrec);
+            analyze_output[0] += "  " + val::ToString(val::round(zeros[i],dec),digits);
         }
 
         if (rat) {
@@ -1411,22 +1415,24 @@ void analize_rationalfunction(val::valfunction& F,const double& eps,int dec)
             N_r = r_zeros.length();
             r_zeros.sort();
             analyze_output[0]+="\nNumber of rational gaps " + val::ToString(N_r) + ":\n";
-            for (int i=0;i<N_r;++i) analyze_output[0]+= "  " + val::ToString(val::round(r_zeros[i],dec));
+            for (int i=0;i<N_r;++i) analyze_output[0]+= "  " + val::ToString(val::round(r_zeros[i],dec),val::MaxPrec);
         }
         analyze_output[0]+="\nBehavior :\n";
         for (int i = 0;i<N;++i) {
+            digits = intdigits(zeros[i]) + dec;
+            digits = val::Min(digits,val::MaxPrec);
             if (f_dred(zeros[i] + eps) * f_dred(zeros[i] - eps) > 0.0) {   //(val::abs(f_dred(zeros[i])) > 5*eps) {
-                analyze_output[0]+="lim f("+val::ToString(val::round(zeros[i],dec))+") = " + val::ToString(val::round(F(zeros[i]),dec)) + "\n";
+                analyze_output[0]+="lim f("+val::ToString(val::round(zeros[i],dec),digits)+") = " + val::ToString(val::round(F(zeros[i]),dec),digits) + "\n";
                 continue;
             }
             if (F(zeros[i]-eps)>0) {
-                analyze_output[0]+="lim f("+val::ToString(val::round(zeros[i],dec))+"-) = +inf,  ";
+                analyze_output[0]+="lim f("+val::ToString(val::round(zeros[i],dec),digits)+"-) = +inf,  ";
             }
-            else analyze_output[0]+="lim f("+val::ToString(val::round(zeros[i],dec))+"-) = -inf,  ";
+            else analyze_output[0]+="lim f("+val::ToString(val::round(zeros[i],dec),digits)+"-) = -inf,  ";
             if (F(zeros[i]+eps)>0) {
-                analyze_output[0]+="lim f("+val::ToString(val::round(zeros[i],dec))+"+) = +inf,  ";
+                analyze_output[0]+="lim f("+val::ToString(val::round(zeros[i],dec),digits)+"+) = +inf,  ";
             }
-            else analyze_output[0]+="lim f("+val::ToString(val::round(zeros[i],dec))+"+) = -inf,  ";
+            else analyze_output[0]+="lim f("+val::ToString(val::round(zeros[i],dec),digits)+"+) = -inf,  ";
             analyze_output[0]+="\n";
         }
         if (F_r.nominator().degree()>=F_r.denominator().degree()) {
@@ -1448,7 +1454,9 @@ void analize_rationalfunction(val::valfunction& F,const double& eps,int dec)
         analyze_output[1]+="Number of real zeros: "+ val::ToString(N) + "\n";
         for (int i=0;i<N;++i) {
             if (zeros[i]==0) zeros[i] = 0;
-            analyze_output[1]+= "  " + val::ToString(val::round(zeros[i],dec));
+            digits = intdigits(zeros[i]) + dec;
+            digits = val::Min(digits,val::MaxPrec);
+            analyze_output[1]+= "  " + val::ToString(val::round(zeros[i],dec),digits);
             Points[0].push_back(val::GPair<double>(zeros[i],0.0));
         }
 
@@ -1482,6 +1490,7 @@ void analize_rationalfunction(val::valfunction& F,const double& eps,int dec)
     else analyze_output[2]+="f'(x) = " +PolfractionToString(F_r) + "\n";
     //os+="\n\nf'(x) = " + factorize(F_r) + "\n";
     if (N) {
+        int ydigits;
         vzw.resize(N);
         zeros.sort();
         for (int i=0;i<N;++i) {
@@ -1510,7 +1519,12 @@ void analize_rationalfunction(val::valfunction& F,const double& eps,int dec)
                 analyze_output[2]+="\nNumber of maxima: " + val::ToString(pm) + "\n";
                 for (int i=0;i<N;++i) {
                     if (vzw[i]==1) {
-                        analyze_output[2]+="( " + val::ToString(val::round(zeros[i],dec)) + " | " + val::ToString(val::round(y=FF(zeros[i]),dec)) + " )  ";
+            			digits = intdigits(zeros[i]) + dec;
+            			digits = val::Min(digits,val::MaxPrec);
+                        y = FF(zeros[i]);
+                        ydigits = intdigits(y) + dec;
+                        ydigits = val::Min(ydigits,val::MaxPrec);
+                        analyze_output[2]+="( " + val::ToString(val::round(zeros[i],dec),digits) + " | " + val::ToString(val::round(y,dec),ydigits) + " )  ";
                         Points[1].push_back(val::GPair<double>(zeros[i],y));
                         for (const auto& x : r_zeros) {
                             if (val::abs(double(x)-zeros[i])<eps) {
@@ -1525,7 +1539,12 @@ void analize_rationalfunction(val::valfunction& F,const double& eps,int dec)
                 analyze_output[2]+="\nNumber of minima: " + val::ToString(mp) + "\n";
                 for (int i=0;i<N;++i) {
                     if (vzw[i]==-1) {
-                        analyze_output[2]+="( " + val::ToString(val::round(zeros[i],dec)) + " | " + val::ToString(val::round(y=FF(zeros[i]),dec)) + " )  ";
+            			digits = intdigits(zeros[i]) + dec;
+            			digits = val::Min(digits,val::MaxPrec);
+                        y = FF(zeros[i]);
+                        ydigits = intdigits(y) + dec;
+                        ydigits = val::Min(ydigits,val::MaxPrec);
+                        analyze_output[2]+="( " + val::ToString(val::round(zeros[i],dec),digits) + " | " + val::ToString(val::round(y,dec),ydigits) + " )  ";
                         Points[1].push_back(val::GPair<double>(zeros[i],y));
                         for (const auto& x : r_zeros) {
                             if (val::abs(double(x)-zeros[i])<eps) {
@@ -1544,18 +1563,20 @@ void analize_rationalfunction(val::valfunction& F,const double& eps,int dec)
 
     //Wendepunkte:
     vzw.del();pm=0;mp=0;
-    F_r=derive(F_r);
+    F_r = derive(F_r);
     F = val::valfunction(PolfractionToString(F_r));
     f_r = F_r.nominator();
     if (!f_r.iszero()) f_r /= val::gcd(f_r,f_r.derive());
     f_d = val::ToDoublePolynom(f_r);
     r_zeros.del();
     val::realRoots(f_d,zeros,eps);
-    N=zeros.dimension();
+    N = zeros.dimension();
     //if (!N) os+="\nKeine Extrema.";
     analyze_output[3]+="f''(x) = " +PolfractionToString(F_r) + "\n";
+    //analyze_output[3]+="f''(x) = (" + val::PolToString(F_r.nominator()) + ")/" + val::PolToString(F_r.denominator()) + "\n";
     //os+="\n\nf''(x) = " + factorize(F_r) + "\n";
     if (N) {
+        int ydigits;
         vzw.resize(N);
         zeros.sort();
         for (int i=0;i<N;++i) {
@@ -1584,7 +1605,12 @@ void analize_rationalfunction(val::valfunction& F,const double& eps,int dec)
                 analyze_output[3]+="\nNumber of  LR-IP: " + val::ToString(pm) + "\n";
                 for (int i=0;i<N;++i) {
                     if (vzw[i]==1) {
-                        analyze_output[3]+="( " + val::ToString(val::round(zeros[i],dec)) + " | " + val::ToString(val::round(y=FF(zeros[i]),dec)) + " )  ";
+            			digits = intdigits(zeros[i]) + dec;
+            			digits = val::Min(digits,val::MaxPrec);
+                        y = FF(zeros[i]);
+                        ydigits = intdigits(y) + dec;
+                        ydigits = val::Min(ydigits,val::MaxPrec);
+                        analyze_output[3]+="( " + val::ToString(val::round(zeros[i],dec),digits) + " | " + val::ToString(val::round(y,dec),ydigits) + " )  ";
                         Points[2].push_back(val::GPair<double>(zeros[i],y));
                         for (const auto& x : r_zeros) {
                             if (val::abs(double(x)-zeros[i])<eps) {
@@ -1599,7 +1625,12 @@ void analize_rationalfunction(val::valfunction& F,const double& eps,int dec)
                 analyze_output[3]+="\nNumber of RL-IP: " + val::ToString(mp) + "\n";
                 for (int i=0;i<N;++i) {
                     if (vzw[i]==-1) {
-                        analyze_output[3]+="( " + val::ToString(val::round(zeros[i],dec)) + " | " + val::ToString(val::round(y=FF(zeros[i]),dec)) + " )  ";
+            			digits = intdigits(zeros[i]) + dec;
+            			digits = val::Min(digits,val::MaxPrec);
+                        y = FF(zeros[i]);
+                        ydigits = intdigits(y) + dec;
+                        ydigits = val::Min(ydigits,val::MaxPrec);
+                        analyze_output[3]+="( " + val::ToString(val::round(zeros[i],dec),digits) + " | " + val::ToString(val::round(y,dec),ydigits) + " )  ";
                         Points[2].push_back(val::GPair<double>(zeros[i],y));
                         for (const auto& x : r_zeros) {
                             if (val::abs(double(x)-zeros[i])<eps) {
@@ -1627,7 +1658,7 @@ void analyze_exprationalfunction(const val::valfunction &f,const double &eps=1e-
 {
     if (f.is_zero()) return;
 
-    int i,pm=0,mp=0,N=0,N_r=0,ispol=0,rat=1;
+    int i,pm=0,mp=0,N=0,N_r=0,ispol=0,rat=1, digits, ydigits;
     double y;
     val::rational r;
     val::valfunction F,Exp;
@@ -1668,7 +1699,9 @@ void analyze_exprationalfunction(const val::valfunction &f,const double &eps=1e-
         zeros.sort();
         analyze_output[1] += "\nNumber of zeros: " + val::ToString(N) + "\n";
         for (i=0;i<N;++i) {
-            analyze_output[1] += " " + val::ToString(val::round(zeros[i],dec));
+            digits = intdigits(zeros[i]) + dec;
+            digits = val::Min(digits,val::MaxPrec);
+            analyze_output[1] += " " + val::ToString(val::round(zeros[i],dec),digits);
             Points[0].push_back(val::GPair<double>(zeros[i],0.0));
         }
         if (rat) {
@@ -1723,7 +1756,12 @@ void analyze_exprationalfunction(const val::valfunction &f,const double &eps=1e-
             analyze_output[2]+="\nNumber of maxima: " + val::ToString(pm) + "\n";
             for (i=0;i<N;++i) {
                 if (vzw[i]==1) {
-                    analyze_output[2]+="( " + val::ToString(val::round(zeros[i],dec)) + " | " + val::ToString(val::round(y=f(zeros[i]),dec)) + " )  ";
+            		digits = intdigits(zeros[i]) + dec;
+            		digits = val::Min(digits,val::MaxPrec);
+                    y = f(zeros[i]);
+                    ydigits = intdigits(y) + dec;
+                    ydigits = val::Min(ydigits,val::MaxPrec);
+                    analyze_output[2]+="( " + val::ToString(val::round(zeros[i],dec),digits) + " | " + val::ToString(val::round(y,dec),ydigits) + " )  ";
                     Points[1].push_back(val::GPair<double>(zeros[i],y));
                     for (const auto& x : r_zeros) {
                         if (val::abs(double(x)-zeros[i])<eps) {
@@ -1741,7 +1779,12 @@ void analyze_exprationalfunction(const val::valfunction &f,const double &eps=1e-
             analyze_output[2]+="\nNumber of minima: " + val::ToString(mp) + "\n";
             for (int i=0;i<N;++i) {
                 if (vzw[i]==-1) {
-                    analyze_output[2]+="( " + val::ToString(val::round(zeros[i],dec)) + " | " + val::ToString(val::round(y=f(zeros[i]),dec)) + " )  ";
+            		digits = intdigits(zeros[i]) + dec;
+            		digits = val::Min(digits,val::MaxPrec);
+                    y = f(zeros[i]);
+                    ydigits = intdigits(y) + dec;
+                    ydigits = val::Min(ydigits,val::MaxPrec);
+                    analyze_output[2]+="( " + val::ToString(val::round(zeros[i],dec),digits) + " | " + val::ToString(val::round(y,dec),ydigits) + " )  ";
                     Points[1].push_back(val::GPair<double>(zeros[i],y));
                     for (const auto& x : r_zeros) {
                         if (val::abs(double(x)-zeros[i])<eps) {
@@ -1800,7 +1843,12 @@ void analyze_exprationalfunction(const val::valfunction &f,const double &eps=1e-
             analyze_output[3]+="\nNumber of LR-IP: " + val::ToString(pm) + "\n";
             for (i=0;i<N;++i) {
                 if (vzw[i]==1) {
-                    analyze_output[3]+="( " + val::ToString(val::round(zeros[i],dec)) + " | " + val::ToString(val::round(y=f(zeros[i]),dec)) + " )  ";
+            		digits = intdigits(zeros[i]) + dec;
+            		digits = val::Min(digits,val::MaxPrec);
+                    y = f(zeros[i]);
+                    ydigits = intdigits(y) + dec;
+                    ydigits = val::Min(ydigits,val::MaxPrec);
+                    analyze_output[3]+="( " + val::ToString(val::round(zeros[i],dec),digits) + " | " + val::ToString(val::round(y,dec),ydigits) + " )  ";
                     Points[2].push_back(val::GPair<double>(zeros[i],y));
                     for (const auto& x : r_zeros) {
                         if (val::abs(double(x)-zeros[i])<eps) {
@@ -1818,7 +1866,12 @@ void analyze_exprationalfunction(const val::valfunction &f,const double &eps=1e-
             analyze_output[3]+="\nNumber of RL-IP: " + val::ToString(mp) + "\n";
             for (int i=0;i<N;++i) {
                 if (vzw[i]==-1) {
-                    analyze_output[3]+="( " + val::ToString(val::round(zeros[i],dec)) + " | " + val::ToString(val::round(y=f(zeros[i]),dec)) + " )  ";
+            		digits = intdigits(zeros[i]) + dec;
+            		digits = val::Min(digits,val::MaxPrec);
+                    y = f(zeros[i]);
+                    ydigits = intdigits(y) + dec;
+                    ydigits = val::Min(ydigits,val::MaxPrec);
+                    analyze_output[3]+="( " + val::ToString(val::round(zeros[i],dec),digits) + " | " + val::ToString(val::round(y,dec),ydigits) + " )  ";
                     Points[2].push_back(val::GPair<double>(zeros[i],y));
                     for (const auto& x : r_zeros) {
                         if (val::abs(double(x)-zeros[i])<eps) {
@@ -1936,7 +1989,7 @@ void analyzefunction(const myfunction &f,std::string input)
         return;
     }
 
-    int pm=0,mp=0,N=0;
+    int pm=0,mp=0,N=0, digits, ydigits;
     double y;
     val::Glist<double> prezeros,zeros;
     val::d_array<int> vzw;
@@ -1964,7 +2017,11 @@ void analyzefunction(const myfunction &f,std::string input)
             if (isInf(P.x)) analyze_output[0]+="( ";
             else if (val::isNaN(F(P.x)) || isInf(F(P.x))) analyze_output[0]+="[ ";
             else analyze_output[0]+="( ";
-            analyze_output[0]+=val::ToString(val::round(P.x,decimals)) + " , " + val::ToString(val::round(P.y,decimals));
+            digits = intdigits(P.x) + decimals;
+            digits = val::Min(digits,val::MaxPrec);
+            ydigits = intdigits(P.y) + decimals;
+            ydigits = val::Min(ydigits,val::MaxPrec);
+            analyze_output[0]+=val::ToString(val::round(P.x,decimals),digits) + " , " + val::ToString(val::round(P.y,decimals),ydigits);
             if (isInf(P.y)) analyze_output[0]+= " )  ";
             else if (val::isNaN(F(P.y)) || isInf(F(P.y))) analyze_output[0]+= " ]  ";
             else analyze_output[0]+= " )  ";
@@ -1972,7 +2029,9 @@ void analyzefunction(const myfunction &f,std::string input)
         if (!undef_points.isempty()) {
             analyze_output[0]+= " { ";
             for (const auto &x : undef_points) {
-                analyze_output[0] += val::ToString(val::round(x, decimals)) + " ";
+                digits = intdigits(x) + decimals;
+                digits = val::Min(digits,val::MaxPrec);
+                analyze_output[0] += val::ToString(val::round(x, decimals),digits) + " ";
             }
             analyze_output[0] += "}";
         }
@@ -1990,7 +2049,9 @@ void analyzefunction(const myfunction &f,std::string input)
         zeros.sort();
         analyze_output[1] += "\nNumber of zeros: " + val::ToString(N) + "\n";
         for (i=0;i<N;++i) {
-            analyze_output[1] += "  " + val::ToString(val::round(zeros[i],decimals));
+            digits = intdigits(zeros[i]) + decimals;
+            digits = val::Min(digits,val::MaxPrec);
+            analyze_output[1] += "  " + val::ToString(val::round(zeros[i],decimals),digits);
             Points[0].push_back(val::GPair<double>(zeros[i],0.0));
         }
     }
@@ -2029,7 +2090,12 @@ void analyzefunction(const myfunction &f,std::string input)
             analyze_output[2]+="\nNumber of maxima: " + val::ToString(pm) + "\n";
             for (int i=0;i<N;++i) {
                 if (vzw[i]==1) {
-                    analyze_output[2]+="( " + val::ToString(val::round(zeros[i],decimals)) + " | " + val::ToString(val::round(y=F(zeros[i]),decimals)) + " )  ";
+            		digits = intdigits(zeros[i]) + decimals;
+           		digits = val::Min(digits,val::MaxPrec);
+                    y = F(zeros[i]);
+                    ydigits = intdigits(y) + decimals;
+            		ydigits = val::Min(ydigits,val::MaxPrec);
+                    analyze_output[2]+="( " + val::ToString(val::round(zeros[i],decimals),digits) + " | " + val::ToString(val::round(y,decimals),ydigits) + " )  ";
                     Points[1].push_back(val::GPair<double>(zeros[i],y));
                 }
             }
@@ -2038,7 +2104,12 @@ void analyzefunction(const myfunction &f,std::string input)
             analyze_output[2]+="\nNumber of minima: " + val::ToString(mp) + "\n";
             for (int i=0;i<N;++i) {
                 if (vzw[i]==-1) {
-                    analyze_output[2]+="( " + val::ToString(val::round(zeros[i],decimals)) + " | " + val::ToString(val::round(y=F(zeros[i]),decimals)) + " )  ";
+            		digits = intdigits(zeros[i]) + decimals;
+           		digits = val::Min(digits,val::MaxPrec);
+                    y = F(zeros[i]);
+                    ydigits = intdigits(y) + decimals;
+            		ydigits = val::Min(ydigits,val::MaxPrec);
+                    analyze_output[2]+="( " + val::ToString(val::round(zeros[i],decimals),digits) + " | " + val::ToString(val::round(y,decimals),ydigits) + " )  ";
                     Points[1].push_back(val::GPair<double>(zeros[i],y));
                 }
             }
@@ -2080,7 +2151,12 @@ void analyzefunction(const myfunction &f,std::string input)
             analyze_output[3]+="\nNumber of  LR-IP: " + val::ToString(pm) + "\n";
             for (int i=0;i<N;++i) {
                 if (vzw[i]==1) {
-                    analyze_output[3]+="( " + val::ToString(val::round(zeros[i],decimals)) + " | " + val::ToString(val::round(y=F(zeros[i]),decimals)) + " )  ";
+            		digits = intdigits(zeros[i]) + decimals;
+           		digits = val::Min(digits,val::MaxPrec);
+                    y = F(zeros[i]);
+                    ydigits = intdigits(y) + decimals;
+            		ydigits = val::Min(ydigits,val::MaxPrec);
+                    analyze_output[3]+="( " + val::ToString(val::round(zeros[i],decimals),digits) + " | " + val::ToString(val::round(y,decimals),ydigits) + " )  ";
                     Points[2].push_back(val::GPair<double>(zeros[i],y));
                 }
             }
@@ -2089,7 +2165,12 @@ void analyzefunction(const myfunction &f,std::string input)
             analyze_output[3]+="\nNumber of RL-IP: " + val::ToString(mp) + "\n";
             for (int i=0;i<N;++i) {
                 if (vzw[i]==-1) {
-                    analyze_output[3]+="( " + val::ToString(val::round(zeros[i],decimals)) + " | " + val::ToString(val::round(y=F(zeros[i]),decimals)) + " )  ";
+            		digits = intdigits(zeros[i]) + decimals;
+           		digits = val::Min(digits,val::MaxPrec);
+                    y = F(zeros[i]);
+                    ydigits = intdigits(y) + decimals;
+            		ydigits = val::Min(ydigits,val::MaxPrec);
+                    analyze_output[3]+="( " + val::ToString(val::round(zeros[i],decimals),digits) + " | " + val::ToString(val::round(y,decimals),ydigits) + " )  ";
                     Points[2].push_back(val::GPair<double>(zeros[i],y));
                 }
             }
@@ -2104,4 +2185,3 @@ void analyzefunction(const myfunction &f,std::string input)
     if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event.Clone() );
     return;
 }
-

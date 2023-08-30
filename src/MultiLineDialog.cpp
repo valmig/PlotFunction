@@ -1,9 +1,11 @@
 #include "MultiLineDialog.h"
+#include "d_array.h"
 #include "wx/accel.h"
-#include <wx/msgdlg.h>
-#include <analysis.h>
+#include "wx/string.h"
 #include "valDialogs.cpp"
 #include "valControls.cpp"
+#include <val_wx/valControls.cpp>
+#endif // _WIN32
 
 
 
@@ -263,20 +265,20 @@ wxDEFINE_EVENT(P_EVENT,ParentEvent);
 
 
 AnalysisDialog::AnalysisDialog(wxWindow *parent,int &nchild,const val::d_array<std::string> &output,const val::d_array<val::d_array<val::GPair<double>>> &Point,
-                                const wxSize &Size,const wxPoint &Pos,int fonts) : Parent(parent), N_child(&nchild) , Points(&Point), fontsize(fonts)
+                                const wxSize &Size,const wxPoint &Pos,int fonts, const std::string &title) : Parent(parent), N_child(&nchild) , Points(&Point), fontsize(fonts)
 {
-    Create(parent, wxID_ANY,_T("Analyze function"), wxDefaultPosition, wxDefaultSize, wxRESIZE_BORDER|wxCAPTION, _T("wxID_ANY"));
+    Create(parent, wxID_ANY, title, wxDefaultPosition, wxDefaultSize, wxRESIZE_BORDER|wxCAPTION, _T("wxID_ANY"));
     ++(*N_child);
     Move(Pos);
     int n_point=Point.length(),i,n_output=output.length();
-    if (n_output!=4 || n_point!=3) return;
+    if (n_output > 4 || n_output < 2 || n_point > 3 || n_point < 1) return;
 
     surface = new wxPanel(this,100);
 
     TextEdit = val::d_array<wxTextCtrl*>(nullptr,n_output);
     val::d_array<wxBoxSizer*> BoxSizerText(nullptr,n_output);
     val::d_array<wxBoxSizer*> BoxSizerButton(nullptr,n_point);
-    wxStaticText* Text[3];
+    val::d_array<wxStaticText*> Text(n_point);
     //val::d_array<wxButton*> Button(nullptr,n_point);
     wxBoxSizer *BoxSizer = new wxBoxSizer(wxVERTICAL);
     wxBoxSizer *UpBoxSizer = new wxBoxSizer(wxVERTICAL);
@@ -293,10 +295,15 @@ AnalysisDialog::AnalysisDialog(wxWindow *parent,int &nchild,const val::d_array<s
         BoxSizerText[i] = new wxBoxSizer(wxVERTICAL);
         //BoxSizerText[i]->Add(TextEdit[i],1,wxALL|wxEXPAND,5);
     }
-    Text[0] = new wxStaticText(surface,11,_T("Zeros:"));
-    Text[1] = new wxStaticText(surface,11,_T("Extrema:"));
-    Text[2] = new wxStaticText(surface,11,_T("Inflection Points:"));
-    //
+    if (n_point == 3) {
+        Text[0] = new wxStaticText(surface,11,_T("Zeros:"));
+        Text[1] = new wxStaticText(surface,12,_T("Extrema:"));
+        Text[2] = new wxStaticText(surface,13,_T("Inflection Points:"));
+    }
+    else if (n_point == 1) {
+        Text[0] = new wxStaticText(surface,11,_T("Intersection points:"));
+    }
+	 //
     /*
     for (i=1;i<n_output;++i) {
         BoxSizerText[i]->Add(Text[i-1],0,wxALL|wxALIGN_LEFT,5);
@@ -453,7 +460,7 @@ void AnalysisDialog::Paint(int i)
 InputFunctionDialog::InputFunctionDialog(wxWindow *parent,const val::d_array<std::string> &Wlist,const wxString &value,
                                          const wxString &s_text, const wxString& title, const wxSize &size,int fonts)
                                             : BaseDialog(parent,0,wxDefaultPosition,title),
-                                            input(new val::CompleteTextCtrl(this,30,Wlist,value,size,wxDefaultPosition,wxTE_MULTILINE|wxVSCROLL|wxHSCROLL))
+                                            input(new val::CompleteTextCtrl(surface,30,Wlist,value,size,wxDefaultPosition,wxTE_MULTILINE|wxVSCROLL|wxHSCROLL))
 {
     Build(s_text,fonts);
 }
@@ -603,14 +610,9 @@ void InputDialog::OnHelp(wxCommandEvent &)
         }
     }
 
-
-    //text = input->GetValue();
-
     tooltip->Show();
     input->SetFocus();
+    input->SelectNone();
     BoxSizer->Fit(this);
     BoxSizer->SetSizeHints(this);
-
 }
-
-

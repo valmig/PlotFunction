@@ -3,6 +3,8 @@
 
 #include "valDialogs.h"
 #include "valControls.h"
+#include <string>
+#include <val_wx/valDialogs.h>
 #include <val_wx/valControls.h>
 
 
@@ -93,7 +95,7 @@ class AnalysisDialog : public wxDialog
 {
 public:
     AnalysisDialog(wxWindow *parent,int &nchild,const val::d_array<std::string> &output,const val::d_array<val::d_array<val::GPair<double>>> &Point,
-                   const wxSize &Size = wxSize(250,80), const wxPoint &Pos=wxDefaultPosition,int fonts=10);
+                   const wxSize &Size = wxSize(250,80), const wxPoint &Pos=wxDefaultPosition,int fonts=10, const std::string &title = "Analyze function");
     virtual ~AnalysisDialog();
 private:
     wxWindow *Parent=nullptr;

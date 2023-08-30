@@ -97,6 +97,7 @@ namespace val
 //template <> val::rational myabs(const val::rational&);
 val::rational abs(const val::rational&);
 int operator <(const val::GPair<double>& p,const val::GPair<double>& q);
+const int MaxPrec = 19;
 }
 
 double squaredistance(const wxPoint& l1, const wxPoint &l2, const wxPoint &p); // square distance between line-segment def. by l1, l2 and point p
@@ -105,6 +106,8 @@ val::GPair<double> coordinatesdistance(const double &mx, const double &my, const
 double degree_angle(const double &a, const double &b); // angle in degree of vector (a,b) and (1,0)
 
 int decimal(const double& x);
+
+int intdigits(double x);
 
 int getpiscale(const std::string& s,val::rational &factor,double &scale,int pos = 1);
 

@@ -517,7 +517,7 @@ void PlotFunctionFrame::OnFileMenu(wxCommandEvent& event)
         ResetColours();
         SetLabel(Program_Name);
         pi_scale_x=rzero; pi_scale_y=rzero; pi_factor_x=rzero; pi_factor_y=rzero; g_pi_factor_x=rzero; g_pi_factor_y=rzero;
-        abst=10; x_scale=1; y_scale=1;// gx_scale=1; gy_scale=1;
+        abst=10; x_scale=1; y_scale=1; gx_scale = gy_scale = 0.5;
         x_axis="x"; y_axis="y"; sx_scale="1"; sy_scale="1";// sgx_scale="1"; sgy_scale="1";
         //a_fstring=0;
         //n_fstring=1;
@@ -1510,9 +1510,9 @@ void PlotFunctionFrame::plotfill(wxMemoryDC& dc,const val::d_array<double> &f,in
     ix=abst+int(double(sizex-1)*((f[0]-x1)/(x2-x1)));
     iy=yzero -int((double(sizey-1)/double(y2-y1)) * f[1]);
 
-    //dc.SetPen(wxPen(col,1));
-    //valFloodFill(dc,ix,iy,col);
-
+    dc.SetPen(wxPen(col,1));
+    valFloodFill(dc,ix,iy,col);
+/*
 #ifndef __APPLE__
     dc.GetPixel(ix,iy,&bgc);
     wxBrush brush(col);
@@ -1522,7 +1522,7 @@ void PlotFunctionFrame::plotfill(wxMemoryDC& dc,const val::d_array<double> &f,in
     dc.SetPen(wxPen(col,1));
     valFloodFill(dc,ix,iy,col);
 #endif // __APPLE
-
+*/
 }
 
 
@@ -2468,10 +2468,10 @@ void PlotFunctionFrame::OnMenuTools(wxCommandEvent &event)
         Entry += "1e-9\n" + val::ToString(sizex) + "\n" + "4";
 
         ListDialog ldialog(this,List,"Analyze Function",Entry,240,100,fontsize);
-#ifdef __APPLE__
+#ifndef __LINUX__
         ldialog.Centre();
         ldialog.SetSelection(0);
-#endif // __APPLE__
+#endif // __LINUX___
         if (ldialog.ShowModal()==wxID_CANCEL) return;
         j=ldialog.GetSelection();
         if (j<0) j=0;
@@ -2958,6 +2958,9 @@ void PlotFunctionFrame::ChangeSettings(int command, const std::string &svalue, i
                     y_scale=val::FromString<double>(words[1]);
                     if (y_scale<=0.0) y_scale=1.0;
                 }
+            }
+            else {
+                y_scale = x_scale;
             }
             if (n>2) {
                 abst = val::FromString<int>(words[2]);
@@ -3779,7 +3782,7 @@ void PlotFunctionFrame::savefile(const std::string &dirname,const std::string &f
         }
         actual_dirname=savefiledir=dirname; actual_filename=filename;
         SetLabel(Program_Name + " " +actual_filename);
-        wxSize MySize=GetClientSize();
+        wxSize MySize = DrawPanel->GetSize();
         int i,m=0;
 
         file<<"plotfunctionfile"<<std::endl;
@@ -3962,6 +3965,12 @@ void PlotFunctionFrame::openfile(const std::string &dirname,const std::string &f
 
 
     file.close();
+    xsize +=  20; ysize += 20;
+    if (xsize < 50) xsize = 50;
+    if (ysize < 50) ysize = 50;
+    if (SideText_isshown) xsize += widthSideText + 10;
+
+
 #ifdef _WIN32
     // DrawPanel->Disconnect(wxEVT_SIZE,(wxObjectEventFunction)&PlotFunctionFrame::OnDrawPanelResize,0,this);
     DrawPanel->Unbind(wxEVT_SIZE,&PlotFunctionFrame::OnDrawPanelResize,this);
@@ -4756,24 +4765,31 @@ void PlotFunctionFrame::OnSelectActiveFunction(wxCommandEvent &event)
             else pointactive = 0;
         }
 
-        j = active_function;
+        //j = active_function;
 
 
         val::d_array<int> checked;
+
         checked.reserve(N);
         for (i=0;i<N;++i) {
             if (f_menu[i]->IsChecked() && !F[i].IsFill()) checked.push_back(i);
         }
         n = checked.length();
         if (n == 0) return;
+        for (i = 0; i < n ; ++i) {
+            if (checked[i] == active_function) j = i;
+        }
         if (id == 20007) ++j;
         else --j;
-        j %= N;
-        if (j < 0) j = N-1;
+        j %= n;
+        if (j < 0) j = n-1;
+        /*
         for (i = 0; i < n; ++i) {
             if (j <= checked[i]) break;
         }
-        active_function = checked[i%n];
+        */
+        //active_function = checked[i%n];
+        active_function = checked[j];
         StatusBar1->SetStatusText(F[active_function].getinfixnotation());
         iscomputing = 1;
         WriteText();

@@ -176,11 +176,25 @@ InfoWindow::InfoWindow(wxWindow* parent,const std::string &Entry,const wxPoint &
 {
     Create(parent, wxID_ANY, title, wxDefaultPosition, wxDefaultSize, wxRESIZE_BORDER, _T("wxID_ANY"));
     wxBoxSizer *BoxSizer1 = new wxBoxSizer(wxVERTICAL);
-    //int style = wxVSCROLL|wxHSCROLL|wxTE_READONLY;
-    //if (multiline) style = style | wxTE_MULTILINE;
-    //wxTextCtrl *textctrl= new wxTextCtrl(this,1000,Entry, wxDefaultPosition, wxDefaultSize,style, wxDefaultValidator);
-    wxStaticText *textctrl = new wxStaticText(this,1000,Entry);
-    BoxSizer1->Add(textctrl, 0, wxALL|wxALIGN_CENTER, 30);
+    if (multiline) {
+        int style = wxVSCROLL | wxHSCROLL | wxTE_READONLY | wxTE_MULTILINE;
+        wxTextCtrl *textctrl= new wxTextCtrl(this,1000,Entry, wxDefaultPosition, wxDefaultSize,style, wxDefaultValidator);
+        wxFont myfont(textctrl->GetFont());
+        if (fontsize<10) fontsize=10;
+        if (fontsize>18) fontsize=18;
+        myfont.SetPointSize(fontsize);
+        textctrl->SetFont(myfont);
+        BoxSizer1->Add(textctrl, 1, wxALL|wxEXPAND, 5);
+    }
+    else {
+        wxStaticText *textctrl = new wxStaticText(this,1000,Entry);
+        wxFont myfont(textctrl->GetFont());
+        if (fontsize<10) fontsize=10;
+        if (fontsize>18) fontsize=18;
+        myfont.SetPointSize(fontsize);
+        textctrl->SetFont(myfont);
+        BoxSizer1->Add(textctrl, 0, wxALL|wxALIGN_CENTER, 30);
+    }
 	SetSizer(BoxSizer1);
 	BoxSizer1->Fit(this);
 	BoxSizer1->SetSizeHints(this);
@@ -192,14 +206,6 @@ InfoWindow::InfoWindow(wxWindow* parent,const std::string &Entry,const wxPoint &
 	//OKButton->Hide();
 	Bind(wxEVT_CLOSE_WINDOW,&InfoWindow::OnClose,this);
 	Bind(wxEVT_COMMAND_MENU_SELECTED,(wxObjectEventFunction)&InfoWindow::OnClose,this,InfoWindow_Esc_Id);
-    {
-        wxFont myfont(textctrl->GetFont());
-        if (fontsize<10) fontsize=10;
-        if (fontsize>18) fontsize=18;
-        myfont.SetPointSize(fontsize);
-        textctrl->SetFont(myfont);
-        //StaticText1->SetFont(myfont);
-    }
     wxAcceleratorEntry entries[1];
 
     entries[0].Set(wxACCEL_NORMAL,WXK_ESCAPE,InfoWindow_Esc_Id);

@@ -3,7 +3,7 @@
 
 
 * TABLE OF CONTENTS :toc:
-- [[#required-software][Required software]]
+- [[#required-c-libraries][Required C++ libraries]]
   - [[#wxwidgets-libraries][wxWidgets libraries]]
   - [[#libvalmath][libvalmath]]
 - [[#features][Features]]
@@ -14,7 +14,7 @@
   - [[#export-graphic][Export graphic]]
   - [[#high-customization][High customization]]
 
-* Required software
+* Required C++ libraries
 ** wxWidgets libraries
 As this program uses the wxWidgets library, ~wx-config~ should be available on your system.
 ** libvalmath

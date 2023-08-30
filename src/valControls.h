@@ -244,6 +244,7 @@ private:
     void OnCompleteBrackets(wxCommandEvent &);
     void OnShortCuts(wxCommandEvent &);
     void CompleteWord();
+    void DuplicateLine();
     void CompleteBrackets();
     void BindAll();
     void UnbindAll();
