@@ -1,4 +1,5 @@
 #include "PlotFunction.h"
+#include "Glist.h"
 #include "fraction.h"
 #include "val_basics.h"
 #include "val_utils.h"
@@ -49,6 +50,7 @@ val::d_array<val::Glist<val::GPair<double>>> critpoints;// undef_intervals;
 val::d_array<val::d_array<double>> critx;
 val::d_array<std::string> analyze_output(4);
 val::d_array<val::d_array<val::GPair<double>>> Points(3);
+val::Glist<std::string> recentcommands;
 
 
 const val::d_array<std::string> WordList{"PI", "exp", "log", "line", "sinh", "sqrt", "cosh", "circle", "tanh", "text", "triangle", "polygon", "points",
@@ -104,7 +106,7 @@ const val::d_array<std::string> SettingsParList({"axis-scale sx [sy]	<Shift-Alt-
                                              });
 
 const val::d_array<std::string> CommandsList({"derive", "analyze", "tangent", "normal", "interpolation", "regression", "table", "integral",
-                                             "arclength", "zero-iteration", "move", "evaluate" });
+                                             "arclength", "zero-iteration", "move", "evaluate", "intersection" });
 
 const val::d_array<std::string> CommandsParList({"derive [#nr = 1]",
                                                  "analyze [#nr = 1] [x1 x2] [prec = 1e-09] [iterations] [decimals]    <Ctrl-A>",
@@ -117,7 +119,8 @@ const val::d_array<std::string> CommandsParList({"derive [#nr = 1]",
                                                  "arclength [#nr = 1] [decimals iterations precision] [x1 x2]    <Shift-Alt-I>",
                                                  "zero-iteration [#nr = 1] [decimals iterations precision] [x1 x2]    <Alt-Z>",
                                                  "move [#nr = 1] x y",
-                                                 "evaluate [#nr = 1] expressions [ddecimals[ = 4 ]]"
+                                                 "evaluate [#nr = 1] expressions [ddecimals[ = 4 ]]",
+                                                 "intersection [#nr1 = 1] #nr2 [x1 x2] [prec] [iterations] [decimals]"
                                                  });
 
 

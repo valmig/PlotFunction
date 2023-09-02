@@ -1,5 +1,12 @@
 #include "calculus.h"
+#include "Glist.h"
 #include "PlotFunction.h"
+#include "d_array.h"
+#include "fraction.h"
+#include "function_parser.h"
+#include "rational.h"
+#include "val_basics.h"
+#include "val_utils.h"
 #include <vector.h>
 #include <analysis.h>
 #include <polfactor.h>
@@ -1343,7 +1350,7 @@ void analize_rationalfunction(val::valfunction& F,const double& eps,int dec)
     val::d_array<val::rational> r_zeros;
     val::valfunction FF;
     val::rationalfunction F_r = F.getrationalfunction(0), FF_r=F_r;
-    val::Glist<int> &Primelist = val::Primes;
+    //val::Glist<int> &Primelist = val::Primes;
     //std::string os="";
     val::pol<val::rational> one(1,0);
 
@@ -1410,7 +1417,7 @@ void analize_rationalfunction(val::valfunction& F,const double& eps,int dec)
 
         if (rat) {
             //CreatePrimlist(Primelist);
-            if (Primelist.isempty()) analyze_output[0]+="\nNo primes found!";
+            if (val::Primes.isempty()) analyze_output[0]+="\nNo primes found!";
             r_zeros=val::rational_roots(f_r);
             N_r = r_zeros.length();
             r_zeros.sort();
@@ -1906,6 +1913,8 @@ void analyzefunction(const myfunction &f,std::string input)
     double x1=-5,x2=5,epsilon=1e-9;
     //std::string s_n="";
 
+    analyze_output.resize(4);
+    Points.resize(3);
     for (i=0;i<4;++i) analyze_output[i]="";
     for (i=0;i<3;++i) Points[i].del();
 
@@ -1926,47 +1935,6 @@ void analyzefunction(const myfunction &f,std::string input)
     if (epsilon<0.0) epsilon = 1e-9;
     if (decimals<0 || decimals >10) decimals=2;
 
-    /*
-    // Get parameters:
-    for (i=0;i<n;++i) {
-        if (input[i]==';' || input[i]=='\n') {
-            x1=val::FromString<double>(s_n);
-            s_n="";
-            ++i;
-            break;
-        }
-        else s_n+=input[i];
-    }
-    for (;i<n;++i) {
-        if (input[i]==';' || input[i]=='\n') {
-            x2=val::FromString<double>(s_n);
-            s_n="";
-            ++i;
-            break;
-        }
-        else s_n+=input[i];
-    }
-    for (;i<n;++i) {
-        if (input[i]==';' || input[i]=='\n') {
-            epsilon=val::FromString<double>(s_n);
-            s_n="";
-            ++i;
-            break;
-        }
-        else s_n+=input[i];
-    }
-    if (epsilon<0.0) epsilon = 1e-9;
-    for (;i<n;++i) {
-        if (input[i]==';' || input[i]=='\n') {
-            iterations=val::FromString<int>(s_n);
-            s_n="";
-        }
-        else s_n+=input[i];
-    }
-    if (iterations<=0) iterations=1000;
-    decimals=val::FromString<int>(s_n);
-    if (decimals<0 || decimals >10) decimals=2;
-    */
     // ------------------------------------------------------------
 
     val::valfunction F(f.getinfixnotation(),0);
@@ -2182,6 +2150,121 @@ void analyzefunction(const myfunction &f,std::string input)
 
 
     MyThreadEvent event(MY_EVENT,IdAnalyze);
+    if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event.Clone() );
+    return;
+}
+
+
+void intersection(const myfunction &f, const myfunction &g, std::string input)
+{
+    if (f.iszero() || g.iszero()) return;
+
+    int i,iterations=1000,decimals=4,n, N = 0, digits, ydigits;//=input.length();
+    double x1=-5,x2=5,epsilon=1e-9, y;
+    val::vector<double> zeros;
+    val::d_array<double> places;
+    val::d_array<val::rational> r_places;
+    val::rationalfunction h_r;
+    val::pol<val::rational> h_p;
+    //std::string s_n="";
+
+    analyze_output.resize(2);
+    Points.resize(1);
+    for (i=0;i<2;++i) analyze_output[i]="";
+    Points[0].del();
+
+    //Get Parameters
+    val::d_array<char> sep({';', '\n'});
+    auto values = getwordsfromstring(input,sep);
+
+    n = values.length();
+    if (n>0) x1 = val::FromString<double>(values[0]);
+    if (n>1) x2 = val::FromString<double>(values[1]);
+    if (n>2) epsilon = val::FromString<double>(values[2]);
+    if (n>3) iterations = val::FromString<int>(values[3]);
+    if (n>4) decimals = val::FromString<int>(values[4]);
+
+    if (x1>=x2) {
+        x1 = -5; x2 = 5;
+    }
+    if (epsilon<0.0) epsilon = 1e-9;
+    if (decimals<0 || decimals >10) decimals=2;
+
+    analyze_output[0] = "Intersection points of\n f(x) = " + f.getinfixnotation() + "\n g(x) = " + g.getinfixnotation();
+    analyze_output[0] += "\n\n x in [ "+ val::ToString(val::round(x1,decimals)) + " ; " + val::ToString(val::round(x2,decimals)) + " ]";
+    analyze_output[0] += "\n Number of iterations: " + val::ToString(iterations);
+    // ------------------------------------------------------------
+
+    val::valfunction F(f.getinfixnotation(),0), G(g.getinfixnotation()), h = F-G;
+    h.simplify(1);
+
+    if (h.isrationalfunction()) {
+        h_r = h.getrationalfunction();
+        h_p = h_r.nominator();
+        h_p /= val::gcd(h_p,h_p.derive());
+        val::pol<double> h_d = val::ToDoublePolynom(h_p);
+        val::realRoots(h_d,zeros,epsilon);
+    }
+    else if (isexprational(h)) {
+        h_r = hintegral::getrationalfrom_oprat(h,"exp").getrationalfunction();
+        h_p = h_r.nominator();
+        h_p /= val::gcd(h_p,h_p.derive());
+        val::pol<double> h_d = val::ToDoublePolynom(h_p);
+        val::realRoots(h_d,zeros,epsilon);
+    }
+    else {
+        val::Glist<double> prezeros;
+        if (!h.isconst()) prezeros = h.double_roots(x1,x2,iterations,epsilon);
+        n = prezeros.length();
+        zeros = val::vector<double>(n);
+        for (i = 0; i < n; ++i) zeros[i] = prezeros[i];
+    }
+
+    n = zeros.dimension();
+    if (n) {
+        places.reserve(n);
+        for (i = 0; i < n; ++i) {
+            if (!isInf(f(zeros[i])) && !val::isNaN(f(zeros[i])) && !isInf(g(zeros[i])) && !val::isNaN(g(zeros[i]))) places.push_back(zeros[i]);
+        }
+        N = places.length();
+    }
+
+    if (!N) analyze_output[1]+="No real intersection points.\n";
+    else {
+        int rat;
+        std::string xr,yr;
+        Points[0].reserve(N);
+   	places.sort();
+	    analyze_output[1]+="Number of real intersection points: "+ val::ToString(N) + "\n";
+        if (!h_p.iszero()) {
+            r_places = val::rational_roots(h_p);
+            r_places.sort();
+        }
+        for (auto &x : places) {
+            if (x == 0) x = 0;
+            y = f(x);
+            digits = intdigits(x) + decimals;
+            digits = val::Min(digits,val::MaxPrec);
+            ydigits = intdigits(y) + decimals;
+            ydigits = val::Min(digits,val::MaxPrec);
+            analyze_output[1] += "( " + val::ToString(val::round(x,decimals),digits) + " | " + val::ToString(val::round(y,decimals),ydigits) + " )";
+            Points[0].push_back(val::GPair<double>(val::round(x,decimals),val::round(y,decimals)));
+            rat = 0;
+            for (const auto& r : r_places) {
+                if (val::abs(double(r)-x) < epsilon) {
+                    xr = val::ToString(r); yr = F(val::valfunction(xr)).getinfixnotation();
+                    rat = 1;
+                    break;
+                }
+            }
+            if (rat) {
+                analyze_output[1] += "[ = ( " + xr + " | " + yr + " )]\n";
+            }
+            else analyze_output[1] += "\n";
+        }
+    }
+
+    MyThreadEvent event(MY_EVENT,IdIntersection);
     if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event.Clone() );
     return;
 }

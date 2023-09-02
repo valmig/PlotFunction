@@ -3,8 +3,7 @@
  * Purpose:   Code for Application Class
  * Author:    Miguel Valbuena ()
  * Created:   2018-09-28
- * Copyright: Miguel Valbuena ()
- * License:
+ * License:   GPL v3.0
  **************************************************************/
 
 #include "PlotFunctionApp.h"

@@ -3,11 +3,12 @@
  * Purpose:   Code for Application Frame
  * Author:    Miguel Valbuena ()
  * Created:   2018-09-28
- * Copyright: Miguel Valbuena ()
- * License:
+ * License:   GPL v3.0
  **************************************************************/
 
 #include "PlotFunctionMain.h"
+#include <functional>
+#include <string>
 #include <wx/msgdlg.h>
 #include <wx/filedlg.h>
 #include "PlotFunction.h"
@@ -1377,8 +1378,12 @@ void PlotFunctionFrame::plotline(wxDC& dc,const val::d_array<double> &f,int colo
             dc.DrawLine(wxPoint(ix0,iy0),actualpolygonpoint);
             polygonline = 0;
         }
-        dc.SetPen(wxPen(Color[colour],8));
-        dc.DrawPoint(ix0,iy0);
+		int r = val::Max(1,(pen[colour]+2)/2);
+        dc.SetPen(wxPen(Color[colour],pen[colour]+2));
+        dc.SetBrush(wxBrush(Color[colour]));
+        dc.DrawCircle(ix0,iy0,r);
+        //dc.SetPen(wxPen(Color[colour],8));
+        //dc.DrawPoint(ix0,iy0);
         return;
     }
 
@@ -1560,8 +1565,12 @@ void PlotFunctionFrame::plotpolygon(wxDC& dc,const val::d_array<double> &f,int c
             dc.DrawLine(wxPoint(ix0,iy0),actualpolygonpoint);
             polygonline = 0;
         }
-        dc.SetPen(wxPen(Color[colour],8));
-        dc.DrawPoint(ix0,iy0);
+        int r = val::Max(1,(pen[colour]+2)/2);
+        dc.SetPen(wxPen(Color[colour],pen[colour]+2));
+        dc.SetBrush(wxBrush(Color[colour]));
+        dc.DrawCircle(ix0,iy0,r);
+        //dc.SetPen(wxPen(Color[colour],8));
+        //dc.DrawPoint(ix0,iy0);
         actualpolygonpoint = wxPoint(ix0,iy0);
     }
 }
@@ -2702,6 +2711,7 @@ void PlotFunctionFrame::OnInputDialog(wxCommandEvent&)
     InputDialog input(this,1,InputDialogTree,"",size,point,fontsize);
     input.SetComLists(CommandsList,CommandsParList);
     input.SetParLists(SettingsList,SettingsParList);
+    input.SetHistory(recentcommands);
 #ifdef __APPLE__
     StatusBar1->SetStatusText(_T("Type Cmd-H for help"),1);
 #else
@@ -2724,6 +2734,15 @@ void PlotFunctionFrame::OnInputDialog(wxCommandEvent&)
 
 
     if (!n) return;
+
+    {
+        int l = recentcommands.length();
+        if (l && (recentcommands[l-1] != svalue)) recentcommands.push_back(svalue);
+        else recentcommands.push_back(svalue);
+        if (l >= 100) recentcommands.skiphead();
+    }
+
+
     command = val::getfirstwordofstring(svalue,separators);
 
     int command_number = -1, id = 1;
@@ -3152,12 +3171,26 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
             refreshfunctionstring();
             }
         break;
-    case ANALYZE:
+    case ANALYZE: case INTERSECTION:
         {
+            if (F[f_nr].getmode() != myfunction::FUNCTION || F[f_nr].numberofvariables() > 1) return;
             val::d_array<char> separators{' ', ';', '\n'};
             val::Glist<std::string> s_values = getwordsfromstring(svalue,separators);
-            int n = s_values.length();
+            int n = s_values.length(), nr2 = 1;
             std:: string nvalue = "";
+
+            if (command == INTERSECTION) {
+                if (n && s_values[0][0] == '#') {
+                    nvalue = s_values[0];
+                    s_values.skiphead();
+                    nvalue = val::tailofstring(nvalue, nvalue.length()-1);
+                    nr2 = val::FromString<int>(nvalue) - 1;
+                }
+                if (nr2 == f_nr || nr2 < 0 || nr2 >= N) return;
+                if (F[nr2].getmode() != myfunction::FUNCTION || F[nr2].numberofvariables() > 1) return;
+                n = s_values.length();
+                nvalue = "";
+            }
             if (n < 1) nvalue += val::ToString(x1);
             else nvalue = s_values[0];
             if (n < 2) nvalue += ";" + val::ToString(x2);
@@ -3169,8 +3202,14 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
             if (n < 5) nvalue += "\n4";
             else nvalue += "\n" + s_values[4];
 
-            std::thread t(analyzefunction,std::cref(F[f_nr]),nvalue);
-            t.detach();
+            if (command == ANALYZE) {
+                std::thread t(analyzefunction,std::cref(F[f_nr]),nvalue);
+                t.detach();
+            }
+            else {
+                std::thread t(intersection,std::cref(F[f_nr]),std::cref(F[nr2]),nvalue);
+                t.detach();
+            }
             return;
         }
         break;
@@ -3501,7 +3540,13 @@ void PlotFunctionFrame::OnMyEvent(MyThreadEvent& event)
         InfoWindow *tablewindow = new InfoWindow(this,nchildwindows,tablestring,Point,Size,title,fontsize);
         tablewindow->Show();
     }
-    else if (id == IdAnalyze) {
+    else if (id == IdAnalyze || id == IdIntersection) {
+        std::string title;
+
+        if (id == IdAnalyze) {
+            title = "Analyze Function";
+        }
+        else title = "Intersection Points";
         sx=250;
         sy=110;
 
@@ -3512,7 +3557,7 @@ void PlotFunctionFrame::OnMyEvent(MyThreadEvent& event)
         }
         //x+=dx - sx;
         Point.x = x; Point.y = y;
-        AnalysisDialog *adialog = new AnalysisDialog(this,nanalyzewindows,analyze_output,Points,wxSize(sx,sy),Point,fontsize);
+        AnalysisDialog *adialog = new AnalysisDialog(this,nanalyzewindows,analyze_output,Points,wxSize(sx,sy),Point,fontsize,title);
         adialog->Show();
     }
     else if (id == IdIntegral) { // Integral

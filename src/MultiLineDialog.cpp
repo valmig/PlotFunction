@@ -1,9 +1,10 @@
 #include "MultiLineDialog.h"
 #include "d_array.h"
+#include "val_basics.h"
 #include "wx/accel.h"
-#include "wx/string.h"
 #include "valDialogs.cpp"
 #include "valControls.cpp"
+#include <val_wx/valDialogs.cpp>
 #include <val_wx/valControls.cpp>
 #endif // _WIN32
 
@@ -540,11 +541,15 @@ InputDialog::InputDialog(wxWindow *parent, wxWindowID id, const val::trie_type<s
     Bind(wxEVT_TEXT_ENTER,&InputDialog::OnEnterhit,this,101);
     Bind(wxEVT_COMMAND_MENU_SELECTED,&InputDialog::OnEnterhit,this,102);
     Bind(wxEVT_COMMAND_MENU_SELECTED,&InputDialog::OnHelp,this,103);
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&InputDialog::OnEnterhit,this,104);
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&InputDialog::OnEnterhit,this,105);
 
-    wxAcceleratorEntry entries[2];
+    wxAcceleratorEntry entries[4];
     entries[0].Set(wxACCEL_NORMAL,WXK_ESCAPE,102);
     entries[1].Set(wxACCEL_CTRL,(int) 'H',103);
-    wxAcceleratorTable accel(2,entries);
+    entries[2].Set(wxACCEL_NORMAL,WXK_UP,104);
+    entries[3].Set(wxACCEL_NORMAL,WXK_DOWN,105);
+    wxAcceleratorTable accel(4,entries);
     SetAcceleratorTable(accel);
 
     SetSizer(BoxSizer);
@@ -555,7 +560,23 @@ InputDialog::InputDialog(wxWindow *parent, wxWindowID id, const val::trie_type<s
 void InputDialog::OnEnterhit(wxCommandEvent &event)
 {
     int id = event.GetId();
-    event.Skip();
+    //event.Skip();
+    if (id == 104 || id == 105) {
+        if (history == nullptr || history->isempty()) return;
+        if (id == 104) --ahistory;
+        else ++ahistory;
+        ahistory = val::Max(-1, ahistory);
+        ahistory = val::Min(history->length(), ahistory);
+        if ((ahistory >= 0) && (ahistory < history->length())) {
+            bool stat = input->GetCompleteEnabled();
+            input->SetCompleteEnabled(false);
+            input->SetValue((*history)[ahistory]);
+            input->SetInsertionPointEnd();
+            input->SetCompleteEnabled(stat);
+        }
+        else SetTextValue("");
+        return;
+    }
     if (id == 101) {
         EndModal(wxID_OK);
     }
@@ -567,7 +588,7 @@ void InputDialog::OnEnterhit(wxCommandEvent &event)
     else EndModal(wxID_CANCEL);
 }
 
-void InputDialog::OnHelp(wxCommandEvent &)
+void InputDialog::OnHelp(wxCommandEvent &event)
 {
     if (tooltip->IsShown()) return;
     if (CommandsParList == nullptr || CommandsList == nullptr || SettingsList == nullptr || SettingsParList == nullptr) return;

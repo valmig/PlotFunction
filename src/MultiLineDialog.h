@@ -3,6 +3,7 @@
 
 #include "valDialogs.h"
 #include "valControls.h"
+#include "wx/string.h"
 #include <string>
 #include <val_wx/valDialogs.h>
 #include <val_wx/valControls.h>
@@ -95,7 +96,7 @@ class AnalysisDialog : public wxDialog
 {
 public:
     AnalysisDialog(wxWindow *parent,int &nchild,const val::d_array<std::string> &output,const val::d_array<val::d_array<val::GPair<double>>> &Point,
-                   const wxSize &Size = wxSize(250,80), const wxPoint &Pos=wxDefaultPosition,int fonts=10, const std::string &title = "Analyze function");
+                   const wxSize &Size = wxSize(250,80), const wxPoint &Pos=wxDefaultPosition,int fonts=10, const std::string &title = "Analyze Function");
     virtual ~AnalysisDialog();
 private:
     wxWindow *Parent=nullptr;
@@ -156,6 +157,7 @@ public:
     const wxString GetTextValue() const {return input->GetValue();}
     void SetComLists(const val::d_array<std::string> &CL, const val::d_array<std::string> &CPL) {CommandsList = &CL; CommandsParList = &CPL;}
     void SetParLists(const val::d_array<std::string> &SL, const val::d_array<std::string> &SPL) {SettingsList = &SL; SettingsParList = &SPL;}
+    void SetHistory(const val::Glist<std::string> &SH) {history = &SH; ahistory = history->length();}
 
 private:
     //wxWindow *Parent = nullptr;
@@ -163,8 +165,9 @@ private:
     val::CompleteTextCtrl *input = nullptr;
     wxTextCtrl *tooltip = nullptr;
     wxBoxSizer *BoxSizer = nullptr;
-    int fontsize;
+    int fontsize, lhistory, ahistory;
     const val::d_array<std::string> *CommandsParList = nullptr, *CommandsList = nullptr, *SettingsList = nullptr, *SettingsParList = nullptr;
+    const val::Glist<std::string> *history = nullptr;
     //wxTextCtrl *input = nullptr;
     void OnEnterhit(wxCommandEvent&);
     void OnHelp(wxCommandEvent&);

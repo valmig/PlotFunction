@@ -40,6 +40,7 @@ extern const val::d_array<std::string> CommandsList;
 extern const val::d_array<std::string> SettingsList;
 extern const val::d_array<std::string> SettingsParList;
 extern const val::d_array<std::string> CommandsParList;
+extern val::Glist<std::string> recentcommands;
 //extern const val::d_array<std::string> CommandsManList;
 
 extern const val::d_array<std::string> WordList;
@@ -56,7 +57,7 @@ enum val_settings{AXIS_SCALE,AXIS_COLOR,GRID_SCALE,GRID_COLOR,VALUES_NUMBER,AXIS
                     SHOW_Y_SCALE,RESET_COLORS,FONT_SIZE,FUNCTION_COLOR,PANEL_SIZE,AXIS_NAMES,REGRESSION_DEGREE,POINT_DECIMALS,
                     SHOW_FUNCTION,BACKGROND_COLOR,PARAMETER_VALUES,FUNCTION_SIZE,MARGIN,AXIS_FONTSIZE};
 
-enum val_commands{DERIVE,ANALYZE,TANGENT,NORMAL,INTERPOLATION,REGRESSION,TABLE,INTEGRAL,ARCLENGTH,ZERO_ITERATION,MOVE,EVALUATE};
+enum val_commands{DERIVE,ANALYZE,TANGENT,NORMAL,INTERPOLATION,REGRESSION,TABLE,INTEGRAL,ARCLENGTH,ZERO_ITERATION,MOVE,EVALUATE,INTERSECTION};
 
 wxDECLARE_EVENT(MY_EVENT, MyThreadEvent);
 
@@ -80,7 +81,7 @@ private:
 	std::string message;
 };
 
-enum {IdPaint,IdTable,IdIntegral,IdRefresh,IdIteration,IdAnalyze,IdInfo,IdEval};
+enum {IdPaint,IdTable,IdIntegral,IdRefresh,IdIteration,IdAnalyze,IdInfo,IdEval, IdIntersection};
 
 /*
 void computepoints(const val::d_array<val::pol<double>> &F,val::d_array<val::d_array<double>> &farray,
