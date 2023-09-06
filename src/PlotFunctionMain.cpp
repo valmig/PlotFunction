@@ -21,6 +21,8 @@
 #include <wx/dcmemory.h>
 #include <wx/colordlg.h>
 #include "MultiLineDialog.h"
+#include "d_array.h"
+#include "val_wx/valDialogs.h"
 #include "wx/gdicmn.h"
 #include <fstream>
 #include <wx/fontdlg.h>
@@ -280,6 +282,7 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     Menu_Tools->Append(7009,_("Rotate...\tAlt-R"));
     Menu_Tools->Append(7010,_("Regression \tAlt-A"));
     Menu_Tools->Append(7011,_("Analyze function... \tCtrl-A"));
+    Menu_Tools->Append(7012,_("Intersection... \tShift-Ctrl-I"));
 
     MenuBar1->Append(Menu1, _("&File"));
     MenuBar1->Append(viewMenu,_("&View"));
@@ -326,6 +329,7 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuTools,this,7009);      // Rotate
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuTools,this,7010);      // Regression
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuTools,this,7011);      // Analyze
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuTools,this,7012);      // Intersection
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnChangeParmeterMenu,this,5);  // Change Parameter Values
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnChangeParmeterMenu,this,23); // Regression Degree
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnChangeParmeterMenu,this,24); // Round-decimal for points
@@ -2487,6 +2491,23 @@ void PlotFunctionFrame::OnMenuTools(wxCommandEvent &event)
         j = indezes[j];
         Entry = ldialog.GetText();
         ExecuteCommand(ANALYZE,j,Entry);
+        return;
+    }
+    if (id == 7012) { // Intersection
+        if (List.length() < 2) return;
+        std::string Entry = val::ToString(x1) + " ; " + val::ToString(x2) + "\n";
+        wxSize sz=DrawPanel->GetSize();
+        int sizex=sz.x -2*abst;
+
+        Entry += "1e-9\n" + val::ToString(sizex) + "\n" + "4";
+        ListDialog ldialog(this,List,"Intersection",Entry,240,100,fontsize,wxLB_MULTIPLE,2);
+        ldialog.SetSelections(val::d_array<int>({0,1}));
+        if (ldialog.ShowModal() == wxID_CANCEL) return;
+        val::d_array<int> selections = ldialog.GetSelections();
+        if (selections.length() != 2) return;
+        Entry = "#" + val::ToString(indezes[selections[1]] + 1) + " ";
+        Entry += ldialog.GetText();
+        ExecuteCommand(INTERSECTION,indezes[selections[0]],Entry);
         return;
     }
 

@@ -2,6 +2,7 @@
 #define VALDIALOGS_H_INCLUDED
 
 
+#include "wx/event.h"
 #include <wx/string.h>
 #include <wx/button.h>
 #include <wx/dialog.h>
@@ -197,28 +198,47 @@ class DLL_PUBLIC ListBox : public wxListBox
 {
 private:
     wxString *List=nullptr;
+    int Max_Choices, len;
+    long Style;
 public:
-    ListBox(wxWindow* parent,wxWindowID id,const Glist<std::string> &G)
-            : wxListBox(parent,id,wxDefaultPosition,wxDefaultSize,G.length(),(List = getwxStringarray(G))) {}
+    ListBox(wxWindow* parent,wxWindowID id,const Glist<std::string> &G,long style = 0, int max_choices = -1)
+        : wxListBox(parent,id,wxDefaultPosition,wxDefaultSize,G.length(),(List = getwxStringarray(G)),style), Max_Choices(max_choices), len(G.length()), Style(style) {}
+    ListBox(wxWindow* parent,wxWindowID id,const d_array<std::string> &G,long style = 0, int max_choices = -1)
+            : wxListBox(parent,id,wxDefaultPosition,wxDefaultSize,G.length(),(List = getwxStringarray(G)),style), Max_Choices(max_choices), len(G.length()), Style(style) {}
     virtual ~ListBox() {delete[] List;}
+    d_array<int> GetSelections() const;
+	template <template <typename> class C> void SetSelections(const C<int> &List);
 };
+
+
+template <template <typename> class C>
+void ListBox::SetSelections(const C<int> &List)
+{
+    if (Style != wxLB_MULTIPLE) return;
+    int n = List.length();
+    if (Max_Choices != -1) n = val::Min(n,Max_Choices);
+    for (int i = 0; i < n ; ++i) SetSelection(List[i]);
+}
+
+
 // -------------------------------------------------------------------------------
 class DLL_PUBLIC ListDialog : public wxDialog
 {
 public:
     ListDialog(wxWindow* parent,const val::Glist<std::string> &Choices=val::Glist<std::string>(),const std::string &title="",const std::string &Entry="",
-               int sx=240,int sy=100,int fontsize=10);
+               int sx=240,int sy=100,int fontsize=10, long style = 0, int max_choices = -1);
     virtual ~ListDialog();
     std::string GetText() const;
     int GetSelection() const;
     void SetSelection(int n) {if (listbox != nullptr) listbox->SetSelection(n);}
+    d_array<int> GetSelections() const {if (listbox != nullptr) return listbox->GetSelections(); else return d_array<int>();}
+	template <template <typename> class C> void SetSelections(const C<int> &List) {if (listbox!= nullptr) listbox->SetSelections(List);}
 private:
     ListBox *listbox=nullptr;
     wxTextCtrl *TextCtrl1=nullptr;
     wxButton *CancelButton=nullptr,*OKButton=nullptr;
     void OnButtonClick(wxCommandEvent& event);
     void OnListBoxEvent(wxCommandEvent&);
-
 };
 
 // ------------------------------------------------------------------------------------------------------------------------

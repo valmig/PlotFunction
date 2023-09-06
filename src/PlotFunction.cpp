@@ -1,6 +1,7 @@
 #include "PlotFunction.h"
 #include "Glist.h"
 #include "fraction.h"
+#include "function_parser.h"
 #include "val_basics.h"
 #include "val_utils.h"
 #include <rational.h>
@@ -1226,8 +1227,8 @@ void computeevaluation(const myfunction& f, double par)
     if (wlist.isempty()) return;
 
     valfunction F(f.getinfixnotation()), g, h;
-    double x, y;
-    int precision, yprecision;
+    double x, y, limit = 1e50;
+    int precision = val::MaxPrec, yprecision = val::MaxPrec;
 
     //F.setparameter(par);
 
@@ -1239,8 +1240,15 @@ void computeevaluation(const myfunction& f, double par)
         g.setparameter(par);
         h.setparameter(par);
         tablestring += "\n x = " + w + ":" + "\nSymbolic evaluation:\n f(" + w + ") = " + h.getinfixnotation();
-        x = val::round(g(0),decimals);  y = val::round(h(0),decimals);
-        precision = intdigits(x) + decimals; yprecision = intdigits(y) + decimals;
+        x = g(0); y = h(0);
+        if (val::abs(x) < limit) {
+            x = val::round(x,decimals);
+            precision = intdigits(x) + decimals;
+        }
+        if (val::abs(y) < limit) {
+            y = val::round(y,decimals);
+            yprecision = intdigits(y) + decimals;
+        }
         precision = val::Min(precision,val::MaxPrec); yprecision = val::Min(yprecision, val::MaxPrec);
         tablestring += "\n\nDouble evaluation:\n f(" + w + ") = " + ToString(y,yprecision);
         tablestring += "\nPoint in graph: \n" + ToString(x,precision) + "  " + ToString(y,yprecision) + "\n";
@@ -1355,7 +1363,7 @@ void computeregression(const myfunction& f,int degree)
     if (!f.IsPoints() && !f.IsPolygon()) return;
     val::d_array<double> d_f = f.getPolygonPoints();
     double minx = val::Inf, maxx = -val::Inf;
-    int n = d_f.length(), i;
+    int n = d_f.length(), i, N = n/2;
     if (n<=0) return;
 
     if (n<=5) degree=1;
@@ -1372,7 +1380,7 @@ void computeregression(const myfunction& f,int degree)
         for (i=0;i<n;i+=2) {
             x+=d_f[i]; y+=d_f[i+1];
         }
-        x/=double(n/2); y/=double(n/2);
+        x/=double(N); y/=double(N);
 
         for (i=0;i<n;i+=2) {
             m+=(d_f[i]-x)*(d_f[i+1]-y);
@@ -1389,7 +1397,7 @@ void computeregression(const myfunction& f,int degree)
         }
     }
     else {
-        int j,N=n/2;
+        int j;
         degree = val::Min(N,degree);
         val::d_array<val::vector<double> > g(degree+1);
         val::vector<double> y(N);
@@ -1448,9 +1456,11 @@ void computetangent(std::string sf,const myfunction &f,double x1,double x2,int t
     val::valfunction F(f.getinfixnotation());
 
     if (isfunction) {
+        int diffbar = 0;
         if (isingraph) {
             if (F.isdifferentiable()) {
                 m=(F.derive())(x);
+                diffbar = 1;
             }
             else {
                 n=isderived(f);
@@ -1463,6 +1473,12 @@ void computetangent(std::string sf,const myfunction &f,double x1,double x2,int t
             }
             if (isInf(m)) {
                fstring+=";\nline "+val::ToString(x)+ " -inf " + val::ToString(x) + " inf";
+            }
+            else if (diffbar) {
+                val::valfunction x_f(sf), m_f = (F.derive())(x_f);
+                if (!tangent) m_f = val::valfunction("1/(" + m_f.getinfixnotation() + ")");
+                val::valfunction b_f = F(x_f) - m_f * x_f, g = m_f * val::valfunction("x") + b_f;
+                fstring += ";\n" + g.getinfixnotation();
             }
             else {
                 b=F(x) -m*x;

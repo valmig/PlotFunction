@@ -1,4 +1,6 @@
 #include "valDialogs.h"
+#include "wx/event.h"
+#include <val_wx/valDialogs.h>
 //(*InternalHeaders(MultiLineDialog)
 #include <wx/intl.h>
 #include <wx/string.h>
@@ -262,8 +264,22 @@ void MultiChoiceDialog::OnKB(wxCommandEvent &event)
 
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 
+
+d_array<int> ListBox::GetSelections() const
+{
+    d_array<int> sel;
+    sel.reserve(len);
+
+    for (int i = 0; i < len ; ++i) {
+        if (IsSelected(i)) sel.push_back(i);
+    }
+    return sel;
+}
+// --------------------------------------------------------------------------------------------------------------------------------------------------
+
+
 ListDialog::ListDialog(wxWindow* parent,const val::Glist<std::string> &Choices,const std::string &title,const std::string &Entry,
-                       int sx,int sy,int fontsize)
+                       int sx,int sy,int fontsize, long style, int max_choices)
 {
 	if (sx<100) sx=100;
 	if (sx>400) sx=400;
@@ -285,10 +301,11 @@ ListDialog::ListDialog(wxWindow* parent,const val::Glist<std::string> &Choices,c
         wxStaticText *StaticText1 = new wxStaticText(this,41,_T("Select Function:"), wxDefaultPosition, wxDefaultSize, 0, _T("ID_STATICTEXT1"));
         BoxSizer2->Add(StaticText1, 1, wxALL|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
         BoxSizer1->Add(BoxSizer2, 0, wxALL|wxALIGN_LEFT, 5);
-        listbox = new ListBox(this,30,Choices);
+        listbox = new ListBox(this,30,Choices,style,max_choices);
         BoxSizer3 = new wxBoxSizer(wxHORIZONTAL);
-        BoxSizer3->Add(listbox,1,wxALL|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL,5);
-        BoxSizer1->Add(BoxSizer3,0,wxALL|wxEXPAND,5);
+        //BoxSizer3->Add(listbox,1,wxALL|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL,5);
+        BoxSizer3->Add(listbox,1,wxALL|wxEXPAND,5);
+        BoxSizer1->Add(BoxSizer3,1,wxALL|wxEXPAND,5);
 	}
     BoxSizer41 = new wxBoxSizer(wxHORIZONTAL);
     wxStaticText *StaticText2 = new wxStaticText(this,42,_T("Set Interval/Precision/Iterations/Decimals:"), wxDefaultPosition, wxDefaultSize, 0, _T("ID_STATICTEXT2"));

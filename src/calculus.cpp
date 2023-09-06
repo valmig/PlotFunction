@@ -1271,10 +1271,15 @@ void computeintegral(const myfunction& f,val::rational x1,val::rational x2,doubl
         }
         name+="integral( ";
     }
+
+    int wprec = intdigits(wert) + dez, eprec = intdigits(exwert) + dez;
+    wprec = val::Min(wprec,val::MaxPrec);
+    eprec = val::Min(eprec,val::MaxPrec);
+
     tablestring = name + f.getinfixnotation() + " ; " + ToString(x1) + " ; " + ToString(x2) + " ) =\n     ";
     if (ispol) tablestring+= ToString(r_wert) + "\n\ndouble:   ";
-    else if (exact) tablestring += ToString(val::round(exwert,dez),val::MaxPrec) + " (over stammfunction), \n\ndouble:   ";
-    tablestring+=ToString(val::round(wert,dez),val::MaxPrec);
+    else if (exact) tablestring += ToString(val::round(exwert,dez),eprec) + " (over stammfunction), \n\ndouble:   ";
+    tablestring+=ToString(val::round(wert,dez),wprec);
     if (k==0) tablestring+= "\nPrecision : " + ToString(delta) + " , Round to decimal: " + ToString(dez) + "\nIterations : " + ToString(n);
 
     if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event.Clone() );
