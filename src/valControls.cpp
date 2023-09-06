@@ -1,8 +1,7 @@
 #include "valControls.h"
-#include "wx/event.h"
-#include "wx/msgdlg.h"
-#include "wx/string.h"
-#include <val_wx/valControls.h>
+#include <wx/accel.h>
+#include <wx/msgdlg.h>
+#include <wx/string.h>
 #include <val_utils.h>
 
 //wxDEFINE_EVENT(IS_EVENT,ISliderEvent);

@@ -2,7 +2,7 @@
 #define VALDIALOGS_H_INCLUDED
 
 
-#include "wx/event.h"
+#include <wx/event.h>
 #include <wx/string.h>
 #include <wx/button.h>
 #include <wx/dialog.h>

@@ -1,6 +1,6 @@
 #include "valDialogs.h"
-#include "wx/event.h"
-#include <val_wx/valDialogs.h>
+#include <d_array.h>
+#include <wx/event.h>
 //(*InternalHeaders(MultiLineDialog)
 #include <wx/intl.h>
 #include <wx/string.h>

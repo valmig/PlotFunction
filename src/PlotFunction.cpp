@@ -1,9 +1,9 @@
 #include "PlotFunction.h"
-#include "Glist.h"
-#include "fraction.h"
-#include "function_parser.h"
-#include "val_basics.h"
-#include "val_utils.h"
+#include <Glist.h>
+#include <fraction.h>
+#include <function_parser.h>
+#include <val_basics.h>
+#include <val_utils.h>
 #include <rational.h>
 #include <vector.h>
 #include <wx/msgdlg.h>

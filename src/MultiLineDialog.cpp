@@ -1,12 +1,13 @@
 #include "MultiLineDialog.h"
-#include "d_array.h"
-#include "val_basics.h"
-#include "wx/accel.h"
+#include <d_array.h>
+#include <val_basics.h>
+#include <wx/accel.h>
+#include <wx/string.h>
+#include <wx/msgdlg.h>
+#include <analysis.h>
 #include "valDialogs.cpp"
 #include "valControls.cpp"
-#include <val_wx/valDialogs.cpp>
-#include <val_wx/valControls.cpp>
-#endif // _WIN32
+
 
 
 

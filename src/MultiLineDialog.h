@@ -3,10 +3,10 @@
 
 #include "valDialogs.h"
 #include "valControls.h"
-#include "wx/string.h"
+#include <Glist.h>
+#include <wx/event.h>
+#include <wx/string.h>
 #include <string>
-#include <val_wx/valDialogs.h>
-#include <val_wx/valControls.h>
 
 
 #include <wx/clrpicker.h>
