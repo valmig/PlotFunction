@@ -27,7 +27,7 @@
 #include <fstream>
 #include <wx/fontdlg.h>
 #include <pol_arithmetic.h>
-#include <function_parser.h>
+#include <valfunction.h>
 #include <wx/utils.h>
 #include <wx/display.h>
 #include <wx/dcgraph.h>

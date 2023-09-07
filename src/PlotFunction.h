@@ -15,7 +15,7 @@
 #include <matrix.h>
 #include <fraction.h>
 #include <MyTime.h>
-#include <function_parser.h>
+#include <valfunction.h>
 //#include <mutex>
 #include <trie.h>
 

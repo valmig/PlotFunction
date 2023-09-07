@@ -3,7 +3,7 @@
 #include "PlotFunction.h"
 #include "d_array.h"
 #include "fraction.h"
-#include "function_parser.h"
+#include "valfunction.h"
 #include "rational.h"
 #include "val_basics.h"
 #include "val_utils.h"

@@ -2,7 +2,7 @@
 #define CALCULUS_H_INCLUDED
 
 #include "PlotFunction.h"
-#include <function_parser.h>
+#include <valfunction.h>
 
 int partialfraction(const val::valfunction& f, val::rational &cont, val::pol<val::rational> &fp,val::d_array<val::pol<val::rational>> &numpol,
                     val::d_array<val::pol<val::rational>> &denompol, val::d_array<int> &denumexpo, int comment = 0);
