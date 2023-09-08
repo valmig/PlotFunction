@@ -7,12 +7,13 @@
  **************************************************************/
 
 #include "PlotFunctionMain.h"
-#include <functional>
+#include "MultiLineDialog.h"
+#include "calculus.h"
+//#include <functional>
 #include <string>
 #include <wx/msgdlg.h>
 #include <wx/filedlg.h>
 #include "PlotFunction.h"
-#include "calculus.h"
 #include <thread>
 #include <val_utils.h>
 #include <analysis.h>
@@ -20,10 +21,8 @@
 #include <wx/bitmap.h>
 #include <wx/dcmemory.h>
 #include <wx/colordlg.h>
-#include "MultiLineDialog.h"
-#include "d_array.h"
-#include "val_wx/valDialogs.h"
-#include "wx/gdicmn.h"
+#include <d_array.h>
+#include <wx/gdicmn.h>
 #include <fstream>
 #include <wx/fontdlg.h>
 #include <pol_arithmetic.h>
@@ -2994,13 +2993,15 @@ void PlotFunctionFrame::ChangeSettings(int command, const std::string &svalue, i
             }
             if (n>1) {
                 sy_scale = words[1];
-                if (!(pi_scale_y = getpiscale(words[1],pi_factor_x,y_scale))) {
+                if (!(pi_scale_y = getpiscale(words[1],pi_factor_y,y_scale))) {
                     y_scale=val::FromString<double>(words[1]);
                     if (y_scale<=0.0) y_scale=1.0;
                 }
             }
             else {
                 y_scale = x_scale;
+                pi_factor_y = pi_factor_x;
+                pi_scale_y = pi_scale_x;
             }
             if (n>2) {
                 abst = val::FromString<int>(words[2]);
