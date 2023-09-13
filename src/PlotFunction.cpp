@@ -70,10 +70,10 @@ functionpairs ({ {"sqrt",val::sqrt}, {"abs",val::abs}, {"exp", val::exp}, {"log"
 
 const val::d_array<wxColour> defaultcolors{wxColour(0,0,255), wxColour(255,0,0), wxColour(0,255,0), wxColour(0,236,246),
                                       wxColour(255,116,0), wxColour(238,0,255), wxColour(125,125,125), wxColour(255,255,255),
-                                      wxColour(0,0,0), wxColour(191,191,191), wxColour(255,255,0), wxColour(0,128,0), wxColour(245,245,220) };
+                                      wxColour(0,0,0), wxColour(191,191,191), wxColour(255,255,0), wxColour(0,128,0), wxColour(245,245,220), wxColour(165,42,42) };
 
 const val::d_array<std::string> defaultcolornames{"blue", "red", "green", "lblue", "orange", "violet", "grey", "white", "black",
-                                "lgrey", "yellow", "dgreen", "beige" };
+                                "lgrey", "yellow", "dgreen", "beige", "brown" };
 
 const val::d_array<std::string> SettingsList({"axis-scale", "axis-color", "grid-scale", "grid-color", "values-number", "axis-range", "show-x-axis",
                                 "show-y-axis", "show-grid" , "show-x-scale", "show-y-scale" , "reset-colors", "font-size", "function-color", "panel-size", "axis-names", "regression-degree",
@@ -526,7 +526,8 @@ int getfunctionfromstring(std::string &fstring,std::string& f_s,double &x1,doubl
     val::rational factor;
     std::string ns="";
     f_s="";
-    int i, n, colorindex = -1;
+    int i, colorindex = -1;
+    //int i, n, colorindex = -1;
 
     ns = extractstringfrombrackets(fstring,'<','>');
 
@@ -539,7 +540,13 @@ int getfunctionfromstring(std::string &fstring,std::string& f_s,double &x1,doubl
         ++i;
     }
 
-    ns = "";
+    //ns = "";
+    ns = extractstringfrombrackets(fstring, '[', ']');
+    f_s = fstring;
+    val::d_array<char> separators({','}), ignore({' '});
+    val::Glist<std::string> values = getwordsfromstring(ns, separators, 0, ignore);
+
+    /*
     n = fstring.size();
 
     for (i=0;i<n;++i) {
@@ -551,15 +558,23 @@ int getfunctionfromstring(std::string &fstring,std::string& f_s,double &x1,doubl
         ns+=fstring[i];
     }
     if (ns.size()==0) return colorindex;
-    if (!getpiscale(ns,factor,x1,0))  x1=val::FromString<double>(delcharfromstring(ns));
+    */
+    if (values.isempty()) return colorindex;
+
+    //if (!getpiscale(values[0],factor,x1,0))  x1=val::FromString<double>(delcharfromstring(values[0]));
+    if (!getpiscale(values[0],factor,x1,0))  x1=val::FromString<double>(values[0]);
     x2 = x1;
+    /*
     ns="";
     for (++i;i<n;++i) {
         if (fstring[i]==']') break;
         ns+=fstring[i];
     }
     if (ns.size()==0) return colorindex;
-    if (!getpiscale(ns,factor,x2,0)) x2=val::FromString<double>(delcharfromstring(ns));
+    */
+    if (values.length() < 2) return colorindex;
+    //if (!getpiscale(values[1],factor,x2,0)) x2=val::FromString<double>(delcharfromstring(values[1]));
+    if (!getpiscale(values[1],factor,x2,0)) x2=val::FromString<double>(values[1]);
     return colorindex;
 }
 

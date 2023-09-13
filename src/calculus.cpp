@@ -534,7 +534,7 @@ val::fraction<val::pol<val::valfunction>> getrationalfunction(const val::valfunc
 	else if (sf == svar) return fraction<pol<valfunction>>(pol<valfunction>(valfunction("1"),1));
 	else if (oper == "m") return -getrationalfunction(f.getfirstargument(),k);
 	else if (oper == "+") {
-		return getrationalfunction(f.getfirstargument(),k) + getpolynomial(f.getsecondargument(),k);
+		return getrationalfunction(f.getfirstargument(),k) + getrationalfunction(f.getsecondargument(),k);
 	}
 	else if (oper == "-") return getrationalfunction(f.getfirstargument(),k) - getrationalfunction(f.getsecondargument(),k);
 	else if (oper == "*") {
@@ -1222,7 +1222,7 @@ void computeintegral(const myfunction& f,val::rational x1,val::rational x2,doubl
     using namespace val;
     MyThreadEvent event(MY_EVENT,IdIntegral);
     int k=isderived(f),ispol=0,exact=0;
-    double a=double(x1),b=double(x2),wert,exwert;
+    double a=double(x1),b=double(x2),wert,exwert = 0;
     val::rational r_wert;
     //val::DoubleFunction g;
     val::valfunction g;
@@ -1683,9 +1683,10 @@ void analyze_exprationalfunction(const val::valfunction &f,const double &eps=1e-
 
     F_r = hintegral::getrationalfrom_oprat(f,"exp").getrationalfunction();
     FF_r = F_r;
-    if (F_r.nominator()==one) ispol=1;
+    if (F_r.denominator()==one) ispol=1;
 
-    analyze_output[0]="f(x) = ";
+
+    analyze_output[0] = "f(x) = ";
     if (ispol) analyze_output[0] += f.getinfixnotation();
     else {
         F_r = hintegral::getrationalfrom_oprat(f,"exp").getrationalfunction();
@@ -1943,6 +1944,7 @@ void analyzefunction(const myfunction &f,std::string input)
     // ------------------------------------------------------------
 
     val::valfunction F(f.getinfixnotation(),0);
+    F.setparameter(f.getparameter());
 
     if (F.isrationalfunction()) {
         analize_rationalfunction(F,epsilon,decimals);
@@ -1969,7 +1971,7 @@ void analyzefunction(const myfunction &f,std::string input)
     val::valfunction FF;
 
 
-    analyze_output[0]="f(x) = "+F.getinfixnotation()+".";
+    analyze_output[0]= "f(x) = "+F.getinfixnotation()+".";
     analyze_output[0]+="\n\n x in [ "+ val::ToString(val::round(x1,decimals)) + " ; " + val::ToString(val::round(x2,decimals)) + " ]";
     analyze_output[0]+="\n Number of iterations: " + val::ToString(iterations);
     {

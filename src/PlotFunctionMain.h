@@ -114,6 +114,8 @@ class PlotFunctionFrame: public wxFrame
         void changedrawpoints();
         void changedrawpolygon();
         void changedrawline();
+        void changedrawrectangle();
+        void changedrawcircle();
         void SendNotification(const std::string& s);
         //
         void OnZoom(wxCommandEvent &event);
@@ -122,13 +124,13 @@ class PlotFunctionFrame: public wxFrame
         //
         wxMenu *Menu_functions,*colorsubmenu,*rightclickmenu;
         wxMenuItem *hideallmenu,*showallmenu,*deletelastmenu,*deleteallmenu,*x_scaleactiv,*y_scaleactiv,*gridactiv,*undomenu,*redomenu,*addfunction,
-                    *addpointsmenu, *polygonpointsmenu, *linepointsmenu, *multicolormenu, *sidemenuview = nullptr;
+                    *addpointsmenu, *polygonpointsmenu, *linepointsmenu, *rectanglemenu , *circlemenu, *multicolormenu, *sidemenuview = nullptr;
         int ispainted=0,N=0,points=1000,abst=10,sizex,sizey,yzero,npainted=0,yset=1,defaultsize=1,fontsize=10,nchildwindows=0;
         int settings=0,Posx=0,Posy=0,clientsize_x=0,clientsize_y=0,iter=50,dez=4,mouse_x1,mouse_y1,fillfunctions=0,pi_scale_x=0,pi_scale_y=0;//mouse_x2,mouse_y2;
         int n_fstring=1,a_fstring=0,axis_pen=2,grid_pen=1,iscomputing=0,MaxRecent=10,addingpoints=0,drawpoints=0, doubleclicked = 0;
         int regressiondegree=1,rounddrawingpoints=-2,nanalyzewindows=0,active_function=-1,pointactive=0,decimalx=0,decimaly=0;
-        int moveinpointsx = 0, moveinpointsy = 0, drawpolygon = 0, n_polygonpoints=0, polygonline = 0, drawline = 0, n_linepoints = 0;
-        int bitmapbackground = 0, axis_fontsize = 10, SideText_isshown = 0, widthSideText = 200;
+        int moveinpointsx = 0, moveinpointsy = 0, drawpolygon = 0, n_polygonpoints=0, polygonline = 0, drawline = 0, n_linepoints = 0, drawrectangle = 0, n_rectanglepoints = 0;
+        int drawcircle = 0, n_circlepoints = 0, bitmapbackground = 0, axis_fontsize = 10, SideText_isshown = 0, widthSideText = 200;
         bool closebrackets = true;
         wxPoint actuallinepoint,actualpolygonpoint;
         val::rational pi_factor_x,pi_factor_y,g_pi_factor_x,g_pi_factor_y;

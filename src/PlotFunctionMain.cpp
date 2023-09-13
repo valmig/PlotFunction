@@ -9,11 +9,11 @@
 #include "PlotFunctionMain.h"
 #include "MultiLineDialog.h"
 #include "calculus.h"
+#include "PlotFunction.h"
 //#include <functional>
 #include <string>
 #include <wx/msgdlg.h>
 #include <wx/filedlg.h>
-#include "PlotFunction.h"
 #include <thread>
 #include <val_utils.h>
 #include <analysis.h>
@@ -304,6 +304,10 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     rightclickmenu->Append(linepointsmenu);
     polygonpointsmenu = new wxMenuItem(rightclickmenu,1006,_T("Draw Polygon \tShift-Ctrl-P"),wxEmptyString,wxITEM_CHECK);
     rightclickmenu->Append(polygonpointsmenu);
+    rectanglemenu = new wxMenuItem(rightclickmenu,1010,_T("Draw Rectangle \tShift-Ctrl-R"),wxEmptyString,wxITEM_CHECK);
+    rightclickmenu->Append(rectanglemenu);
+    circlemenu = new wxMenuItem(rightclickmenu,1011,_T("Draw Circle \tShift-Ctrl-E"),wxEmptyString,wxITEM_CHECK);
+    rightclickmenu->Append(circlemenu);
     rightclickmenu->AppendSeparator();
     rightclickmenu->Append(1008,_T("Copy Image\tCtrl-C"));
     rightclickmenu->Append(1009,_T("Paste Image to Background\tCtrl-V"));
@@ -363,7 +367,9 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1007);         // DrawLine
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1008);         // Copy to Clipboard
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1009);         // Paste from Clipboard
-    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnInputDialog,this,1010);      // Opens InputDialog
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1010);         // DrawRectangle
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1011);         // DrawRectangle
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnInputDialog,this,5010);      // Opens InputDialog
     Bind(MY_EVENT,&PlotFunctionFrame::OnMyEvent,this);
     Bind(P_EVENT,&PlotFunctionFrame::OnParentEvent,this);
     // Mouse-Events:
@@ -386,7 +392,7 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMove,this,20009);
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMove,this,20010);
     //
-    wxAcceleratorEntry entries[19];
+    wxAcceleratorEntry entries[21];
     entries[0].Set(wxACCEL_CTRL, (int) '+',20001);
     entries[1].Set(wxACCEL_CTRL, (int) '-',20002);
     entries[2].Set(wxACCEL_CTRL,WXK_RIGHT,20003);
@@ -403,14 +409,16 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     entries[13].Set(wxACCEL_CTRL,(int) 'V',1009);
     entries[14].Set(wxACCEL_SHIFT,WXK_INSERT,1009);
 #ifdef __APPLE__
-    entries[15].Set(wxACCEL_ALT,WXK_SPACE,1010);
+    entries[15].Set(wxACCEL_ALT,WXK_SPACE,5010);
 #else
-    entries[15].Set(wxACCEL_CTRL,WXK_SPACE,1010);
+    entries[15].Set(wxACCEL_CTRL,WXK_SPACE,5010);
 #endif // __APPLE__
     entries[16].Set(wxACCEL_ALT,WXK_RIGHT,20009);
     entries[17].Set(wxACCEL_ALT,WXK_LEFT,20010);
     entries[18].Set(wxACCEL_CTRL,WXK_PAGEUP,20011);
-    wxAcceleratorTable accel(19,entries);
+    entries[19].Set(wxACCEL_SHIFT|wxACCEL_CTRL,(int) 'R',1010);
+    entries[20].Set(wxACCEL_SHIFT|wxACCEL_CTRL,(int) 'E',1011);
+    wxAcceleratorTable accel(21,entries);
     SetAcceleratorTable(accel);
     //
 
@@ -514,6 +522,8 @@ void PlotFunctionFrame::OnFileMenu(wxCommandEvent& event)
     if (drawpoints) changedrawpoints();
     if (drawpolygon) changedrawpolygon();
     if (drawline) changedrawline();
+    if (drawrectangle) changedrawrectangle();
+    if (drawcircle) changedrawcircle();
 
     if (id==101) {   //new
         val::rational rzero;
@@ -1405,12 +1415,36 @@ void PlotFunctionFrame::plotcircle(wxDC& dc,const val::d_array<double> &f,int co
 
     if (r <= 0) return;
 
-
     if (active_function == colour) dc.SetPen(wxPen(Color[colour],pen[colour]+3));
     else dc.SetPen(wxPen(Color[colour],pen[colour]));
     wxBrush brush(Color[colour]);
-    if (slice < 2) brush.SetStyle(wxBrushStyle::wxBRUSHSTYLE_TRANSPARENT);
-    dc.SetBrush(brush);
+
+    if (n_circlepoints && colour == N-1) {
+        int r;
+        ix0=abst+int(double(sizex-1)*((x-x1)/(x2-x1)));
+        iy0=yzero -int((double(sizey-1)/double(y2-y1)) * y);
+        if (polygonline) {
+            brush.SetStyle(wxBrushStyle::wxBRUSHSTYLE_TRANSPARENT);
+            dc.SetBrush(brush);
+            dc.SetPen(wxPen(Color[colour],1));
+            ix1 = actualpolygonpoint.x - ix0;
+            iy1 = actualpolygonpoint.y - iy0;
+            double dx = double(ix1), dy = double(iy1) , dr = sqrt(dx*dx + dy*dy);
+            dr = val::round(dr,0);
+            r = int(dr);
+            dc.DrawLine(wxPoint(ix0,iy0),actualpolygonpoint);
+            //dc.DrawCircle(ix0,iy0,r);
+            dc.DrawEllipse(ix0-r,iy0-r,2*r,2*r);
+            polygonline = 0;
+        }
+		r = val::Max(1,(pen[colour]+2)/2);
+        dc.SetPen(wxPen(Color[colour],pen[colour]+2));
+        dc.SetBrush(wxBrush(Color[colour]));
+        dc.DrawCircle(ix0,iy0,r);
+        //dc.SetPen(wxPen(Color[colour],8));
+        //dc.DrawPoint(ix0,iy0);
+        return;
+    }
 
     ix0=abst+int(double(sizex-1)*((f[0]-x1)/(x2-x1)));
     iy0=yzero -int((double(sizey-1)/double(y2-y1)) * f[1]);
@@ -1418,6 +1452,9 @@ void PlotFunctionFrame::plotcircle(wxDC& dc,const val::d_array<double> &f,int co
     iy1=yzero -int((double(sizey-1)/double(y2-y1)) * f[3]);
     ix1-=ix0;
     iy1-=iy0;
+
+    if (slice < 2) brush.SetStyle(wxBrushStyle::wxBRUSHSTYLE_TRANSPARENT);
+    dc.SetBrush(brush);
 
     dc.DrawEllipticArc(ix0,iy0,ix1,iy1,f[4],f[5]);
 
@@ -1451,7 +1488,7 @@ void PlotFunctionFrame::plotcircle(wxDC& dc,const val::d_array<double> &f,int co
 void PlotFunctionFrame::plotrectangle(wxDC& dc,const val::d_array<double> &f,int colour)
 {
     if (!yset) return;
-    if (f[0]<x1 || f[0]>x2 || f[1]<y1 || f[1]>y2 || f[2]<x1 || f[2]>x2 || f[3]<y1 || f[3]>y2) return;
+    //if (f[0]<x1 || f[0]>x2 || f[1]<y1 || f[1]>y2 || f[2]<x1 || f[2]>x2 || f[3]<y1 || f[3]>y2) return;
 
     int ix0,iy0,ix1,iy1;
 
@@ -1469,6 +1506,22 @@ void PlotFunctionFrame::plotrectangle(wxDC& dc,const val::d_array<double> &f,int
     ix1-=ix0;
     iy1-=iy0;
 
+    if (n_rectanglepoints && colour == N-1) {
+        if (polygonline) {
+            dc.SetPen(wxPen(Color[colour],1));
+            ix1 = actualpolygonpoint.x - ix0;
+            iy1 = actualpolygonpoint.y - iy0;
+            dc.DrawRectangle(ix0,iy0,ix1,iy1);
+            polygonline = 0;
+        }
+		int r = val::Max(1,(pen[colour]+2)/2);
+        dc.SetPen(wxPen(Color[colour],pen[colour]+2));
+        dc.SetBrush(wxBrush(Color[colour]));
+        dc.DrawCircle(ix0,iy0,r);
+        //dc.SetPen(wxPen(Color[colour],8));
+        //dc.DrawPoint(ix0,iy0);
+        return;
+    }
     dc.DrawRectangle(ix0,iy0,ix1,iy1);
 }
 
@@ -2103,6 +2156,8 @@ void PlotFunctionFrame::OnMenunewfunction(wxCommandEvent &event)
         if (drawpoints) changedrawpoints();
         if (drawpolygon) changedrawpolygon();
         if (drawline) changedrawline();
+        if (drawrectangle) changedrawrectangle();
+        if (drawcircle) changedrawcircle();
     }
     if (id==3000) {   // Add/removeFunction
         std::string input="",output="";
@@ -2153,17 +2208,23 @@ void PlotFunctionFrame::OnMenunewfunction(wxCommandEvent &event)
             if (drawpoints) addingpoints--;
             if (drawpolygon) n_polygonpoints--;
             if (drawline) n_linepoints--;
+            if (drawrectangle) n_rectanglepoints--;
+            if (drawcircle) n_circlepoints--;
         }
         else {
             a_fstring++;
             if (drawpoints) addingpoints++;
             if (drawpolygon) n_polygonpoints++;
             if (drawline) n_linepoints++;
+            if (drawrectangle) n_rectanglepoints++;
+            if (drawcircle) n_circlepoints++;
         }
 
         if (drawpoints && addingpoints<=0) changedrawpoints();
         if (drawpolygon && n_polygonpoints<=0) changedrawpolygon();
         if (drawline && n_linepoints<=0) changedrawline();
+        if (drawrectangle && n_rectanglepoints<=0) changedrawrectangle();
+        if (drawcircle && n_circlepoints<=0) changedrawcircle();
 
         if (a_fstring<0) {
             a_fstring=0;
@@ -2370,6 +2431,8 @@ void PlotFunctionFrame::OnMenuTools(wxCommandEvent &event)
     if (drawpoints) changedrawpoints();
     if (drawpolygon) changedrawpolygon();
     if (drawline) changedrawline();
+    if (drawrectangle) changedrawrectangle();
+    if (drawcircle) changedrawcircle();
 
     if (id==7006) {  //interpolation
         MultiLineDialog dialog(this,"","Enter Points:",240,80,"Interpolation",fontsize);
@@ -2710,6 +2773,8 @@ void PlotFunctionFrame::OnInputDialog(wxCommandEvent&)
     if (drawpoints) changedrawpoints();
     if (drawpolygon) changedrawpolygon();
     if (drawline) changedrawline();
+    if (drawrectangle) changedrawrectangle();
+    if (drawcircle) changedrawcircle();
 
     wxSize size = GetSize();
 
@@ -3709,6 +3774,14 @@ void PlotFunctionFrame::OnMenuFill(wxCommandEvent &event)
         changedrawpoints();
         return;
     }
+    if (id == 1010) {
+        changedrawrectangle();
+        return;
+    }
+    if (id == 1011) {
+        changedrawcircle();
+        return;
+    }
 
     if (id==1003 ||  id==1004) {
 
@@ -3923,6 +3996,8 @@ void PlotFunctionFrame::openfile(const std::string &dirname,const std::string &f
     if (drawpoints) changedrawpoints();
     if (drawpolygon) changedrawpolygon();
     if (drawline) changedrawline();
+    if (drawrectangle) changedrawrectangle();
+    if (drawcircle) changedrawcircle();
     /*
     if (!val::FileExists(name)) {
         wxMessageBox("File " + name + "\ndoes not exist!");
@@ -4239,14 +4314,14 @@ void PlotFunctionFrame::OnMouseCaptured(wxMouseEvent &event)
     mouse_x1=event.GetX(); mouse_y1=event.GetY();
 
 
-    if (drawpoints || drawpolygon || drawline) {
+    if (drawpoints || drawpolygon || drawline || drawrectangle || drawcircle) {
         //mouse_x1=event.GetX();mouse_y1=event.GetY();
         double x,y,gx1,gx2,gy1,gy2;
         int fx,fy;
 
         x=(x2-x1)*double(mouse_x1-abst) / double (sizex -1) + x1;
         y=double(yzero-mouse_y1)*(y2-y1)/double(sizey -1);
-        if (rounddrawingpoints>=0) {
+        if (rounddrawingpoints>=0)  {
             x=val::round(x,rounddrawingpoints); y=val::round(y,rounddrawingpoints);
         }
         else if (rounddrawingpoints==-2) {
@@ -4269,22 +4344,42 @@ void PlotFunctionFrame::OnMouseCaptured(wxMouseEvent &event)
         else if (drawline && !n_linepoints) {
             fstring += "line";
         }
+        else if (drawrectangle && !n_rectanglepoints) {
+            fstring += "rectangle";
+        }
+        else if (drawcircle && !n_circlepoints) {
+            fstring += "circle";
+        }
         else {
             int n = fstring.length();
             for (--n;n>=0;--n) if (fstring[n]==';') break;
             fstring.resize(n);
         }
-        mx1=x; my1=y;
-        fstring+="  " + val::ToString(x) + " " + val::ToString(y);
+        if (drawcircle && n_circlepoints) {
+            double dx = x - mx1, dy = y -my1, r = val::sqrt(dx*dx + dy*dy);
+            fstring += "  " + val::ToString(r);
+        }
+        else {
+            mx1=x; my1=y;
+            fstring+="  " + val::ToString(x) + " " + val::ToString(y);
+        }
         if (drawpoints) addingpoints++;
         else if (drawpolygon) {
             n_polygonpoints++;
         }
-        else {
+        else if (drawline) {
             n_linepoints++;
             if (n_linepoints == 2) n_linepoints = 0;
         }
-        if (!n_linepoints) refreshfunctionstring();
+        else if (drawrectangle) {
+            n_rectanglepoints++;
+            if (n_rectanglepoints == 2) n_rectanglepoints = 0;
+        }
+        else if (drawcircle) {
+            n_circlepoints++;
+            if (n_circlepoints == 2) n_circlepoints = 0;
+        }
+        if (!n_linepoints || !n_rectanglepoints || !n_circlepoints) refreshfunctionstring();
         GetSettings();
         Compute();
 
@@ -4329,7 +4424,7 @@ void PlotFunctionFrame::OnMouseMoved(wxMouseEvent &event)
         return;
     }
     */
-    if (drawpoints || drawpolygon || drawline) {
+    if (drawpoints || drawpolygon || drawline || drawrectangle || drawcircle) {
         //if (!addingpoints) return;
         int xm=event.GetX(),ym=event.GetY();
         double x,y,dxm,dym,d=0;
@@ -4338,14 +4433,14 @@ void PlotFunctionFrame::OnMouseMoved(wxMouseEvent &event)
         dxm=(x2-x1)*double(xm-abst) / double (sizex -1) + x1;
         dym=double(yzero-ym)*(y2-y1)/double(sizey -1);
         text = "( " +val::ToString(dxm) + " , " + val::ToString(dym) + " )";
-        if (addingpoints || n_polygonpoints || n_linepoints) {
+        if (addingpoints || n_polygonpoints || n_linepoints || n_rectanglepoints || n_circlepoints) {
             x=mx1; y = my1;
             x-=dxm;y-=dym;
             d=val::sqrt(x*x + y*y);
             text+= " ; " + val::ToString(d);
         }
         StatusBar1->SetStatusText(text,0);
-        if (n_polygonpoints || n_linepoints) {
+        if (n_polygonpoints || n_linepoints || n_rectanglepoints || n_circlepoints) {
             polygonline = 1;
             iscomputing = 1;
             actualpolygonpoint.x = xm; actualpolygonpoint.y = ym;
@@ -4390,7 +4485,7 @@ void PlotFunctionFrame::OnMouseMoved(wxMouseEvent &event)
 // mouse - left -up
 void PlotFunctionFrame::OnMouseReleased(wxMouseEvent &event)
 {
-    if (drawpoints || drawpolygon || drawline) return;
+    if (drawpoints || drawpolygon || drawline || drawrectangle || drawcircle) return;
     if (doubleclicked) {
         doubleclicked = 0;
         return;
@@ -4604,6 +4699,8 @@ void PlotFunctionFrame::changedrawpoints()
     if (!drawpoints) {
             if (drawline) changedrawline();
             if (drawpolygon) changedrawpolygon();
+            if (drawrectangle) changedrawrectangle();
+            if (drawcircle) changedrawcircle();
 
             SendNotification("Insert Points: ON");
             StatusBar1->SetStatusText(_T("Insert Points"),1);
@@ -4633,6 +4730,8 @@ void PlotFunctionFrame::changedrawpolygon()
     if (!drawpolygon) {
              if (drawpoints) changedrawpoints();
              if (drawline) changedrawline();
+             if (drawrectangle) changedrawrectangle();
+             if (drawcircle) changedrawcircle();
 
              SendNotification("Insert Polygon: ON");
              StatusBar1->SetStatusText(_T("Insert Polygon!"),1);
@@ -4660,6 +4759,8 @@ void PlotFunctionFrame::changedrawline()
     if (!drawline) {
              if (drawpolygon) changedrawpolygon();
              if (drawpoints) changedrawpoints();
+             if (drawrectangle) changedrawrectangle();
+             if (drawcircle) changedrawcircle();
 
              SendNotification("Insert Line: ON");
              StatusBar1->SetStatusText(_T("Insert Line!"),1);
@@ -4683,6 +4784,64 @@ void PlotFunctionFrame::changedrawline()
 }
 
 
+void PlotFunctionFrame::changedrawrectangle()
+{
+    if (!drawrectangle) {
+             if (drawpolygon) changedrawpolygon();
+             if (drawpoints) changedrawpoints();
+             if (drawline) changedrawline();
+             if (drawcircle) changedrawcircle();
+
+             SendNotification("Insert Rectangle: ON");
+             StatusBar1->SetStatusText(_T("Insert Rectangle!"),1);
+             rectanglemenu->Check(true);
+             DrawPanel->SetCursor(wxCursor (wxCURSOR_ARROW));
+             DrawPanel->Bind(wxEVT_MOTION,&PlotFunctionFrame::OnMouseMoved,this);
+             drawrectangle = 1;
+    }
+    else {
+             SendNotification("Insert Rectangle: OFF");
+             StatusBar1->SetStatusText(_T(""),1);
+             rectanglemenu->Check(false);
+             DrawPanel->SetCursor(wxCursor (wxCURSOR_HAND));
+             DrawPanel->Unbind(wxEVT_MOTION,&PlotFunctionFrame::OnMouseMoved,this);
+             if (DrawPanel->HasCapture()) DrawPanel->ReleaseMouse();
+             n_rectanglepoints = 0;
+             drawrectangle = 0;
+             iscomputing = 1;
+             Paint();
+    }
+}
+
+
+void PlotFunctionFrame::changedrawcircle()
+{
+    if (!drawcircle) {
+             if (drawpolygon) changedrawpolygon();
+             if (drawpoints) changedrawpoints();
+             if (drawline) changedrawline();
+             if (drawrectangle) changedrawrectangle();
+
+             SendNotification("Insert Circle: ON");
+             StatusBar1->SetStatusText(_T("Insert Cicle!"),1);
+             circlemenu->Check(true);
+             DrawPanel->SetCursor(wxCursor (wxCURSOR_ARROW));
+             DrawPanel->Bind(wxEVT_MOTION,&PlotFunctionFrame::OnMouseMoved,this);
+             drawcircle = 1;
+    }
+    else {
+             SendNotification("Insert Circle: OFF");
+             StatusBar1->SetStatusText(_T(""),1);
+             circlemenu->Check(false);
+             DrawPanel->SetCursor(wxCursor (wxCURSOR_HAND));
+             DrawPanel->Unbind(wxEVT_MOTION,&PlotFunctionFrame::OnMouseMoved,this);
+             if (DrawPanel->HasCapture()) DrawPanel->ReleaseMouse();
+             n_circlepoints = 0;
+             drawcircle = 0;
+             iscomputing = 1;
+             Paint();
+    }
+}
 
 
 void PlotFunctionFrame::SendNotification(const std::string& s)
@@ -4873,6 +5032,14 @@ void PlotFunctionFrame::OnSelectActiveFunction(wxCommandEvent &event)
         }
         if (drawline) {
             changedrawline();
+            return;
+        }
+        if (drawrectangle) {
+            changedrawrectangle();
+            return;
+        }
+        if (drawcircle) {
+            changedrawcircle();
             return;
         }
         if (active_function == -1) return;
