@@ -140,7 +140,7 @@ private:
     int plcolor = 50;
     bool is_active=false;
     wxPanel *DrawPanel = nullptr;
-    wxColor backgroundcolor= wxSystemSettings::GetColour(wxSYS_COLOUR_MENU);
+    wxColor backgroundcolor;//= wxSystemSettings::GetColour(wxSYS_COLOUR_MENU);
     wxColour barcolor_a = wxSystemSettings::GetColour(wxSYS_COLOUR_HIGHLIGHT);
     wxColour barcolor_p;//= wxSystemSettings::GetColour(wxSYS_COLOUR_BTNHIGHLIGHT);
     wxColour fg_color = wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW);

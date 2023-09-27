@@ -40,7 +40,8 @@ std::string filesep="/",filedir=val::CurrentHomeDir(), valdir= val::CurrentHomeD
             alticonpath = val::GetExeDir() + "/../Resources/MV_Plot.xpm";
 #endif //
 
-std::string RecentFilesPath = settingsdir + filesep + "recent.txt";
+std::string RecentFilesPath = settingsdir + filesep + "recentfiles.txt";
+std::string RecentCommandsPath = settingsdir + filesep + "recentcommands.txt";
 
 //std::mutex compute_mutex;
 //std::atomic<int> iscomputing(0);
@@ -53,6 +54,14 @@ val::d_array<std::string> analyze_output(4);
 val::d_array<val::d_array<val::GPair<double>>> Points(3);
 val::Glist<std::string> recentcommands;
 
+
+const val::d_array<wxString> greek_literals{"\\alpha", "\\beta", "\\gamma", "\\delta", "\\epsilon", "\\zeta", "\\eta", "\\theta", "\\iota", "\\kappa", "\\lambda", "\\mu", "\\nu",
+                                            "\\xi", "\\omicron", "\\pi", "\\rho", "\\sigma", "\\tau", "\\phi", "\\chi", "\\psi", "\\omega", "\\Gamma", "\\Delta", "\\Pi",
+                                            "\\Sigma", "\\Phi", "\\Psi", "\\Omega"};
+
+const val::d_array<wxString> greek_letters{L"\u03B1", L"\u03B2", L"\u03B3", L"\u03B4", L"\u03B5",  L"\u03B6", L"\u03B7", L"\u03B8", L"\u03B9", L"\u03BA", L"\u03BB", L"\u03BC", L"\u03BD",
+                                           L"\u03BE", L"\u03BF", L"\u03C0", L"\u03C1", L"\u03C3", L"\u03C4", L"\u03C6", L"\u03C7", L"\u03C8", L"\u03C9", L"\u0393", L"\u0394", L"\u03A0",
+                                           L"\u03A3", L"\u03A6", L"\u03A8", L"\u03A9"};
 
 const val::d_array<std::string> WordList{"PI", "exp", "log", "line", "sinh", "sqrt", "cosh", "circle", "tanh", "text", "triangle", "polygon", "points",
                                    "inf", "fill", "abs", "arcsin", "arccos", "arctan", "rectangle", "sin", "cos", "tan",
@@ -78,7 +87,7 @@ const val::d_array<std::string> defaultcolornames{"blue", "red", "green", "lblue
 const val::d_array<std::string> SettingsList({"axis-scale", "axis-color", "grid-scale", "grid-color", "values-number", "axis-range", "show-x-axis",
                                 "show-y-axis", "show-grid" , "show-x-scale", "show-y-scale" , "reset-colors", "font-size", "function-color", "panel-size", "axis-names", "regression-degree",
                                 "point-decimals", "show-function", "background-color", "parameter-values", "function-size", "margin",
-                                "axis-fontsize" });
+                                "axis-fontsize", "function-settings" });
 
 const val::d_array<std::string> SettingsParList({"axis-scale sx [sy]	<Shift-Alt-S>",
                                               "axis-color def. color / Red Green Blue	<Shift-Ctrl-A>",
@@ -103,7 +112,8 @@ const val::d_array<std::string> SettingsParList({"axis-scale sx [sy]	<Shift-Alt-
                                               "parameter-values double ...    <Ctrl-P>",
                                               "function-size [#nr = 1] unsigned int    <Ctrl-nr>",
                                               "margin unsigned int    <Shift-Alt-S>",
-                                              "axis-fontsize unsigned int    <Shift-Ctrl-F>"
+                                              "axis-fontsize unsigned int    <Shift-Ctrl-F>",
+                                              "function-settings [nr=1]"
                                              });
 
 const val::d_array<std::string> CommandsList({"derive", "analyze", "tangent", "normal", "interpolation", "regression", "table", "integral",
@@ -503,21 +513,53 @@ void gettangentvalues(const myfunction &f,const double &x,double &m,double &b,in
 std::string extractstringfrombrackets(std::string &sf,const char lb, const char rb)
 {
     std::string s = "", sb = "";
-    int i, n = sf.length();
+    int i, n = sf.length(), nbrackets = 0;
 
     if (n == 0) return sb;
     for (i = 0; i < n; ++i) {
-        if (sf[i] == lb) break;
+        if (sf[i] == lb) {
+            ++nbrackets;
+            break;
+        }
         s += sf[i];
     }
     for (++i; i < n ; ++i) {
-        if (sf[i] == rb) break;
+        if (sf[i] == rb) {
+            --nbrackets;
+            if (!nbrackets) break;
+        }
+        if (sf[i] == lb) ++nbrackets;
         sb += sf[i];
     }
     for (++i; i < n; ++i) s += sf[i];
     sf = s;
     return sb;
 }
+
+
+std::string getstringfrombrackets(const std::string &sf, const char lb, const char rb)
+{
+    int n = sf.length(), i, nbrackets = 0;
+    std::string sb ="";
+
+    if (n == 0) return sb;
+    for (i = 0; i < n; ++i) {
+        if (sf[i] == lb) {
+            ++nbrackets;
+            break;
+        }
+    }
+    for (++i; i < n; ++i) {
+        if (sf[i] == rb) {
+            --nbrackets;
+            if (!nbrackets) break;
+        }
+        if (sf[i] == lb) ++nbrackets;
+        sb += sf[i];
+    }
+    return sb;
+}
+
 
 
 int getfunctionfromstring(std::string &fstring,std::string& f_s,double &x1,double &x2)
@@ -1491,7 +1533,7 @@ void computetangent(std::string sf,const myfunction &f,double x1,double x2,int t
             }
             else if (diffbar) {
                 val::valfunction x_f(sf), m_f = (F.derive())(x_f);
-                if (!tangent) m_f = val::valfunction("1/(" + m_f.getinfixnotation() + ")");
+                if (!tangent) m_f = val::valfunction("-1/(" + m_f.getinfixnotation() + ")");
                 val::valfunction b_f = F(x_f) - m_f * x_f, g = m_f * val::valfunction("x") + b_f;
                 fstring += ";\n" + g.getinfixnotation();
             }
@@ -1765,6 +1807,65 @@ int foundpattern(const std::string &s,const std::string &pattern, int& i)
     return is;
 }
 
+
+val::Glist<drawingword> getdrawingwords(const wxString &s)
+{
+    val::Glist<drawingword> G;
+    unsigned i, n = s.length(), s_ready = 0;
+    drawingword lword;
+
+    for (i = 0; i < n; ++i) {
+        if (s[i] == '_' && i < n-1) {
+            if (s[i+1] == '{') {
+                for (i += 2; i < n; ++i ) {
+                    if (s[i] == '}') {
+                        s_ready = 1;
+                        break;
+                    }
+                    else {
+                        lword.sub_word += s[i];
+                    }
+                }
+            }
+            else {
+                ++i;
+                lword.sub_word += s[i];
+                s_ready = 1;
+            }
+            if (s_ready) continue;
+        }
+        else if (s[i] == '^' && i < n-1) {
+            if (i < n-1 && s[i+1] == '{') {
+                for (i += 2; i < n; ++i ) {
+                    if (s[i] == '}') {
+                        s_ready = 1;
+                        break;
+                    }
+                    else {
+                        lword.sup_word += s[i];
+                    }
+                }
+            }
+            else {
+                ++i;
+                lword.sup_word += s[i];
+                s_ready = 1;
+            }
+        }
+        else if (!s_ready) lword.word += s[i];
+        if (s_ready) {
+            G.push_back(lword);
+            lword.sub_word = lword.sup_word = lword.word = "";
+            s_ready = 0;
+        }
+    }
+    if (lword.word != "") G.push_back(lword);
+    return G;
+}
+
+
+
+
 //  --------------------------------------
 
 myfunction::myfunction(const myfunction& f)
@@ -1774,6 +1875,7 @@ myfunction::myfunction(const myfunction& f)
     t=f.t;
     s_infix=f.s_infix;
     textdata=f.textdata;
+    TextWords = f.TextWords;
     nvar=f.nvar;
     withpar=f.withpar;
     isrational=f.isrational;
@@ -2076,10 +2178,15 @@ const myfunction& myfunction::infix_to_postfix(const std::string &s)
                 t = s_stack(sf,tp,prec);
                 if (sf == "text") {
                     j = i;
+                    int nbrackets = 0;
                     for (i=j;i<n;++i) {
-                        if (s[i]=='}') {
-                            ++i;
-                            break;
+                        if (s[i] == '{') ++nbrackets;
+                        else if (s[i]=='}') {
+                            --nbrackets;
+                            if (!nbrackets) {
+                                ++i;
+                                break;
+                            }
                         }
                     }
                 }
@@ -2512,7 +2619,8 @@ val::d_array<double> myfunction::getPolygonPoints() const
 
 void myfunction::settextdata()
 {
-    textdata = "";
+    textdata = getstringfrombrackets(s_infix, '{', '}');
+    /*
     int i,l=s_infix.size();
 
     for (i=0;i<l;++i) {
@@ -2525,6 +2633,13 @@ void myfunction::settextdata()
         if (s_infix[i]!='}') textdata+= s_infix[i];
         else break;
     }
+    */
+
+    for (int i = 0; i < greek_literals.length(); ++i) {
+        //if (textdata.Find(greek_literals[i]) != wxNOT_FOUND) textdata.Replace(greek_literals[i], greek_letters[i]);
+        textdata.Replace(greek_literals[i], greek_letters[i]);
+    }
+    /*
     if (textdata == "\\alpha") textdata = L"\u03B1";
     else if (textdata == "\\beta") textdata = L"\u03B2";
     else if (textdata == "\\gamma") textdata = L"\u03B3";
@@ -2555,5 +2670,8 @@ void myfunction::settextdata()
     else if (textdata=="\\Phi") textdata = L"\u03A6";
     else if (textdata=="\\Psi") textdata = L"\u03A8";
     else if (textdata=="\\Omega") textdata = L"\u03A9";
+    */
+    TextWords = getdrawingwords(textdata);
+
     return;
 }

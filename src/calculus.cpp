@@ -2265,7 +2265,7 @@ void intersection(const myfunction &f, const myfunction &g, std::string input)
                 }
             }
             if (rat) {
-                analyze_output[1] += "[ = ( " + xr + " | " + yr + " )]\n";
+                analyze_output[1] += " [ = ( " + xr + " | " + yr + " )]\n";
             }
             else analyze_output[1] += "\n";
         }

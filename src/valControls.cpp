@@ -620,15 +620,16 @@ SwitchCtrl::SwitchCtrl(wxWindow *parent,wxWindowID id,bool active) : wxControl(p
             r = val::Max(r,0); g = val::Max(g,0); b = val::Max(b,0);
         }
         barcolor_p = wxColour(r,g,b);
+        if (parent != nullptr) backgroundcolor = parent->GetBackgroundColour();
     }
 
-#ifdef _WIN32
+//#ifdef _WIN32
     wxBoxSizer *BoxSizer = new wxBoxSizer(wxHORIZONTAL);
     BoxSizer->Add(DrawPanel,0,wxALL|wxALIGN_LEFT);
     SetSizer(BoxSizer);
     BoxSizer->Fit(this);
     BoxSizer->SetSizeHints(this);
-#endif // _WIN32
+//#endif // _WIN32
 
     Paint();
 }
@@ -654,14 +655,11 @@ void SwitchCtrl::Paint()
     // Tell memDC to write on “paper”.
     dc.SelectObject( paper );
     // Call Repin to draw our picture on memDC
-#ifdef __APPLE__
-    backgroundcolor = Parent->GetBackgroundColour();
-#endif // __APPLE__
+
     dc.SetBackground(wxBrush(backgroundcolor));
     //dc.SetFont(dc1.GetFont());
     //dc.SetBackground(wxBrush(barcolor));
-    //dc.SetBackground(backgroundcolor);
-    dc.SetBrush(wxBrush(fg_color,wxBRUSHSTYLE_TRANSPARENT));
+    //dc.SetBrush(wxBrush(fg_color,wxBRUSHSTYLE_TRANSPARENT));
 
     dc.Clear();
 

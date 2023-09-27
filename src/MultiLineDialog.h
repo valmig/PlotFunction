@@ -165,7 +165,7 @@ private:
     val::CompleteTextCtrl *input = nullptr;
     wxTextCtrl *tooltip = nullptr;
     wxBoxSizer *BoxSizer = nullptr;
-    int fontsize, lhistory, ahistory;
+    int fontsize, ahistory;
     const val::d_array<std::string> *CommandsParList = nullptr, *CommandsList = nullptr, *SettingsList = nullptr, *SettingsParList = nullptr;
     const val::Glist<std::string> *history = nullptr;
     //wxTextCtrl *input = nullptr;

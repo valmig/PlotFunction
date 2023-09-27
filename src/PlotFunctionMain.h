@@ -30,7 +30,6 @@
 class MyThreadEvent;
 class ParentEvent;
 class myfunction;
-namespace val {class rational;}
 
 class PlotFunctionFrame: public wxFrame
 {
@@ -84,6 +83,7 @@ class PlotFunctionFrame: public wxFrame
         wxBoxSizer *BoxSizer1, *BoxSizer2;
         val::CompleteTextCtrl *SideText = nullptr;
 
+        void SetAccelerators(const val::Glist<wxAcceleratorEntry> &Accel);
         void GetSizeSettings();
         void OnFileMenu(wxCommandEvent &event);
         void OnMenunewfunction(wxCommandEvent &event);
@@ -102,6 +102,7 @@ class PlotFunctionFrame: public wxFrame
         void ExecuteCommand(int command, int f_nr = 0, const std::string &svalue="", int id = 0);
         int findactivefunction(int x,int y);
         void displacefunction(int i,const double& dx,const double& dy);
+        void OnMenuButton(wxCommandEvent&);
         // Mouse - Handler
         void OnMouseDown(wxMouseEvent &event);
         void OnMouseWheel(wxMouseEvent &event);
@@ -111,6 +112,7 @@ class PlotFunctionFrame: public wxFrame
         void OnMouseDouble(wxMouseEvent& event);
         //void OnMouseUp(wxMouseEvent &event);
         void OnLostMouse(wxMouseCaptureLostEvent &event);
+        void changefunctionsettings(int i);
         void changedrawpoints();
         void changedrawpolygon();
         void changedrawline();
@@ -122,7 +124,7 @@ class PlotFunctionFrame: public wxFrame
         void OnMove(wxCommandEvent &event);
         void OnSelectActiveFunction(wxCommandEvent &event);
         //
-        wxMenu *Menu_functions,*colorsubmenu,*rightclickmenu;
+        wxMenu *Menu_functions,*colorsubmenu,*rightclickmenu, *rightclickfunctionsmenu;
         wxMenuItem *hideallmenu,*showallmenu,*deletelastmenu,*deleteallmenu,*x_scaleactiv,*y_scaleactiv,*gridactiv,*undomenu,*redomenu,*addfunction,
                     *addpointsmenu, *polygonpointsmenu, *linepointsmenu, *rectanglemenu , *circlemenu, *multicolormenu, *sidemenuview = nullptr;
         int ispainted=0,N=0,points=1000,abst=10,sizex,sizey,yzero,npainted=0,yset=1,defaultsize=1,fontsize=10,nchildwindows=0;
@@ -138,7 +140,7 @@ class PlotFunctionFrame: public wxFrame
         void Compute(int i=-1, int computepoints = 1);
         double x1=-5,x2=5,y1=-5,y2=5,ymin=-5,ymax=5,x_scale=1,y_scale=1,gx_scale=0.5,gy_scale=0.5,delta=1e-8,zoom=1.0,mx1,mx2,my1,my2,movedx = 0.1, movedy = 0.1;
         double movex = 0, movey = 0;
-        std::string Program_Name="Simple plot",x_axis="x",y_axis="y",sx_scale="1",sy_scale="1",sgx_scale="0.5",sgy_scale="0.5",actual_filename="",actual_dirname="";
+        std::string Program_Name="PlotFunction",x_axis="x",y_axis="y",sx_scale="1",sy_scale="1",sgx_scale="0.5",sgy_scale="0.5",actual_filename="",actual_dirname="";
         std::string SideText_Word;
         wxFont defaultFont;
         wxSize bitmapsize,actualPanelsize; //DialogInputSize{wxDefaultSize};
@@ -183,7 +185,7 @@ class PlotFunctionFrame: public wxFrame
         void plotfill(wxMemoryDC& dc,const val::d_array<double> &f,int colour=0);
         void plotpolygon(wxDC& dc,const val::d_array<double> &f,int colour=0);
         void plotpoints(wxDC& dc,const val::d_array<double> &f,int colour=0);
-        void plottext(wxDC& dc,const val::d_array<double> &f,const wxString& text,int colour=0);
+        void plottext(wxDC& dc,const val::d_array<double> &f,int colour=0);
         //void plotcurve(wxDC& dc,const val::d_array<val::d_array<double> > &c,const val::d_array<val::d_array<double> > &y_c,int colour=0);
         void plotcurve(wxDC& dc,const val::d_array<val::d_array<double> > &c,const val::Glist<val::GPair<double>>& critpoints
                        ,const val::d_array<double> &critx,int colour=0);
@@ -202,6 +204,7 @@ class PlotFunctionFrame: public wxFrame
         void WriteText();
         void OnLostFocus(wxFocusEvent&);
         void OnSideBarCheck(wxCommandEvent&);
+        void OnSideBarEvaluate(wxCommandEvent&);
         void CheckFocus();
 
         //DECLARE_EVENT_TABLE()

@@ -154,6 +154,11 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     //
     sidemenuview = new wxMenuItem(viewMenu,30101,_("Side Bar \tF2"),wxEmptyString,wxITEM_CHECK);
     viewMenu->Append(sidemenuview);
+#ifdef __APPLE__
+    viewMenu->Append(5011,_("Command Line \tAlt-SPACE"));
+#else
+    viewMenu->Append(5011,_("Command Line \tCtrl-SPACE"));
+#endif
     sidemenuview->Check(false);
     //
     StatusBar1 = new wxStatusBar(this, ID_STATUSBAR1, 0, _T("ID_STATUSBAR1"));
@@ -312,6 +317,9 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     rightclickmenu->Append(1008,_T("Copy Image\tCtrl-C"));
     rightclickmenu->Append(1009,_T("Paste Image to Background\tCtrl-V"));
     //
+    rightclickfunctionsmenu = new wxMenu();
+    rightclickfunctionsmenu->Append(7101,_T("Change Settings"));
+    //
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnFileMenu,this,101);          // New
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnFileMenu,this,102);          // Open
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnFileMenu,this,103);          // Save File
@@ -369,7 +377,9 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1009);         // Paste from Clipboard
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1010);         // DrawRectangle
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1011);         // DrawRectangle
-    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnInputDialog,this,5010);      // Opens InputDialog
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,7101);         // Change Settings for marked function
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnInputDialog,this,5011);      // Opens InputDialog
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnSideBarEvaluate,this,5020);  // Evaluate input in SideBar
     Bind(MY_EVENT,&PlotFunctionFrame::OnMyEvent,this);
     Bind(P_EVENT,&PlotFunctionFrame::OnParentEvent,this);
     // Mouse-Events:
@@ -391,35 +401,67 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnSelectActiveFunction,this,20011);
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMove,this,20009);
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMove,this,20010);
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuButton,this,7200);
     //
-    wxAcceleratorEntry entries[21];
-    entries[0].Set(wxACCEL_CTRL, (int) '+',20001);
-    entries[1].Set(wxACCEL_CTRL, (int) '-',20002);
-    entries[2].Set(wxACCEL_CTRL,WXK_RIGHT,20003);
-    entries[3].Set(wxACCEL_CTRL,WXK_LEFT,20004);
-    entries[4].Set(wxACCEL_CTRL,WXK_UP,20005);
-    entries[5].Set(wxACCEL_CTRL,WXK_DOWN,20006);
-    entries[6].Set(wxACCEL_SHIFT|wxACCEL_ALT,(int) 'P',1005);
-    entries[7].Set(wxACCEL_CTRL,WXK_PAGEDOWN,20007);
-    entries[8].Set(wxACCEL_NORMAL,WXK_ESCAPE,20008);
-    entries[9].Set(wxACCEL_SHIFT|wxACCEL_CTRL,(int) 'P',1006);
-    entries[10].Set(wxACCEL_SHIFT|wxACCEL_CTRL,(int) 'L',1007);
-    entries[11].Set(wxACCEL_CTRL,(int) 'C',1008);
-    entries[12].Set(wxACCEL_CTRL,WXK_INSERT,1008);
-    entries[13].Set(wxACCEL_CTRL,(int) 'V',1009);
-    entries[14].Set(wxACCEL_SHIFT,WXK_INSERT,1009);
+    val::Glist<wxAcceleratorEntry> Accel;
+
+    Accel.push_back(wxAcceleratorEntry(wxACCEL_CTRL, (int) '+',20001));
+    Accel.push_back(wxAcceleratorEntry(wxACCEL_CTRL, (int) '-',20002));
+    Accel.push_back(wxAcceleratorEntry(wxACCEL_CTRL,WXK_RIGHT,20003));
+    Accel.push_back(wxAcceleratorEntry(wxACCEL_CTRL,WXK_LEFT,20004));
+    Accel.push_back(wxAcceleratorEntry(wxACCEL_CTRL,WXK_UP,20005));
+    Accel.push_back(wxAcceleratorEntry(wxACCEL_CTRL,WXK_DOWN,20006));
+    Accel.push_back(wxAcceleratorEntry(wxACCEL_SHIFT|wxACCEL_ALT,(int) 'P',1005));
+    Accel.push_back(wxAcceleratorEntry(wxACCEL_CTRL,WXK_PAGEDOWN,20007));
+    Accel.push_back(wxAcceleratorEntry(wxACCEL_NORMAL,WXK_ESCAPE,20008));
+    Accel.push_back(wxAcceleratorEntry(wxACCEL_SHIFT|wxACCEL_CTRL,(int) 'P',1006));
+    Accel.push_back(wxAcceleratorEntry(wxACCEL_SHIFT|wxACCEL_CTRL,(int) 'L',1007));
+    Accel.push_back(wxAcceleratorEntry(wxACCEL_CTRL,(int) 'C',1008));
+    Accel.push_back(wxAcceleratorEntry(wxACCEL_CTRL,WXK_INSERT,1008));
+    Accel.push_back(wxAcceleratorEntry(wxACCEL_CTRL,(int) 'V',1009));
+    Accel.push_back(wxAcceleratorEntry(wxACCEL_SHIFT,WXK_INSERT,1009));
+    Accel.push_back(wxAcceleratorEntry(wxACCEL_ALT,WXK_RIGHT,20009));
+    Accel.push_back(wxAcceleratorEntry(wxACCEL_ALT,WXK_LEFT,20010));
+    Accel.push_back(wxAcceleratorEntry(wxACCEL_CTRL,WXK_PAGEUP,20011));
+    Accel.push_back(wxAcceleratorEntry(wxACCEL_SHIFT|wxACCEL_CTRL,(int) 'R',1010));
+    Accel.push_back(wxAcceleratorEntry(wxACCEL_SHIFT|wxACCEL_CTRL,(int) 'E',1011));
+    //Accel.push_back(wxAcceleratorEntry(wxACCEL_ALT,(int) 'P',5020));
+    Accel.push_back(wxAcceleratorEntry(wxACCEL_CTRL,WXK_RETURN,5020));
+    Accel.push_back(wxAcceleratorEntry(wxACCEL_NORMAL,WXK_MENU,7200));
+
+    SetAccelerators(Accel);
+
+    //wxAcceleratorEntry entries[21];
+    //entries[0].Set(wxACCEL_CTRL, (int) '+',20001);
+    //entries[1].Set(wxACCEL_CTRL, (int) '-',20002);
+    //entries[2].Set(wxACCEL_CTRL,WXK_RIGHT,20003);
+    //entries[3].Set(wxACCEL_CTRL,WXK_LEFT,20004);
+    //entries[4].Set(wxACCEL_CTRL,WXK_UP,20005);
+    //entries[5].Set(wxACCEL_CTRL,WXK_DOWN,20006);
+    //entries[6].Set(wxACCEL_SHIFT|wxACCEL_ALT,(int) 'P',1005);
+    //entries[7].Set(wxACCEL_CTRL,WXK_PAGEDOWN,20007);
+    //entries[8].Set(wxACCEL_NORMAL,WXK_ESCAPE,20008);
+    //entries[9].Set(wxACCEL_SHIFT|wxACCEL_CTRL,(int) 'P',1006);
+    //entries[10].Set(wxACCEL_SHIFT|wxACCEL_CTRL,(int) 'L',1007);
+    //entries[11].Set(wxACCEL_CTRL,(int) 'C',1008);
+    //entries[12].Set(wxACCEL_CTRL,WXK_INSERT,1008);
+    //entries[13].Set(wxACCEL_CTRL,(int) 'V',1009);
+    //entries[14].Set(wxACCEL_SHIFT,WXK_INSERT,1009);
+/*
 #ifdef __APPLE__
-    entries[15].Set(wxACCEL_ALT,WXK_SPACE,5010);
+    entries[15].Set(wxACCEL_ALT,WXK_SPACE,5011);
 #else
-    entries[15].Set(wxACCEL_CTRL,WXK_SPACE,5010);
+    entries[15].Set(wxACCEL_CTRL,WXK_SPACE,5011);
 #endif // __APPLE__
-    entries[16].Set(wxACCEL_ALT,WXK_RIGHT,20009);
-    entries[17].Set(wxACCEL_ALT,WXK_LEFT,20010);
-    entries[18].Set(wxACCEL_CTRL,WXK_PAGEUP,20011);
-    entries[19].Set(wxACCEL_SHIFT|wxACCEL_CTRL,(int) 'R',1010);
-    entries[20].Set(wxACCEL_SHIFT|wxACCEL_CTRL,(int) 'E',1011);
-    wxAcceleratorTable accel(21,entries);
-    SetAcceleratorTable(accel);
+*/
+    //entries[15].Set(wxACCEL_ALT,WXK_RIGHT,20009);
+    //entries[16].Set(wxACCEL_ALT,WXK_LEFT,20010);
+    //entries[17].Set(wxACCEL_CTRL,WXK_PAGEUP,20011);
+    //entries[18].Set(wxACCEL_SHIFT|wxACCEL_CTRL,(int) 'R',1010);
+    //entries[19].Set(wxACCEL_SHIFT|wxACCEL_CTRL,(int) 'E',1011);
+    //entries[20].Set(wxACCEL_ALT,(int) 'P',5020);
+    //wxAcceleratorTable accel(21,entries);
+    //SetAcceleratorTable(accel);
     //
 
 
@@ -466,6 +508,8 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     Compute();
 }
 
+
+
 PlotFunctionFrame::~PlotFunctionFrame()
 {
     using namespace std;
@@ -498,15 +542,36 @@ PlotFunctionFrame::~PlotFunctionFrame()
     }
     file3.close();
 
+    std::ofstream file4(RecentCommandsPath,std::ios::out | std::ios::trunc);
+    for (const auto& v : recentcommands) {
+        file4 << v << std::endl;
+    }
+    file4.close();
+
     if (DrawPanel->HasCapture()) DrawPanel->ReleaseMouse();
     //(*Destroy(PlotFunctionFrame)
     //*)
 }
 
+
 void PlotFunctionFrame::OnQuit(wxCommandEvent& event)
 {
     Close();
 }
+
+
+void PlotFunctionFrame::SetAccelerators(const val::Glist<wxAcceleratorEntry> &Accel)
+{
+    int n = Accel.length();
+    wxAcceleratorEntry *entries = new wxAcceleratorEntry[n];
+
+    for (int i=0;i<n;++i) entries[i] = Accel[i];
+    wxAcceleratorTable accel(n,entries);
+    SetAcceleratorTable(accel);
+
+    delete[] entries;
+}
+
 
 
 void PlotFunctionFrame::OnFileMenu(wxCommandEvent& event)
@@ -539,6 +604,7 @@ void PlotFunctionFrame::OnFileMenu(wxCommandEvent& event)
         xstring="-5;5";
         ystring="-5;5";
         pen.del();
+        Font.del();
         active_function = -1;
         pointactive = 0;
         refreshfunctionstring();
@@ -665,6 +731,15 @@ void PlotFunctionFrame::GetSizeSettings()
         Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuRecent,this,6000+i);
     }
     file1.close();
+
+    line = "";
+    std::fstream file2(RecentCommandsPath, std::ios::in);
+    while (file2) {
+        getline(file2,line);
+        if (line == "") break;
+        else recentcommands.push_back(line);
+    }
+    file2.close();
 }
 
 
@@ -1667,26 +1742,71 @@ void PlotFunctionFrame::plotpoints(wxDC& dc,const val::d_array<double> &f,int co
 
 
 
-void PlotFunctionFrame::plottext(wxDC& dc,const val::d_array<double> &f,const wxString& text,int colour)
+void PlotFunctionFrame::plottext(wxDC& dc,const val::d_array<double> &f,int colour)
 {
     if (!yset) return;
     if (f[0]<x1 || f[0]>x2 || f[1]<y1 || f[1]>y2) return;
 
     wxFont or_font(dc.GetFont()), font(Font[colour]);
+    int f_size = 10;
+    wxSize tsize;
+    const val::Glist<drawingword> &TextWords = F[colour].getTextWords();
 
-    if (!font.IsNull()) {
-        int p = font.GetPointSize();
-        if (active_function == colour) font.SetPointSize(p+5);
-        dc.SetFont(font);
+    if (font.IsNull()) {
+        font = or_font;
+        //int p = font.GetPointSize();
+        //if (active_function == colour) font.SetPointSize(p+5);
+        //dc.SetFont(font);
+        //f_size = font.GetPointSize();
     }
+    f_size = font.GetPointSize();
 
-    int ix0,iy0;
-    ix0=abst+int(double(sizex-1)*((f[0]-x1)/(x2-x1)));
+    int ix0,ix1,iy0,x_sub, x_sup, sub_size = (f_size*2)/3;
+    if (sub_size <= 0) sub_size = 1;
+    ix1=ix0=abst+int(double(sizex-1)*((f[0]-x1)/(x2-x1)));
     iy0=yzero -int((double(sizey-1)/double(y2-y1)) * f[1]);
     dc.SetTextForeground(Color[colour]);
-    dc.DrawText(text,ix0,iy0);
-    dc.SetFont(or_font);
 
+    for (const auto &v : TextWords) {
+        x_sup = x_sub = 0;
+        if (v.word != "") {
+            font.SetPointSize(f_size);
+            dc.SetFont(font);
+            dc.DrawText(v.word,ix1,iy0);
+            tsize = dc.GetMultiLineTextExtent(v.word);
+            ix1 += tsize.x;
+        }
+        if (v.sub_word != "") {
+            font.SetPointSize(sub_size);
+            dc.SetFont(font);
+            tsize = dc.GetMultiLineTextExtent(v.sub_word);
+            dc.DrawText(v.sub_word,ix1 - 2,iy0 + f_size -3);
+            x_sub = tsize.x;
+        }
+        if (v.sup_word != "") {
+            font.SetPointSize(sub_size);
+            dc.SetFont(font);
+            dc.DrawText(v.sup_word,ix1,iy0-2);
+            tsize = dc.GetMultiLineTextExtent(v.sup_word);
+            x_sup = tsize.x;
+        }
+        ix1 += val::Max(x_sub,x_sup);
+    }
+
+    //dc.DrawText(text,ix0,iy0);
+
+    if (active_function == colour) {
+        wxBrush brush;
+        font.SetPointSize(f_size);
+        dc.SetFont(font);
+        tsize = dc.GetMultiLineTextExtent(F[colour].getTextData());
+        brush.SetStyle(wxBrushStyle::wxBRUSHSTYLE_TRANSPARENT);
+        dc.SetBrush(brush);
+        dc.SetPen(wxPen(Color[colour],2));
+        dc.DrawRectangle(ix0-2,iy0-2,ix1 - ix0 + 5,tsize.y + sub_size);
+    }
+
+    dc.SetFont(or_font);
 }
 
 void PlotFunctionFrame::plotcurve(wxDC& dc,const val::d_array<val::d_array<double> > &f,const val::Glist<val::GPair<double>>& cpoints,
@@ -1840,7 +1960,7 @@ void PlotFunctionFrame::plotallfunctions(wxMemoryDC& dc)
                     case myfunction::CIRCLE :
                         plotcircle(dc,farray[i_f],i); break;
                     case myfunction::TEXT :
-                        plottext(dc,farray[i_f],F[i].getTextData(),i);break;
+                        plottext(dc,farray[i_f],i);break;
                     case myfunction::RECTANGLE :
                         plotrectangle(dc,farray[i_f],i);break;
                     case myfunction::TRIANGLE :
@@ -2328,7 +2448,13 @@ void PlotFunctionFrame::OnMenuColours(wxCommandEvent &event)
     }
 
     int i=(evid%4000);
+    changefunctionsettings(i);
+}
 
+
+void PlotFunctionFrame::changefunctionsettings(int i)
+{
+    if (i >= N) return;
     if (F[i].IsText()) {
         TextFontsDialog Dialog(this,Font[i],Color[i]);
         if (Dialog.ShowModal()==wxID_OK) {
@@ -2337,7 +2463,6 @@ void PlotFunctionFrame::OnMenuColours(wxCommandEvent &event)
             Paint();
             WriteText();
         }
-        return;
     }
     else {
         FunctionColorDialog Dialog(this,Color[i],BackgroundColor,pen[i]);
@@ -2347,9 +2472,9 @@ void PlotFunctionFrame::OnMenuColours(wxCommandEvent &event)
             Paint();
             WriteText();
         }
-        return;
     }
 }
+
 
 
 void PlotFunctionFrame::OnMenuResetColours(wxCommandEvent &event)
@@ -2564,6 +2689,7 @@ void PlotFunctionFrame::OnMenuTools(wxCommandEvent &event)
         Entry += "1e-9\n" + val::ToString(sizex) + "\n" + "4";
         ListDialog ldialog(this,List,"Intersection",Entry,240,100,fontsize,wxLB_MULTIPLE,2);
         ldialog.SetSelections(val::d_array<int>({0,1}));
+        ldialog.Move(GetPosition().x+10, GetPosition().y+10);
         if (ldialog.ShowModal() == wxID_CANCEL) return;
         val::d_array<int> selections = ldialog.GetSelections();
         if (selections.length() != 2) return;
@@ -3150,7 +3276,7 @@ void PlotFunctionFrame::ChangeSettings(int command, const std::string &svalue, i
             if (command == AXIS_COLOR) axis_color = color;
             else if (command == GRID_COLOR) grid_color = color;
             else if (command == FUNCTION_COLOR) {
-                if (id > N) return;
+                if (id <= 0 || id > N) return;
                 Color[id-1] = color;
             }
             else {
@@ -3181,7 +3307,7 @@ void PlotFunctionFrame::ChangeSettings(int command, const std::string &svalue, i
             case SHOW_Y_SCALE: menu = y_scaleactiv; break;
             case SHOW_FUNCTION:
                 {
-                    if (id > N) return;
+                    if (id <= 0  || id > N) return;
                     menu = f_menu[id-1];
                 }
                 break;
@@ -3201,7 +3327,7 @@ void PlotFunctionFrame::ChangeSettings(int command, const std::string &svalue, i
         break;
     case FUNCTION_SIZE:
         {
-            if (id > N) return;
+            if (id <= 0 || id > N) return;
             pen[id-1] = val::FromString<int>(svalue);
             if (pen[id-1] <= 0) pen[id-1] = 1;
             Paint();
@@ -3223,6 +3349,12 @@ void PlotFunctionFrame::ChangeSettings(int command, const std::string &svalue, i
             if (abst > 60) abst = 60;
             Paint();
         }
+        break;
+    case FUNCTION_SETTINGS:
+    	{
+            if (id <= 0 || id > N) return;
+            changefunctionsettings(id-1);
+    	}
         break;
     default:
         break;
@@ -3256,7 +3388,7 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
             else if (x_range[f_nr].x!=x1 || x_range[f_nr].y!=x2)
                 fstring+="  [ "+val::ToString(x_range[f_nr].x) + " , " + val::ToString(x_range[f_nr].y) + " ]";
             refreshfunctionstring();
-            }
+        }
         break;
     case ANALYZE: case INTERSECTION:
         {
@@ -3696,7 +3828,14 @@ void PlotFunctionFrame::OnParentEvent(ParentEvent &event)
 
 void PlotFunctionFrame::OnMenuFill(wxCommandEvent &event)
 {
-    int n=fstring.length()-1, id = event.GetId();
+    int id = event.GetId();
+
+    if (id == 7101) {
+        if (active_function != -1) changefunctionsettings(active_function);
+        return;
+    }
+
+    int n=fstring.length()-1;
     double x,y;
 
     if (id == 1009) {
@@ -3862,13 +4001,36 @@ void PlotFunctionFrame::OnMenuFill(wxCommandEvent &event)
 }
 
 
-void PlotFunctionFrame::OnMouseDown(wxMouseEvent &event)
+void PlotFunctionFrame::OnMenuButton(wxCommandEvent&)
 {
-    if (!yset) return;
-
     if (DrawPanel->HasCapture()) return;
 
+    if (active_function != -1) {
+        PopupMenu(rightclickfunctionsmenu);
+        return;
+    }
+    if (!yset) return;
+    wxMouseState m_state = wxGetMouseState();
+    wxPoint P_abs = m_state.GetPosition(), P_cl = DrawPanel->ScreenToClient(P_abs);
+    mouse_x1 = P_cl.x; mouse_y1 = P_cl.y;
+
+    PopupMenu(rightclickmenu);
+}
+
+
+void PlotFunctionFrame::OnMouseDown(wxMouseEvent &event)
+{
+    if (DrawPanel->HasCapture()) return;
+
+    if (active_function != -1) {
+        PopupMenu(rightclickfunctionsmenu);
+        return;
+    }
+
+    if (!yset) return;
+
     mouse_x1=event.GetX();mouse_y1=event.GetY();
+
     PopupMenu(rightclickmenu);
     //mouse_x1=event.GetX();mouse_y1=event.GetY();
     //StatusBar1->SetStatusText(val::ToString(mouse_x1) + " " + val::ToString(mouse_y1));
@@ -4059,6 +4221,7 @@ void PlotFunctionFrame::openfile(const std::string &dirname,const std::string &f
         file>>iwert; Color[i].SetRGB(iwert);
     }
     file>>m;
+    std::getline(file,line);
     Font.resize(m);
     for (i=0;i<m;++i) {
         line="";
@@ -4182,11 +4345,17 @@ int PlotFunctionFrame::findactivefunction(int x, int y)
             break;
         case myfunction::TEXT :
             {
-                ix = val::Max(abst,x);
-                int ix0=abst+int(double(sizex)*((farray[i_f][0]-x1)/(x2-x1)));
+                //ix = val::Max(abst,x);
+                int ix0=abst+int(double(sizex)*((farray[i_f][0]-x1)/(x2-x1))), sx, sy, l = F[i].getTextData().length(), p = Font[i].GetPointSize(), dx, dy;
+
+                sy = p + 10; sx = (l*p*2)/3;
                 iy=yzero -int((double(sizey)/double(y2-y1)) * farray[i_f][1]);
-                if (val::abs(ix-ix0)<15 && val::abs(y-iy) < 15 ) return i;
-                if (val::abs(endx-ix0)<15 && val::abs(y-iy) < 15 ) return i;
+                dx = x -ix0; dy = y - iy;
+
+                if (dx >= 0 && dx <= sx && dy >= 0 && dy <= sy) return i;
+
+                //if (val::abs(ix-ix0)<15 && val::abs(y-iy) < 15 ) return i;
+                //if (val::abs(endx-ix0)<15 && val::abs(y-iy) < 15 ) return i;
                 ++i_f;
             }
             break;
@@ -4596,12 +4765,14 @@ void PlotFunctionFrame::displacefunction(int i,const double &dx1,const double &d
         case myfunction::TEXT :
             {
                 int j,k=0;
-                std::string sf = F[i].getinfixnotation(), nf="";
+                std::string nf="text {" + getstringfrombrackets(F[i].getinfixnotation(), '{', '}') + "}";
+                /*
                 int n = sf.length();
                 for (j = 0; j < n; ++j) {
                     nf += sf[j];
                     if (sf[j] == '}') break;
                 }
+                */
                 for (j = 0; j < i; ++j ) {
                     if (F[j].numberofvariables() == 1) k++;
                 }
@@ -5229,8 +5400,8 @@ void PlotFunctionFrame::CompareSideTextInput()
     for (const auto &v : words) {
         first_word = val::getfirstwordofstring(v,numsep);
         //wxMessageBox(first_word);
-        if ( (m = first_word.length() > 0) && first_word[0] == '#') {
-            s_func = val::tailofstring(v,v.length()-m-3);
+        if ( ((m = first_word.length()) > 0) && first_word[0] == '#') {
+            s_func = val::tailofstring(v,v.length()-m-2);
         }
         else s_func = v;
         fstring += s_func + ";\n";
@@ -5240,6 +5411,17 @@ void PlotFunctionFrame::CompareSideTextInput()
     Compute();
     //WriteText();
 }
+
+
+void PlotFunctionFrame::OnSideBarEvaluate(wxCommandEvent &event)
+{
+    if (!SideText->HasFocus()) return;
+    int n = SideText->GetInsertionPoint();
+    CompareSideTextInput();
+    SideText->SetInsertionPoint(n);
+}
+
+
 
 
 void PlotFunctionFrame::OnLostFocus(wxFocusEvent &event)

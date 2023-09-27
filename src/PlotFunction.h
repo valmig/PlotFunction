@@ -26,7 +26,7 @@ class myfunction;
 
 extern wxFrame *MyFrame;
 extern std::string fstring,xstring,ystring,filesep,filedir,sizestring,tablestring,settingsfile,settingsdir,valdir,iconpath,savefiledir,
-                   openfiledir,handcursor,RecentFilesPath,alticonpath;
+                   openfiledir,handcursor,RecentFilesPath,alticonpath, RecentCommandsPath;
 
 //extern std::mutex compute_mutex;
 extern myfunction global_function;
@@ -34,6 +34,8 @@ extern val::d_array<val::Glist<val::GPair<double>>> critpoints;//,undef_interval
 extern val::d_array<val::d_array<double>> critx;
 extern val::d_array<std::string> analyze_output;
 extern val::d_array<val::d_array<val::GPair<double>>> Points;
+extern const val::d_array<wxString> greek_literals;
+extern const val::d_array<wxString> greek_letters;
 extern const val::d_array<wxColour> defaultcolors;
 extern const val::d_array<std::string> defaultcolornames;
 extern const val::d_array<std::string> CommandsList;
@@ -55,7 +57,7 @@ enum val_colors{BLUE,RED,GREEN,LBLUE,ORANGE,VIOLET,GREY,WHITE,BlACK,LGREY,YELLOW
 
 enum val_settings{AXIS_SCALE,AXIS_COLOR,GRID_SCALE,GRID_COLOR,VALUES_NUMBER,AXIS_RANGE,SHOW_X_AXIS,SHOW_Y_AXIS,SHOW_GRID,SHOW_X_SCALE,
                     SHOW_Y_SCALE,RESET_COLORS,FONT_SIZE,FUNCTION_COLOR,PANEL_SIZE,AXIS_NAMES,REGRESSION_DEGREE,POINT_DECIMALS,
-                    SHOW_FUNCTION,BACKGROND_COLOR,PARAMETER_VALUES,FUNCTION_SIZE,MARGIN,AXIS_FONTSIZE};
+                    SHOW_FUNCTION,BACKGROND_COLOR,PARAMETER_VALUES,FUNCTION_SIZE,MARGIN,AXIS_FONTSIZE,FUNCTION_SETTINGS};
 
 enum val_commands{DERIVE,ANALYZE,TANGENT,NORMAL,INTERPOLATION,REGRESSION,TABLE,INTEGRAL,ARCLENGTH,ZERO_ITERATION,MOVE,EVALUATE,INTERSECTION};
 
@@ -132,6 +134,8 @@ void gettangentvalues(const myfunction &f,const double &x,double &m,double &b,in
 
 std::string extractstringfrombrackets(std::string &sf,const char lb, const char rb);
 
+std::string getstringfrombrackets(const std::string &sf,const char lb, const char rb);
+
 // Returns color index if specified, -1 else.
 int getfunctionfromstring(std::string &fstring,std::string& f_s,double &x1,double &x2);
 
@@ -198,7 +202,12 @@ double integral(const T& f,const double &a,const double &b,int iter = 50, const 
 //template <class T>
 //int SecantMethod(const T& f,double& x0,double& x1,const double& eps,int n);
 
+//----------------------------------------------------------------------------------------------------------------------------------------
 
+struct drawingword
+{
+    wxString word, sub_word, sup_word;
+};
 
 //-----------------------------   class myfunction ----------------------------------------------------------------------------------------
 
@@ -209,9 +218,9 @@ public:
     myfunction() = default;
     explicit myfunction(const std::string &s) {infix_to_postfix(s);}
     myfunction(const myfunction&);
-    myfunction(myfunction &&f) {Gdat=std::move(f.Gdat);t=std::move(f.t);s_infix=std::move(f.s_infix);textdata=std::move(f.textdata);nvar=f.nvar;withpar=f.withpar;isrational=f.isrational;isline=f.isline;istext=f.istext;mode=f.mode;}// Gdat(std::move(f.Gdat)), t(std::move(f.t)), s_infix(std::move(f.s_infix)) {nvar=f.nvar;}//{Gdat=std::move(f.Gdat);t=f.t;}
+    myfunction(myfunction &&f) {Gdat=std::move(f.Gdat);t=std::move(f.t);s_infix=std::move(f.s_infix);textdata=std::move(f.textdata);TextWords=std::move(f.TextWords);nvar=f.nvar;withpar=f.withpar;isrational=f.isrational;isline=f.isline;istext=f.istext;mode=f.mode;}// Gdat(std::move(f.Gdat)), t(std::move(f.t)), s_infix(std::move(f.s_infix)) {nvar=f.nvar;}//{Gdat=std::move(f.Gdat);t=f.t;}
     const myfunction& operator=(const myfunction&) = delete;
-    const myfunction& operator= (myfunction&& f) {Gdat=std::move(f.Gdat);s_infix=std::move(f.s_infix);textdata=std::move(f.textdata);nvar=f.nvar;withpar=f.withpar;isrational=f.isrational;isline=f.isline;istext=f.istext;mode=f.mode;return *this;}
+    const myfunction& operator= (myfunction&& f) {Gdat=std::move(f.Gdat);s_infix=std::move(f.s_infix);textdata=std::move(f.textdata);TextWords=std::move(f.TextWords);nvar=f.nvar;withpar=f.withpar;isrational=f.isrational;isline=f.isline;istext=f.istext;mode=f.mode;return *this;}
     const myfunction& infix_to_postfix(const std::string &s);
     template <class T> T operator() (const T&) const;
     template <class T> val::pol<T> getpol(const T& a,const char var='x') const; // Polynom p(Y) = f(a,Y);
@@ -223,6 +232,7 @@ public:
     void getFillPoints(double& x,double& y, double& transparancy) const;
     val::d_array<double> getPolygonPoints() const;
     const wxString& getTextData() const {return textdata;}
+    const val::Glist<drawingword>& getTextWords() const {return TextWords;}
     void setparameter(const double &a) {t=a;}
     const double& getparameter() const {return t;}
     const std::string& getinfixnotation() const {return s_infix;}
@@ -264,6 +274,7 @@ private:
     val::Glist<token> Gdat;
     std::string s_infix="";
     wxString textdata="";
+	val::Glist<drawingword> TextWords;
     int nvar=1,withpar=0,isrational=1,isline=0,istext=0;
     modetype mode=FUNCTION;
     void settextdata();
