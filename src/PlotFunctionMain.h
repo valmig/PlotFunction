@@ -24,8 +24,8 @@
 #include <Glist.h>
 #include <val_basics.h>
 #include <rational.h>
+#include <string>
 #include "valControls.h"
-#include <val_wx/valControls.h>
 
 
 class MyThreadEvent;
