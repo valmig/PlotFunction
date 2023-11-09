@@ -134,6 +134,7 @@ public:
     ~SwitchCtrl() {}
     bool GetValue() const {return is_active;}
     void SetValue(bool value);
+    void ChangeValue(bool value);
 private:
     wxWindow *Parent=nullptr;
     int identity=0;

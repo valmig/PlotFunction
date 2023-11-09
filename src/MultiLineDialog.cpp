@@ -415,6 +415,9 @@ void AnalysisDialog::OnShortCuts(wxCommandEvent &event)
     int i =event.GetId()%4000;
     if (checkbox[i]->GetValue()) checkbox[i]->SetValue(false);
     else checkbox[i]->SetValue(true);
+    //wxCommandEvent s_event(val_EVENT_SWITCH,2000+i);
+    //wxPostEvent(this,s_event);
+    //ProcessWindowEvent(s_event);
     //Paint(i);
 }
 

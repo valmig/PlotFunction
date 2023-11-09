@@ -664,7 +664,7 @@ void getpolsincos(int n,const val::valfunction& a, const val::valfunction &c,con
 	g.insert(sg*coeff,n);
 
 	for (int i = 1; i <= n; ++i) {
-		coeff *= val::valfunction(val::ToString("n-i+1"));
+		coeff *= val::valfunction(val::ToString(n-i+1));
 		coeff = coeff / a;
 		if (i%2) {
 			f.insert(sf*coeff,n-i);
@@ -1132,14 +1132,14 @@ val::valfunction integral(const val::valfunction &f, int k)
 		if (n <= 1) {
 			if (operindex == 0) { // exp
 				pol<valfunction> P;
-				for (int i = 0; i <= n; ++i) P += hintegral::getpolfromintegralexppol(i,parg.LC(),pfactor[i]);
+				for (int i = 0; i <= pfactor.degree(); ++i) P += hintegral::getpolfromintegralexppol(i,parg.LC(),pfactor[i]);
 				h = P(valfunction(svar));
 				h1 = valfunction("exp(x)")(h1);
 				return h * h1;
 			}
 			else if (operindex <= 2) {    // sin or cos:
 				pol<valfunction> fh,gh,P,Q;
-				for (int i = 0; i <= n; ++i) {
+				for (int i = 0; i <= pfactor.degree(); ++i) {
 					hintegral::getpolsincos(i,parg.LC(),pfactor[i],hintegral::escop[operindex],fh,gh);
 					P += fh; Q += gh;
 				}

@@ -23,21 +23,24 @@ std::string filesep="\\", filedir=val::CurrentHomeDir(), valdir = val::CurrentHo
             settingsdir = valdir + "\\PlotFuncion", settingsfile=settingsdir + "\\settings.txt",
             iconpath="C:\\gccprogrammes\\Plot\\PlotFunction\\icon\\MV_plot.xpm",
             handcursor="C:\\gccprogrammes\\Plot\\PlotFunction\\icon\\hand.png",
-            alticonpath = val::GetExeDir() + "\\MV_plot.xpm";
+            alticonpath = val::GetExeDir() + "\\MV_plot.xpm",
+    		errorfile = settingsdir + "\\error.log";
 #endif // _WIN32
 #ifdef __LINUX__
 std::string filesep="/",filedir=val::CurrentHomeDir(), valdir= val::CurrentHomeDir() + "/.config/MVPrograms",
             settingsdir = valdir + "/PlotFunction", settingsfile=settingsdir + "/settings.conf",
             iconpath = val::CurrentHomeDir() + "/.local/share/icons/MVPrograms/MV_Plot.xpm",
             handcursor = val::CurrentHomeDir() + "/.local/share/icons/MVPrograms/hand.png",
-            alticonpath = val::CurrentHomeDir() + "/.local/share/icons/MVPrograms/MV_Plot.xpm";
+            alticonpath = val::CurrentHomeDir() + "/.local/share/icons/MVPrograms/MV_Plot.xpm",
+    		errorfile = settingsdir + "/error.log";
 #endif
 #ifdef __APPLE__
 std::string filesep="/",filedir=val::CurrentHomeDir(), valdir= val::CurrentHomeDir() + "/Library/Application Support",
             settingsdir = valdir + "/PlotFunction", settingsfile=settingsdir + "/settings.conf",
             iconpath = val::CurrentHomeDir() + "/.local/share/icons/MVPrograms/MV_Plot.xpm",
             handcursor = val::CurrentHomeDir() + "/.local/share/icons/MVPrograms/hand.png",
-            alticonpath = val::GetExeDir() + "/../Resources/MV_Plot.xpm";
+            alticonpath = val::GetExeDir() + "/../Resources/MV_Plot.xpm",
+    		errorfile = settingsdir + "/error.log";
 #endif //
 
 std::string RecentFilesPath = settingsdir + filesep + "recentfiles.txt";

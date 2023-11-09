@@ -642,6 +642,15 @@ void SwitchCtrl::SetValue(bool value)
     SendEvent();
 }
 
+void SwitchCtrl::ChangeValue(bool value)
+{
+    if (is_active==value) return;
+    is_active = value;
+    Paint();
+}
+
+
+
 
 void SwitchCtrl::Paint()
 {
