@@ -337,6 +337,7 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     rightclickmenu->AppendSeparator();
     rightclickmenu->Append(1008,_T("Copy Image\tCtrl-C"));
     rightclickmenu->Append(1009,_T("Paste Image to Background\tCtrl-V"));
+    rightclickmenu->Append(1012,_T("Change Background Color \tShift-Ctrl-B"));
     //
     rightclickfunctionsmenu = new wxMenu();
     rightclickfunctionsmenu->Append(7101,_T("Change Settings"));
@@ -398,6 +399,7 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1009);         // Paste from Clipboard
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1010);         // DrawRectangle
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1011);         // DrawRectangle
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuColours,this,1012);      // Background Color
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,7101);         // Change Settings for marked function
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnInputDialog,this,5011);      // Opens InputDialog
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnSideBarEvaluate,this,5020);  // Evaluate input in SideBar
@@ -1648,6 +1650,14 @@ void PlotFunctionFrame::plotfill(wxMemoryDC& dc,const val::d_array<double> &f,in
     iy=yzero -int((double(sizey-1)/double(y2-y1)) * f[1]);
 
     dc.SetPen(wxPen(col,1));
+#ifdef _WIN32
+    bgc = BackgroundColor;
+    wxBrush brush(col);
+    dc.SetBrush(brush);
+    dc.FloodFill(ix,iy,bgc);
+    return;
+#endif // _WIN32
+
     valFloodFill(dc,ix,iy,col);
 /*
 #ifndef __APPLE__
@@ -2082,7 +2092,6 @@ void PlotFunctionFrame::OnDrawPanelPaint(wxPaintEvent &event)
 {
     event.Skip();
     if (!ispainted || iscomputing) return;
-    npainted++;
 #ifndef _WIN32
     iscomputing=1;
     Paint();
@@ -2390,7 +2399,7 @@ void PlotFunctionFrame::OnMenuColours(wxCommandEvent &event)
 {
     int evid = event.GetId();
 
-    if (evid==4400) {
+    if (evid==4400 || evid==1012) {
         wxColourData data;
         data.SetColour(BackgroundColor);
         wxColourDialog dialog(this,&data);

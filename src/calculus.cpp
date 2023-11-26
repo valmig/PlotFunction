@@ -1584,7 +1584,13 @@ void analize_rationalfunction(val::valfunction& F,const double& eps,int dec)
     val::realRoots(f_d,zeros,eps);
     N = zeros.dimension();
     //if (!N) os+="\nKeine Extrema.";
-    analyze_output[3]+="f''(x) = " +PolfractionToString(F_r) + "\n";
+    //analyze_output[3]+="f''(x) = " +PolfractionToString(F_r) + "\n";
+    if (F_r.denominator().degree() == 0) {
+        analyze_output[3] += "f''(x) = " + val::PolToString((val::rational(1)/F_r.denominator().LC())*F_r.nominator()) + "\n";
+        analyze_output[3] += "      = " + PolfractionToString(F_r) + "\n";
+    }
+    else analyze_output[3]+="f''(x) = " +PolfractionToString(F_r) + "\n";
+
     //analyze_output[3]+="f''(x) = (" + val::PolToString(F_r.nominator()) + ")/" + val::PolToString(F_r.denominator()) + "\n";
     //os+="\n\nf''(x) = " + factorize(F_r) + "\n";
     if (N) {
