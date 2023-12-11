@@ -1216,7 +1216,7 @@ val::valfunction integral(const val::valfunction &f, int k)
 }
 
 
-
+/*
 void computeintegral(const myfunction& f,val::rational x1,val::rational x2,double delta,int n,int dez,int arclength)
 {
     using namespace val;
@@ -1284,8 +1284,83 @@ void computeintegral(const myfunction& f,val::rational x1,val::rational x2,doubl
 
     if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event.Clone() );
 }
+*/
 
 
+void computeintegral(const myfunction& f,std::string x1,std::string x2,double delta,int n,int dez,int arclength)
+{
+    using namespace val;
+    MyThreadEvent event(MY_EVENT,IdIntegral);
+    int k=isderived(f),exact=0;
+    double a = val::FromString<double>(x1), b=FromString<double>(x2),wert,exwert = 0;
+    //val::rational r_wert;
+    //val::DoubleFunction g;
+    val::valfunction g, symbolic;
+    std::string name="";
+
+    if (arclength) {
+        if (f.isdifferentiable()) {
+            val::valfunction h("sqrt(x^2 + 1)"),g(f.getinfixnotation());
+            g=g.derive(); //g=g*g; g+=val::valfunction("1");
+            h=h(g);
+            //name += h.getinfixnotation() + "\n";
+            //name = h.getinfixnotation() + "  ;";
+            wert=integral(h,a,b,n,delta);
+        }
+        else {
+            //val::DoubleFunction g1=val::DoubleFunction(val::doublefunction(std::bind(std::cref(f),std::placeholders::_1))).derive();
+            val::valfunction g1(val::valfunction(f.getinfixnotation()).derive());
+            g1 = g1*g1;
+            //g1 += val::DoubleFunction(1);
+            g1 += val::valfunction("1");
+            //g = DoubleFunction(sqrt)(g1);
+            g = val::valfunction("sqrt")(g1);
+            wert = integral(g,a,b,n,delta);
+        }
+        name+="arclength( ";
+        //g = val::DoubleFunction(sqrt) (val::DoubleFunction(val::doublefunction(std::bind(std::cref(f),std::placeholders::_1))).derive() + val::DoubleFunction(1));
+    }
+    /*
+    else if (f.numberofvariables()<=1 && f.ispolynomialfunction()) {
+        ispol=1;
+        val::pol<val::rational> p=f.getpol(val::rational(0),'y');
+        r_wert=p.integrate(FromString<rational>(x1),FromString<rational>(x2));
+    }
+    */
+    if (!arclength) {
+        if (k) {
+            wert=derive(f,b,k-1) - derive(f,a,k-1);
+        }
+        else wert=integral(f,a,b,n,delta);
+        {
+            val::valfunction F= integral(val::valfunction(f.getinfixnotation()));
+            if (!F.is_zero()) {
+                name += "integral("+f.getinfixnotation()+") \n= " + F.getinfixnotation() + "\n\n";
+                exact = 1;
+                valfunction A(x1), B(x2);
+                exwert = F(b) - F(a);
+                symbolic = F(B) - F(A);
+            }
+
+        }
+        name+="integral( ";
+    }
+
+    int wprec = intdigits(wert) + dez, eprec = intdigits(exwert) + dez;
+    wprec = val::Min(wprec,val::MaxPrec);
+    eprec = val::Min(eprec,val::MaxPrec);
+
+    tablestring = name + f.getinfixnotation() + " ; " + ToString(x1) + " ; " + ToString(x2) + " ) =\n";
+    //if (ispol) tablestring+= ToString(r_wert) + "\n\ndouble:   ";
+    if (exact) {
+        tablestring += "Symbolic over stammfunction:\n" + symbolic.getinfixnotation() + ";\n double over stammfunction: ";
+        tablestring += ToString(val::round(exwert,dez),eprec) + ";\n\ndouble:   ";
+    }
+    tablestring+=ToString(val::round(wert,dez),wprec);
+    if (k==0) tablestring+= "\nPrecision : " + ToString(delta) + " , Round to decimal: " + ToString(dez) + "\nIterations : " + ToString(n);
+
+    if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event.Clone() );
+}
 
 std::string compute_partialfraction(const val::valfunction &f)
 {

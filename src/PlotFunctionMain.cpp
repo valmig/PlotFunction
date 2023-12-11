@@ -1202,7 +1202,7 @@ void PlotFunctionFrame::plotvertices(wxDC& dc)
     sizey=sz.y-2*abst;
 
     if (sizex <320) {nsize-=2;dscale--;dx--;dy--;}
-    if (sizex < 220) {nsize -=2;dscale--;dx--;dy--;pen--;}
+    if (sizex < 220) {nsize -=2;dscale--;dx--;dy--;}  // evtl. pen--
     if (nsize < 2) nsize =2;
     italicfont.SetPointSize(nsize);
 
@@ -3637,7 +3637,8 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
             if (delta>0.1) delta=0.1;
 
             if (command == INTEGRAL || command == ARCLENGTH) {
-                std::thread t(computeintegral,std::cref(F[f_nr]),xr1,xr2,delta,iter,dez,arclength);
+                //std::thread t(computeintegral,std::cref(F[f_nr]),xr1,xr2,delta,iter,dez,arclength);
+                std::thread t(computeintegral,std::cref(F[f_nr]),s_values[3],s_values[4],delta,iter,dez,arclength);
                 t.detach();
                 return;
             }

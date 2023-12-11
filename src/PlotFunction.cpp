@@ -80,12 +80,13 @@ functionpairs ({ {"sqrt",val::sqrt}, {"abs",val::abs}, {"exp", val::exp}, {"log"
             {"cosh", val::cosh}, {"tanh", val::tanh}, {"arsinh", val::arsinh}, {"arcosh", val::arcosh}, {"artanh", val::artanh}});
 
 
-const val::d_array<wxColour> defaultcolors{wxColour(0,0,255), wxColour(255,0,0), wxColour(0,255,0), wxColour(0,236,246),
+const val::d_array<wxColour> defaultcolors{wxColour(0,0,255), wxColour(255,0,0), wxColour(0,255,0), wxColour(173,216,230),
                                       wxColour(255,116,0), wxColour(238,0,255), wxColour(125,125,125), wxColour(255,255,255),
-                                      wxColour(0,0,0), wxColour(191,191,191), wxColour(255,255,0), wxColour(0,128,0), wxColour(245,245,220), wxColour(165,42,42) };
+                                      wxColour(0,0,0), wxColour(191,191,191), wxColour(255,255,0), wxColour(0,128,0), wxColour(245,245,220), wxColour(165,42,42),
+                                      wxColour(0,0,128), wxColour(255,192,203), wxColour(135,206,235), wxColour(144,238,144)};
 
 const val::d_array<std::string> defaultcolornames{"blue", "red", "green", "lblue", "orange", "violet", "grey", "white", "black",
-                                "lgrey", "yellow", "dgreen", "beige", "brown" };
+                                "lgrey", "yellow", "dgreen", "beige", "brown", "dblue", "pink", "skyblue", "lgreen" };
 
 const val::d_array<std::string> SettingsList({"axis-scale", "axis-color", "grid-scale", "grid-color", "values-number", "axis-range", "show-x-axis",
                                 "show-y-axis", "show-grid" , "show-x-scale", "show-y-scale" , "reset-colors", "font-size", "function-color", "panel-size", "axis-names", "regression-degree",
