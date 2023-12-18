@@ -91,7 +91,7 @@ const val::d_array<std::string> defaultcolornames{"blue", "red", "green", "lblue
 const val::d_array<std::string> SettingsList({"axis-scale", "axis-color", "grid-scale", "grid-color", "values-number", "axis-range", "show-x-axis",
                                 "show-y-axis", "show-grid" , "show-x-scale", "show-y-scale" , "reset-colors", "font-size", "function-color", "panel-size", "axis-names", "regression-degree",
                                 "point-decimals", "show-function", "background-color", "parameter-values", "function-size", "margin",
-                                "axis-fontsize", "function-settings" });
+                                "axis-fontsize", "function-settings", "move-increment" });
 
 const val::d_array<std::string> SettingsParList({"axis-scale sx [sy]	<Shift-Alt-S>",
                                               "axis-color def. color / Red Green Blue	<Shift-Ctrl-A>",
@@ -117,7 +117,8 @@ const val::d_array<std::string> SettingsParList({"axis-scale sx [sy]	<Shift-Alt-
                                               "function-size [#nr = 1] unsigned int    <Ctrl-nr>",
                                               "margin unsigned int    <Shift-Alt-S>",
                                               "axis-fontsize unsigned int    <Shift-Ctrl-F>",
-                                              "function-settings [nr=1]"
+                                              "function-settings [nr=1]",
+                                              "move-increment (p for pixels)    <Ctrl-M>"
                                              });
 
 const val::d_array<std::string> CommandsList({"derive", "analyze", "tangent", "normal", "interpolation", "regression", "table", "integral",

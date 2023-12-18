@@ -1120,10 +1120,12 @@ val::valfunction integral(const val::valfunction &f, int k)
 		break;
 	}
 
-	if (firstop == "+") {
-		return integral(g,k) + integral(f.getsecondargument(),k);
+	if (firstop == "+" || firstop == "-") {
+        valfunction f1 = integral(g,k), f2 = integral(f.getsecondargument(),k);
+        if (f1.is_zero() || f2.is_zero()) return valfunction();
+        if (firstop == "+") return (f1 + f2);
+        else return (f1 - f2);
 	}
-	else if (firstop == "-") return integral(g,k) - integral(f.getsecondargument(),k);
 	else if (firstop == "m") return -integral(g,k);
 	else if ((operindex = hintegral::isoppolynomial(f,k)) != -1) {  // case f = polynomial * oper(ax +b)
 		valfunction h = hintegral::getrationalfrom_oprat(f,hintegral::escop[operindex]), h1 = hintegral::getopargumentfrom_oprat(f,hintegral::escop[operindex]);
@@ -1823,7 +1825,13 @@ void analyze_exprationalfunction(const val::valfunction &f,const double &eps=1e-
         analyze_output[2] += PolfractionToString(F_r) + "*" + "exp(" + Exp.getinfixnotation() + ").\n";
     }
 
-
+    if (f_r.degree() == 0) {
+        analyze_output[2] += "\n\nNo extrema.";
+        analyze_output[3] += "No infection points.";
+        MyThreadEvent event(MY_EVENT,IdAnalyze);
+        if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event.Clone() );
+        return;
+    }
     f_r /= val::gcd(f_r,f_r.derive());
     f_d = val::ToDoublePolynom(f_r);
     val::realRoots(f_d,zeros,eps);
@@ -1907,6 +1915,13 @@ void analyze_exprationalfunction(const val::valfunction &f,const double &eps=1e-
     if (F_r.denominator().degree() < 1) analyze_output[3] += F.getinfixnotation() + "\n";
     else {
         analyze_output[3] += PolfractionToString(F_r) + "*" + "exp(" + Exp.getinfixnotation() + ").\n";
+    }
+
+    if (f_r.degree() == 0) {
+        analyze_output[3] += "\nNo infection points.";
+        MyThreadEvent event(MY_EVENT,IdAnalyze);
+        if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event.Clone() );
+        return;
     }
 
     pm=mp=0;

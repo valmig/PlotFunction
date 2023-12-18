@@ -512,6 +512,7 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
 PlotFunctionFrame::~PlotFunctionFrame()
 {
     using namespace std;
+    ispainted = 0;
     //std::ofstream file(val::GetExeDir()+filesep+"settings.txt",ios::out | ios::trunc);
     std::ofstream file(settingsfile,ios::out | ios::trunc);
     if (file) {
@@ -549,6 +550,12 @@ PlotFunctionFrame::~PlotFunctionFrame()
     file4.close();
 
     if (DrawPanel->HasCapture()) DrawPanel->ReleaseMouse();
+    for (auto &v : ViewSwitches) {
+        delete v;
+    }
+    for (auto &v : Set_TextEdit ) {
+        delete v;
+    }
     //(*Destroy(PlotFunctionFrame)
     //*)
 }
@@ -769,6 +776,9 @@ void PlotFunctionFrame::ResetColours()
 void PlotFunctionFrame::GetSettings()
 {
 
+    while (iscomputing) {
+        wxYield();
+    }
     ispainted=0;
     F.dellist();
     x_range.dellist();
@@ -2090,7 +2100,7 @@ void PlotFunctionFrame::plottomemoryDc(wxMemoryDC &memDC)
 
 void PlotFunctionFrame::OnDrawPanelPaint(wxPaintEvent &event)
 {
-    event.Skip();
+    //event.Skip();
     if (!ispainted || iscomputing) return;
 #ifndef _WIN32
     iscomputing=1;
@@ -2101,7 +2111,7 @@ void PlotFunctionFrame::OnDrawPanelPaint(wxPaintEvent &event)
 
 void PlotFunctionFrame::OnDrawPanelResize(wxSizeEvent &event)
 {
-    event.Skip();
+    //event.Skip();
     if (!ispainted || iscomputing) return;
 #ifdef _WIN32
     iscomputing=1;
@@ -3411,6 +3421,39 @@ void PlotFunctionFrame::ChangeSettings(int command, const std::string &svalue, i
             changefunctionsettings(id-1);
     	}
         break;
+    case MOVEINC:
+    	{
+      		val::d_array<char> separators({';'});
+      		val::Glist<std::string> values = getwordsfromstring(svalue, separators);
+      		int n = values.length(), l;
+
+
+            moveinpointsx = moveinpointsy = 0;
+
+      		if (n > 0) {
+        		l = values[0].length();
+        		if (values[0][l - 1] == 'p') {
+          			moveinpointsx = 1;
+          			values[0].resize(l - 1);
+        		}
+        		movedx = val::FromString<double>(values[0]);
+        		moveinpointsy = moveinpointsx;
+       	 	movedy = movedx;
+      		}
+      		if (n > 1) {
+        		l = values[1].length();
+                if (values[1][l - 1] == 'p') {
+          			moveinpointsy = 1;
+          			values[1].resize(l - 1);
+        		}
+                else moveinpointsy = 0;
+        		movedy = val::FromString<double>(values[1]);
+      		}
+            if (movedx <= 0) movedx = 0.1;
+            if (movedy <= 0) movedy = 0.1;
+            Text_Editrefresh();
+    	}
+        break;
     default:
         break;
     }
@@ -3608,6 +3651,7 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
             if (id == 7008) command = ZERO_ITERATION;
 
             val::rational xr1,xr2;
+            std::string sxr1, sxr2;
 
             val::d_array<char> sep({'\n', ';', ' '});
             val::Glist<std::string> s_values = getwordsfromstring(svalue,sep);
@@ -3626,9 +3670,8 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
             if (n>0) dez = val::FromString<int>(s_values[0]);
             if (n>1) iter = val::FromString<int>(s_values[1]);
             if (n>2) delta = val::FromString<double>(s_values[2]);
-            if (n>3) xr1 = val::FromString<val::rational>(s_values[3]);
-            if (n>4) xr2 = val::FromString<val::rational>(s_values[4]);
-
+            if (n>3) {sxr1 = s_values[3]; xr1 = val::FromString<val::rational>(sxr1);}
+            if (n>4) {sxr2 = s_values[4]; xr2 = val::FromString<val::rational>(sxr2);}
             if (dez<0) dez = 0;
             if (dez>10) dez=10;
             if (iter<40) iter=40;
@@ -3638,7 +3681,7 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
 
             if (command == INTEGRAL || command == ARCLENGTH) {
                 //std::thread t(computeintegral,std::cref(F[f_nr]),xr1,xr2,delta,iter,dez,arclength);
-                std::thread t(computeintegral,std::cref(F[f_nr]),s_values[3],s_values[4],delta,iter,dez,arclength);
+                std::thread t(computeintegral,std::cref(F[f_nr]),sxr1,sxr2,delta,iter,dez,arclength);
                 t.detach();
                 return;
             }
@@ -3686,7 +3729,7 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
                 c_menu[f_nr]->SetItemLabel(s + tc);
             }
 
-            iscomputing = 1;
+            //iscomputing = 1;
             Compute(f_nr);
             return;
         }
@@ -3713,8 +3756,35 @@ void PlotFunctionFrame::OnMoveMenu(wxCommandEvent &)
     if (movedialog.ShowModal() == wxID_CANCEL) return;
     svalue=movedialog.GetSettingsText();
     if (svalue=="") return;
+    ChangeSettings(MOVEINC,svalue);
 
-    int i,n=svalue.size() , nfound = 0, m;
+    /*
+    val::d_array<char> separators(';');
+    val::Glist<std::string> values = getwordsfromstring(svalue,separators);
+    int n = values.length(), l;
+
+    if (n > 0) {
+        l = values[0].length();
+        if (values[0][l-1] == 'p') {
+            moveinpointsx = 1;
+            values[0].resize(l-1);
+        }
+        movedx = val::FromString<double>(values[0]);
+        moveinpointsy = moveinpointsx;
+        movedy = movedx;
+    }
+    if (n > 1) {
+        l = values[1].length();
+        if (values[1][l-1] == 'p') {
+            moveinpointsy = 1;
+            values[0].resize(l-1);
+        }
+        else moveinpointsy = 0;
+        movedy = val::FromString<double>(values[0]);
+    }
+
+
+  	int i,n=svalue.size() , nfound = 0, m;
     std::string swert;
 
     moveinpointsx = moveinpointsy = 0;
@@ -3741,16 +3811,15 @@ void PlotFunctionFrame::OnMoveMenu(wxCommandEvent &)
         }
         else swert += svalue[i];
     }
-
     if (movedy == 0) {
         movedy = movedx;
         moveinpointsy = moveinpointsx;
     }
 
-
     if (movedx <= 0) movedx = 0.1;
     if (movedy <= 0) movedy = 0.1;
     Text_Editrefresh();
+    */
 }
 
 
@@ -4105,7 +4174,7 @@ void PlotFunctionFrame::OnMouseWheel(wxMouseEvent &event)
 
     //if (f<0) return;
     if (!iscomputing) {
-        iscomputing=1;
+        //iscomputing=1;
         x1*=zoom;x2*=zoom;y1*=zoom;y2*=zoom;
         zoom=1.0;
         xstring=val::ToString(x1) + ";" + val::ToString(x2);
@@ -4695,14 +4764,14 @@ void PlotFunctionFrame::OnMouseMoved(wxMouseEvent &event)
         displacefunction(active_function,dx1,-dy1);
         mouse_x1=mousex;
         mouse_y1=mousey;
-        iscomputing = 1;
+        //iscomputing = 1;
         Compute(active_function,0);
     }
     else {
         x1=mx1-dx1; x2=mx2-dx1; y1=my1+dy1; y2=my2+dy1;
         xstring=val::ToString(x1) + ";" + val::ToString(x2);
         ystring=val::ToString(y1) + ";" + val::ToString(y2);
-        iscomputing=1;
+        //iscomputing=1;
         Compute(-1,0);
     }
     //computemutex.lock();
@@ -4740,7 +4809,7 @@ void PlotFunctionFrame::OnMouseReleased(wxMouseEvent &event)
             ++i;
         }
         refreshfunctionstring();
-        iscomputing=1;
+        //iscomputing=1;
         active_function=-1;
         GetSettings();
         Compute();
@@ -5105,6 +5174,7 @@ void PlotFunctionFrame::OnZoom(wxCommandEvent &event)
             if (fs >100) fs = 100;
             Font[active_function].SetPointSize(fs);
         }
+        iscomputing = 1;
         Paint();
         return;
     }
@@ -5112,7 +5182,7 @@ void PlotFunctionFrame::OnZoom(wxCommandEvent &event)
     if (id == 20001) zoom*=0.96;
     else zoom*=1.04;
     if (!iscomputing) {
-        iscomputing=1;
+        //iscomputing=1;
         x1*=zoom;x2*=zoom;y1*=zoom;y2*=zoom;
         zoom=1.0;
         xstring=val::ToString(x1) + ";" + val::ToString(x2);
@@ -5189,7 +5259,7 @@ void PlotFunctionFrame::OnMove(wxCommandEvent &event)
         xstring=val::ToString(x1) + ";" + val::ToString(x2);
         ystring=val::ToString(y1) + ";" + val::ToString(y2);
         movex=movey=0;
-        iscomputing=1;
+        //iscomputing=1;
         Compute();
     }
 
@@ -5717,8 +5787,8 @@ void PlotFunctionFrame::ProcessText_Edit(int id)
         case PNSIZE: ChangeSettings(PANEL_SIZE,svalue,22); break;
         case SMARGIN: ChangeSettings(MARGIN,svalue); break;
         case PDEC: ChangeSettings(POINT_DECIMALS,svalue); break;
-        case MOVINC:
-	        {
+        case MOVINC: ChangeSettings(MOVEINC,svalue); break;
+/*	        {
 	            val::d_array<char> sep{' ', ';'};
 	            val::Glist<std::string> values = getwordsfromstring(svalue, sep);
 	            if (values.isempty()) return;
@@ -5726,7 +5796,7 @@ void PlotFunctionFrame::ProcessText_Edit(int id)
                 movedx = movedy = val::FromString<double>(values[0]);
                 if (n > 1) movedy = val::FromString<double>(values[1]);
             }
-            break;
+*/
         case PARVAL: ChangeSettings(PARAMETER_VALUES,svalue); break;
         case REGDEG: ChangeSettings(REGRESSION_DEGREE,svalue); break;
     }
@@ -5742,7 +5812,10 @@ void PlotFunctionFrame::switchrefresh()
 void PlotFunctionFrame::Text_Editrefresh()
 {
     wxSize Psize = DrawPanel->GetSize();
-    std::string sp = "";
+    std::string sp = "", mvstrx = val::ToString(movedx), mvstry = val::ToString(movedy);
+
+    if (moveinpointsx) mvstrx += " p";
+    if (moveinpointsy) mvstry += " p";
 
     for (const auto &v : Parameter) {
         sp += val::ToString(v) + "; ";
@@ -5752,6 +5825,6 @@ void PlotFunctionFrame::Text_Editrefresh()
     Set_TextEdit[GSCALE]->SetValue(sgx_scale + " ; " + sgy_scale); Set_TextEdit[ANAME]->SetValue(x_axis + " ; " + y_axis);
     Set_TextEdit[AFSIZE]->SetValue(val::ToString(axis_fontsize)); Set_TextEdit[PNSIZE]->SetValue(val::ToString(Psize.x) + " ; " + val::ToString(Psize.y));
     Set_TextEdit[SMARGIN]->SetValue(val::ToString(abst)); Set_TextEdit[PDEC]->SetValue(val::ToString(rounddrawingpoints));
-    Set_TextEdit[MOVINC]->SetValue(val::ToString(movedx) + " ; "+ val::ToString(movedy));
+    Set_TextEdit[MOVINC]->SetValue(mvstrx + " ; " + mvstry);
     Set_TextEdit[PARVAL]->SetValue(sp); Set_TextEdit[REGDEG]->SetValue(val::ToString(regressiondegree));
 }
