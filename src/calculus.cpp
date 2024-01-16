@@ -1340,8 +1340,8 @@ void computeintegral(const myfunction& f,std::string x1,std::string x2,double de
                 name += "integral("+f.getinfixnotation()+") \n= " + F.getinfixnotation() + "\n\n";
                 exact = 1;
                 valfunction A(x1), B(x2);
-                exwert = F(b) - F(a);
                 symbolic = F(B) - F(A);
+                exwert = symbolic(0);
             }
 
         }
@@ -2132,6 +2132,7 @@ void analyzefunction(const myfunction &f,std::string input)
 
     // Extrema:
     FF = F.derive();
+    FF.setparameter(f.getparameter());
     prezeros = FF.double_roots(x1,x2,iterations,epsilon);
     zeros.dellist();
     for (const auto & z : prezeros) {
@@ -2193,6 +2194,7 @@ void analyzefunction(const myfunction &f,std::string input)
     // Inflection-Points:
     vzw.del();pm=0;mp=0;
     FF = FF.derive();
+    FF.setparameter(f.getparameter());
     prezeros = FF.double_roots(x1,x2,iterations,epsilon);
     zeros.dellist();
     for (const auto & z : prezeros) {

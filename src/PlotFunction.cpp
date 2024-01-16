@@ -118,7 +118,7 @@ const val::d_array<std::string> SettingsParList({"axis-scale sx [sy]	<Shift-Alt-
                                               "margin unsigned int    <Shift-Alt-S>",
                                               "axis-fontsize unsigned int    <Shift-Ctrl-F>",
                                               "function-settings [nr=1]",
-                                              "move-increment (p for pixels)    <Ctrl-M>"
+                                              "move-increment dx [dy=dx] (p for pixels)    <Ctrl-M>"
                                              });
 
 const val::d_array<std::string> CommandsList({"derive", "analyze", "tangent", "normal", "interpolation", "regression", "table", "integral",
@@ -1053,8 +1053,10 @@ void computepoints(const val::Glist<myfunction> &F,val::d_array<val::d_array<dou
         //farray[i]=val::d_array<double>(points);
         if (!isderived(F[i])) {
             if (F[i].IsLine() || F[i].IsRectangle()) {
-                farray[i_f].reserve(4);
-                F[i].getLinePoints(farray[i_f][0],farray[i_f][1],farray[i_f][2],farray[i_f][3]);
+                double arrow = 0.0;
+                farray[i_f].reserve(5);
+                F[i].getLinePoints(farray[i_f][0],farray[i_f][1],farray[i_f][2],farray[i_f][3],arrow);
+                farray[i_f][4] = arrow;
                 ++i_f;
             }
             else if (F[i].IsTriangle()) {
@@ -1380,9 +1382,11 @@ void computerotation(const val::d_array<myfunction*> F,std::string input)
         switch (fmode)
         {
             case myfunction::LINE : {
+                double arrow = 0.0;
                 sf+="line";
-                d_f.reserve(n=4);
-                f->getLinePoints(d_f[0],d_f[1],d_f[2],d_f[3]);
+                d_f.reserve(n=5);
+                f->getLinePoints(d_f[0],d_f[1],d_f[2],d_f[3],arrow);
+                d_f[4] = arrow;
                 break;
             }
             case myfunction::TRIANGLE:  {
@@ -1412,6 +1416,9 @@ void computerotation(const val::d_array<myfunction*> F,std::string input)
                 y=A*(x-m) + m;
                 sf+= " " +  val::ToString(y(0)) + " " + val::ToString(y(1));
             }
+        }
+        if (fmode == myfunction::LINE && d_f[4] != 0) {
+            sf += " " + val::ToString(d_f[4]);
         }
         fstring+=sf;
     }
@@ -1516,6 +1523,7 @@ void computetangent(std::string sf,const myfunction &f,double x1,double x2,int t
     if (f.numberofvariables()<=1) isfunction=1;
 
     val::valfunction F(f.getinfixnotation());
+    F.setparameter(f.getparameter());
 
     if (isfunction) {
         int diffbar = 0;
@@ -2369,13 +2377,14 @@ int myfunction::isdifferentiable() const
 
 
 
-void myfunction::getLinePoints(double &x1,double &y1,double &x2,double &y2) const
+void myfunction::getLinePoints(double &x1,double &y1,double &x2,double &y2,double &arrow) const
 {
     using namespace val;
     GlistIterator<myfunction::token> iT;
 
     iT=Gdat;
     x1=x2=y1=y2=0;
+    arrow = 0.0;
 
 
     while  (iT.actualvalid()) {
@@ -2412,6 +2421,14 @@ void myfunction::getLinePoints(double &x1,double &y1,double &x2,double &y2) cons
         iT.moveactual();
     }
 
+    while  (iT.actualvalid()) {
+        if (iT().type==0) {
+            arrow = FromString<double>(iT().data);
+            iT.moveactual();
+            break;
+        }
+        iT.moveactual();
+    }
 }
 
 void myfunction::getTrianglePoints(double &x1,double &y1,double &x2,double &y2,double &x3,double &y3) const

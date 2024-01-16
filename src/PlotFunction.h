@@ -225,7 +225,7 @@ public:
     template <class T> T operator() (const T&) const;
     template <class T> val::pol<T> getpol(const T& a,const char var='x') const; // Polynom p(Y) = f(a,Y);
     val::rationalfunction getrationalfuncion() const;
-    void getLinePoints(double& x1,double &y1,double &x2,double &y2) const;
+    void getLinePoints(double& x1,double &y1,double &x2,double &y2,double &arrow) const;
     void getTrianglePoints(double &x1,double &y1,double &x2,double &y2,double &x3,double &y3) const;
     void getTextPoint(double &x1,double &y1) const;
     void getCirclePoints(double& x1,double&y1,double &r,double &angle1, double &angle2,int &slice) const;

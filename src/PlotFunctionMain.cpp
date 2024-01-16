@@ -556,6 +556,8 @@ PlotFunctionFrame::~PlotFunctionFrame()
     for (auto &v : Set_TextEdit ) {
         delete v;
     }
+    if (SideText->IsShown()) SideText->Hide();
+    if (notebook->IsShown()) notebook->Hide();
     //(*Destroy(PlotFunctionFrame)
     //*)
 }
@@ -563,6 +565,7 @@ PlotFunctionFrame::~PlotFunctionFrame()
 
 void PlotFunctionFrame::OnQuit(wxCommandEvent& event)
 {
+    //Destroy();
     Close();
 }
 
@@ -1453,6 +1456,13 @@ void PlotFunctionFrame::plotline(wxDC& dc,const val::d_array<double> &f,int colo
     if (!yset) return;
 
     int ix0,iy0,ix1,iy1;
+    double arrow;
+    /*
+    {
+        double x1,x2,y1,y2;
+        F[colour].getLinePoints(x1, y1, x2, y2, arrow);
+    }
+    */
 
     if (active_function == colour) dc.SetPen(wxPen(Color[colour],pen[colour]+3));
     else dc.SetPen(wxPen(Color[colour],pen[colour]));
@@ -1467,6 +1477,7 @@ void PlotFunctionFrame::plotline(wxDC& dc,const val::d_array<double> &f,int colo
         if (g[i+1]==infm) g[i+1] = y1;
         if (g[i+1]==inf) g[i+1] = y2;
     }
+    arrow = g[4];
 
     ix0=abst+int(double(sizex-1)*((g[0]-x1)/(x2-x1)));
     iy0=yzero -int((double(sizey-1)/double(y2-y1)) * g[1]);
@@ -1489,6 +1500,16 @@ void PlotFunctionFrame::plotline(wxDC& dc,const val::d_array<double> &f,int colo
     }
 
     dc.DrawLine(ix0,iy0,ix1,iy1);
+    if (arrow != 0) {
+        double dx(ix0-ix1), dy(iy0 - iy1), x2(ix1), y2(iy1), x3, y3, x4, y4;
+        double L2 = arrow*10, L1 = val::sqrt(dx*dx + dy*dy), L = L2/L1, alpha = 0.35, s = val::sin(alpha), c = val::cos(alpha);
+        x3 = val::round(x2 + L*(dx*c + dy*s),0);
+        y3 = val::round(y2 + L*(dy*c - dx*s),0);
+        x4 = val::round(x2 + L*(dx*c - dy*s),0);
+        y4 = val::round(y2 + L*(dy*c + dx*s),0);
+        dc.DrawLine(ix1,iy1,int(x3),int(y3));
+        dc.DrawLine(ix1,iy1,int(x4),int(y4));
+    }
 }
 
 
@@ -4943,10 +4964,12 @@ void PlotFunctionFrame::displacefunction(int i,const double &dx1,const double &d
             {
             }
             break;
-        case myfunction::RECTANGLE :
+        case myfunction::RECTANGLE : case myfunction::LINE :
             {
                 int j, k = 0;
-                std::string nf = "rectangle";
+                std::string nf;
+                if (F[i].getmode() == myfunction::LINE) nf = "line";
+                else nf = "rectangle";
 
                 for (j=0;j<i;++j) {
                     if (F[j].numberofvariables() == 1) ++k;
@@ -4955,19 +4978,17 @@ void PlotFunctionFrame::displacefunction(int i,const double &dx1,const double &d
                     if (j%2 == 0) nf += " " + val::ToString(farray[k][j] + dx);
                     else nf += " " + val::ToString(farray[k][j] + dy);
                 }
+                if (F[i].getmode() == myfunction::LINE && farray[k][4] != 0) nf += " " + val::ToString(farray[k][4]);
 
                 F[i].infix_to_postfix(nf);
             }
             break;
-        default:  //myfunction::LINE , myfunction::TRIANGLE, myfunction::POLYGON
+        default:  //myfunction::TRIANGLE, myfunction::POLYGON
             {
                 std::string nf = "";
                 int k = 0, j;
                 switch (F[i].getmode())
                 {
-                case myfunction::LINE :
-                    nf = "line";
-                    break;
                 case myfunction::TRIANGLE :
                     nf = "triangle";
                     break;
