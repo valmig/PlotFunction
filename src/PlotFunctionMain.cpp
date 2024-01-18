@@ -335,8 +335,8 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     circlemenu = new wxMenuItem(rightclickmenu,1011,_T("Draw Circle \tShift-Ctrl-E"),wxEmptyString,wxITEM_CHECK);
     rightclickmenu->Append(circlemenu);
     rightclickmenu->AppendSeparator();
-    rightclickmenu->Append(1008,_T("Copy Image\tCtrl-C"));
-    rightclickmenu->Append(1009,_T("Paste Image to Background\tCtrl-V"));
+    rightclickmenu->Append(1008,_T("Copy Image\tShift-Ctrl-C"));
+    rightclickmenu->Append(1009,_T("Paste Image to Background\tShift-Ctrl-V"));
     rightclickmenu->Append(1012,_T("Change Background Color \tShift-Ctrl-B"));
     //
     rightclickfunctionsmenu = new wxMenu();
@@ -439,9 +439,9 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     Accel.push_back(wxAcceleratorEntry(wxACCEL_NORMAL,WXK_ESCAPE,20008));
     Accel.push_back(wxAcceleratorEntry(wxACCEL_SHIFT|wxACCEL_CTRL,(int) 'P',1006));
     Accel.push_back(wxAcceleratorEntry(wxACCEL_SHIFT|wxACCEL_CTRL,(int) 'L',1007));
-    Accel.push_back(wxAcceleratorEntry(wxACCEL_CTRL,(int) 'C',1008));
+    Accel.push_back(wxAcceleratorEntry(wxACCEL_SHIFT|wxACCEL_CTRL,(int) 'C',1008));
     Accel.push_back(wxAcceleratorEntry(wxACCEL_CTRL,WXK_INSERT,1008));
-    Accel.push_back(wxAcceleratorEntry(wxACCEL_CTRL,(int) 'V',1009));
+    Accel.push_back(wxAcceleratorEntry(wxACCEL_SHIFT|wxACCEL_CTRL,(int) 'V',1009));
     Accel.push_back(wxAcceleratorEntry(wxACCEL_SHIFT,WXK_INSERT,1009));
     Accel.push_back(wxAcceleratorEntry(wxACCEL_ALT,WXK_RIGHT,20009));
     Accel.push_back(wxAcceleratorEntry(wxACCEL_ALT,WXK_LEFT,20010));
@@ -481,7 +481,7 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
             sidemenuview->Check(true);
             SideText->Show();
             SideText->SetFocus();
-            CheckFocus();
+            //CheckFocus();
         }
         if (notebook_isshown) {
             clientsize_x += widthNoteBookPanel + plusw;
@@ -3679,7 +3679,7 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
 
             int n = s_values.length();
 
-            if (n == 2 && id == 1) {
+            if (n == 2) {
                 s_values.push(val::ToString(delta));
                 s_values.push(val::ToString(iter));
                 s_values.push(val::ToString(dez));
@@ -5579,7 +5579,7 @@ void PlotFunctionFrame::OnLostFocus(wxFocusEvent &event)
 {
     //wxMessageBox("Focus on Text lost!");
     CompareSideTextInput();
-    CheckFocus();
+    //CheckFocus();
     event.Skip();
 }
 
@@ -5600,7 +5600,7 @@ void PlotFunctionFrame::OnSideBarCheck(wxCommandEvent &event)
            closebrackets = SideText->GetCloseBrackets();
            DrawPanel->SetFocus();
 #ifdef _WIN32
-           CheckFocus();
+           //CheckFocus();
            SetClientSize(Size);
            Update();
            Paint();
@@ -5615,7 +5615,7 @@ void PlotFunctionFrame::OnSideBarCheck(wxCommandEvent &event)
            SideText->SetFocus();
            SideText->SetCloseBrackets(closebrackets);
         }
-       CheckFocus();
+       //CheckFocus();
     }
     else {
         if (SideText_isshown) Size.x += widthSideText + 10;
@@ -5644,6 +5644,7 @@ void PlotFunctionFrame::OnSideBarCheck(wxCommandEvent &event)
 
 void PlotFunctionFrame::CheckFocus()
 {
+    return;
 #ifdef __APPLE__
     return;
 #endif // __APPLE__
