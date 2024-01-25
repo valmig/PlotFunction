@@ -59,7 +59,7 @@ enum val_settings{AXIS_SCALE,AXIS_COLOR,GRID_SCALE,GRID_COLOR,VALUES_NUMBER,AXIS
                     SHOW_Y_SCALE,RESET_COLORS,FONT_SIZE,FUNCTION_COLOR,PANEL_SIZE,AXIS_NAMES,REGRESSION_DEGREE,POINT_DECIMALS,
                     SHOW_FUNCTION,BACKGROND_COLOR,PARAMETER_VALUES,FUNCTION_SIZE,MARGIN,AXIS_FONTSIZE,FUNCTION_SETTINGS,MOVEINC};
 
-enum val_commands{DERIVE,ANALYZE,TANGENT,NORMAL,INTERPOLATION,REGRESSION,TABLE,INTEGRAL,ARCLENGTH,ZERO_ITERATION,MOVE,EVALUATE,INTERSECTION};
+enum val_commands{DERIVE,ANALYZE,TANGENT,NORMAL,INTERPOLATION,REGRESSION,TABLE,INTEGRAL,ARCLENGTH,ZERO_ITERATION,MOVE,EVALUATE,INTERSECTION,CALCULATE};
 
 wxDECLARE_EVENT(MY_EVENT, MyThreadEvent);
 
@@ -83,7 +83,7 @@ private:
 	std::string message;
 };
 
-enum {IdPaint,IdTable,IdIntegral,IdRefresh,IdIteration,IdAnalyze,IdInfo,IdEval, IdIntersection};
+enum {IdPaint,IdTable,IdIntegral,IdRefresh,IdIteration,IdAnalyze,IdInfo,IdEval, IdIntersection, IdCalculate};
 
 /*
 void computepoints(const val::d_array<val::pol<double>> &F,val::d_array<val::d_array<double>> &farray,
@@ -173,6 +173,7 @@ void computetable_rat(const myfunction& f,val::rational x1,val::rational x2,val:
 
 void computeevaluation(const myfunction& f, double par);
 
+void calculate(std::string s);
 //void computeintegral(const myfunction& f,val::rational x1,val::rational x2,double delta,int n,int dez,int arclength=0);
 
 void computeinterpolation(std::string input,std::string &Fstring);

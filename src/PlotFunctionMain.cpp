@@ -3484,7 +3484,7 @@ void PlotFunctionFrame::ChangeSettings(int command, const std::string &svalue, i
 
 void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string &svalue, int id)
 {
-    if ((command != REGRESSION && command != INTERPOLATION)  && (f_nr < 0 || f_nr >= N)) return;
+    if ((command != REGRESSION && command != INTERPOLATION && command != CALCULATE)  && (f_nr < 0 || f_nr >= N)) return;
     switch (command)
     {
     case DERIVE:
@@ -3659,6 +3659,13 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
             t.detach();
             return;
         }
+        break;
+    case CALCULATE:
+    	{
+            std::thread t(calculate,svalue);
+            t.detach();
+            return;
+    	}
         break;
     case INTEGRAL: case ARCLENGTH: case ZERO_ITERATION:
         {
@@ -3927,12 +3934,15 @@ void PlotFunctionFrame::OnMyEvent(MyThreadEvent& event)
         AnalysisDialog *adialog = new AnalysisDialog(this,nanalyzewindows,analyze_output,Points,wxSize(sx,sy),Point,fontsize,title);
         adialog->Show();
     }
-    else if (id == IdIntegral) { // Integral
+    else if (id == IdIntegral || id == IdCalculate) { // Integral or Calculate
+        std::string title;
+        if (id == IdIntegral) title = "Integral";
+        else title = "Calculate";
         y=y+dy-200;
         Point.x = x; Point.y = y;
         Size.SetWidth(300);
         Size.SetHeight(200);
-        InfoWindow *tablewindow = new InfoWindow(this,nchildwindows,tablestring,wxDefaultPosition,Size,"Integral",fontsize);
+        InfoWindow *tablewindow = new InfoWindow(this,nchildwindows,tablestring,wxDefaultPosition,Size,title,fontsize);
         tablewindow->Show();
         //wxMessageBox("Integral");
     }

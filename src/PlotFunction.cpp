@@ -122,7 +122,7 @@ const val::d_array<std::string> SettingsParList({"axis-scale sx [sy]	<Shift-Alt-
                                              });
 
 const val::d_array<std::string> CommandsList({"derive", "analyze", "tangent", "normal", "interpolation", "regression", "table", "integral",
-                                             "arclength", "zero-iteration", "move", "evaluate", "intersection" });
+                                             "arclength", "zero-iteration", "move", "evaluate", "intersection", "calculate" });
 
 const val::d_array<std::string> CommandsParList({"derive [#nr = 1]",
                                                  "analyze [#nr = 1] [x1 x2] [prec = 1e-09] [iterations] [decimals]    <Ctrl-A>",
@@ -136,7 +136,8 @@ const val::d_array<std::string> CommandsParList({"derive [#nr = 1]",
                                                  "zero-iteration [#nr = 1] [decimals iterations precision] [x1 x2]    <Alt-Z>",
                                                  "move [#nr = 1] x y",
                                                  "evaluate [#nr = 1] expressions [ddecimals[ = 4 ]]",
-                                                 "intersection [#nr1 = 1] #nr2 [x1 x2] [prec] [iterations] [decimals]"
+                                                 "intersection [#nr1 = 1] #nr2 [x1 x2] [prec] [iterations] [decimals]",
+                                                 "calculate arithmetic expression"
                                                  });
 
 
@@ -1321,7 +1322,14 @@ void computeevaluation(const myfunction& f, double par)
     if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event.Clone());
 }
 
+void calculate(std::string s)
+{
+    val::valfunction f(s);
 
+    tablestring = "Evaluation of:\n" + s +": \nSymbolic:\n" + f.getinfixnotation() + "\n\ndouble:\n" + val::ToString(f(0),8);
+    MyThreadEvent event(MY_EVENT,IdCalculate);
+    if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event.Clone() );
+}
 
 void computezeroiteration(const myfunction&f,double x1,double x2,double eps,int n,int dez)
 {
