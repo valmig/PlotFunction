@@ -7,6 +7,7 @@
 #include <rational.h>
 #include <val_basics.h>
 #include <val_utils.h>
+#include <numbers.h>
 #include <vector.h>
 #include <analysis.h>
 #include <polfactor.h>
@@ -65,7 +66,7 @@ void set_unity_element(valfunction &f)
 } // end namespace val
 
 
-
+/*
 // Computes greatest nat. number  m, with m<=sqrt(n), by bisection-method in [a,b].
 val::integer sqrt(const val::integer& n)
 {
@@ -81,6 +82,7 @@ val::integer sqrt(const val::integer& n)
  if ((b*b)>n) return a;
  else return b;
 }
+*/
 
 
 int sortfactors(val::d_array<val::pol<val::rational>> &factors, int &r, int &s)
@@ -546,10 +548,11 @@ val::fraction<val::pol<val::valfunction>> getrationalfunction(const val::valfunc
 
 
 //
-
+/*
 int isquadratic(const val::rational& r, val::rational &root)
 {
-    val::integer p = r.nominator(), q = r.denominator(), sp, sq;
+    const val::integer &p = r.nominator(), &q = r.denominator();
+    val::integer sp, sq;
     root = val::rational(0);
     if (q.iszero()) return 0;
     if (p.iszero()) return 1;
@@ -560,8 +563,7 @@ int isquadratic(const val::rational& r, val::rational &root)
     if (r == root * root) return 1;
     else return 0;
 }
-
-
+*/
 
 // ------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -929,7 +931,7 @@ val::valfunction integral_sqrt_qpolynom(val::pol<val::valfunction> &Pg, int k)
 	eisrational = val::isrationalnumber(e.getinfixnotation());
 
 	if (val::isrationalnumber(sa = a.getinfixnotation())) {
-		if (hintegral::isquadratic(abs(FromString<rational>(sa)),ra)) sc = ToString(ra);
+		if (isquadratic(abs(FromString<rational>(sa)),ra)) sc = ToString(ra);
 		else sc = "sqrt(" + sa + ")";
 
 	}
@@ -2302,6 +2304,13 @@ void intersection(const myfunction &f, const myfunction &g, std::string input)
 
     val::valfunction F(f.getinfixnotation(),0), G(g.getinfixnotation()), h = F-G;
     h.simplify(1);
+
+    if (h.is_zero()) {
+        analyze_output[1] = "f = g !";
+        MyThreadEvent event(MY_EVENT,IdIntersection);
+        if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event.Clone() );
+        return;
+    }
 
     if (h.isrationalfunction()) {
         h_r = h.getrationalfunction();
