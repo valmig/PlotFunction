@@ -425,6 +425,8 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMove,this,20009);
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMove,this,20010);
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuButton,this,7200);
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuButton,this,7201);
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuButton,this,7202);
     //
     val::Glist<wxAcceleratorEntry> Accel;
 
@@ -451,6 +453,8 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     //Accel.push_back(wxAcceleratorEntry(wxACCEL_ALT,(int) 'P',5020));
     Accel.push_back(wxAcceleratorEntry(wxACCEL_CTRL,WXK_RETURN,5020));
     Accel.push_back(wxAcceleratorEntry(wxACCEL_NORMAL,WXK_MENU,7200));
+    Accel.push_back(wxAcceleratorEntry(wxACCEL_CTRL,WXK_MENU,7201));
+    Accel.push_back(wxAcceleratorEntry(wxACCEL_CTRL,(int) '0',7202));
 
     SetAccelerators(Accel);
 
@@ -3106,7 +3110,7 @@ void PlotFunctionFrame::ChangeSettings(int command, const std::string &svalue, i
             if (command == FONT_SIZE) {
                 fontsize = fsize;
                 if (fontsize<10) fontsize=10;
-                if (fontsize>16) fontsize=16;
+                //if (fontsize>16) fontsize=16;
                 WriteText();
             }
             else {
@@ -4159,15 +4163,19 @@ void PlotFunctionFrame::OnMenuFill(wxCommandEvent &event)
 }
 
 
-void PlotFunctionFrame::OnMenuButton(wxCommandEvent&)
+void PlotFunctionFrame::OnMenuButton(wxCommandEvent &event)
 {
     if (DrawPanel->HasCapture()) return;
 
+    int id = event.GetId();
+
     if (active_function != -1) {
-        PopupMenu(rightclickfunctionsmenu);
+        if (id == 7201 || id == 7202) changefunctionsettings(active_function);
+        else PopupMenu(rightclickfunctionsmenu);
         return;
     }
     if (!yset) return;
+    if (id == 7201 || id == 7201) return;
     wxMouseState m_state = wxGetMouseState();
     wxPoint P_abs = m_state.GetPosition(), P_cl = DrawPanel->ScreenToClient(P_abs);
     mouse_x1 = P_cl.x; mouse_y1 = P_cl.y;
@@ -4305,6 +4313,11 @@ void PlotFunctionFrame::savefile(const std::string &dirname,const std::string &f
             BackgroundImage.SaveFile(nfilename);
         }
         else file<<0<<std::endl;
+        file << Parameter.length() << std::endl;
+        for (const auto& v : Parameter) {
+            file << v << " ";
+        }
+        file << std::endl;
 
         file.close();
 }
@@ -4391,7 +4404,7 @@ void PlotFunctionFrame::openfile(const std::string &dirname,const std::string &f
     bitmapbackground = 0;
 
     int bm=0;
-    if (file) getline(file,line);
+    //if (file) getline(file,line);
     if (file) getline(file,line);
     bm = val::FromString<int>(line);
     if (bm == 1) {
@@ -4424,6 +4437,16 @@ void PlotFunctionFrame::openfile(const std::string &dirname,const std::string &f
             bitmapbackground = 1;
         }
         else wxMessageBox("Cannot load Background!");
+    }
+    {
+        int npar = 0, value;
+        file >> npar;
+        if (npar) Parameter.dellist();
+        for (int i = 0; i < npar; ++i) {
+            file >> value;
+            Parameter.push_back(value);
+        }
+        if (Parameter.isempty()) Parameter.push_back(1);
     }
 
 
@@ -5330,7 +5353,8 @@ void PlotFunctionFrame::OnSelectActiveFunction(wxCommandEvent &event)
 
         checked.reserve(N);
         for (i=0;i<N;++i) {
-            if (f_menu[i]->IsChecked() && !F[i].IsFill()) checked.push_back(i);
+            //if (f_menu[i]->IsChecked() && !F[i].IsFill()) checked.push_back(i);
+            if (f_menu[i]->IsChecked()) checked.push_back(i);
         }
         n = checked.length();
         if (n == 0) return;
