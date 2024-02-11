@@ -26,7 +26,7 @@ class myfunction;
 
 extern wxFrame *MyFrame;
 extern std::string fstring,xstring,ystring,filesep,filedir,sizestring,tablestring,settingsfile,settingsdir,valdir,iconpath,savefiledir,
-                   openfiledir,handcursor,RecentFilesPath,alticonpath, RecentCommandsPath, errorfile;
+                   openfiledir,handcursor,RecentFilesPath,alticonpath, RecentCommandsPath, errorfile, ansexpr;
 
 //extern std::mutex compute_mutex;
 extern myfunction global_function;

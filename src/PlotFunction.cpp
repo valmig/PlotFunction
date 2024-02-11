@@ -16,7 +16,7 @@
 
 wxFrame *MyFrame=nullptr;
 std::string fstring="",xstring="-5;5",ystring="-5;5",sizestring="",tablestring="",openfiledir= val::CurrentHomeDir(),
-            savefiledir=val::CurrentHomeDir();
+            savefiledir=val::CurrentHomeDir(), ansexpr = "";
 
 #ifdef _WIN32
 std::string filesep="\\", filedir=val::CurrentHomeDir(), valdir = val::CurrentHomeDir()+"\\AppData\\Roaming\\MVPrograms",
@@ -1275,13 +1275,20 @@ void computetable_rat(const myfunction& f,val::rational x1,val::rational x2,val:
 void computeevaluation(const myfunction& f, double par)
 {
     using namespace val;
-    d_array<char> sep({';', ' '});
+    d_array<char> sep({';'});
     Glist<std::string> wlist = getwordsfromstring(tablestring,sep);
 
     if (wlist.isempty()) return;
-    int n = wlist.length(), decimals = 4;
+    int n = wlist.length(), decimals = 4, m = wlist[n-1].length();
 
-    if (wlist[n-1][0] == 'd') {
+    for (int i = 0; i < m; ++i) {
+        if (wlist[n-1][i] != ' ') {
+            wlist[n-1] = val::tailofstring(wlist[n-1], m-i);
+            break;
+        }
+    }
+
+    if (!(wlist[n-1].empty()) && wlist[n-1][0] == 'd') {
         wlist[n-1] = val::tailofstring(wlist[n-1], wlist[n-1].length()-1);
         decimals = val::FromString<int>(wlist[n-1]);
         decimals = val::Max(decimals, 0);
@@ -1299,7 +1306,8 @@ void computeevaluation(const myfunction& f, double par)
 
     tablestring = "f(x) = " + f.getinfixnotation() + "\n";
 
-    for (const auto & w : wlist) {
+    for (auto & w : wlist) {
+        replace<char>(w, "ans", ansexpr);
         g = valfunction(w);
         h = F(g);
         g.setparameter(par);
@@ -1318,15 +1326,18 @@ void computeevaluation(const myfunction& f, double par)
         tablestring += "\n\nDouble evaluation:\n f(" + w + ") = " + ToString(y,yprecision);
         tablestring += "\nPoint in graph: \n" + ToString(x,precision) + "  " + ToString(y,yprecision) + "\n";
     }
+    ansexpr = "(" + h.getinfixnotation() + ")";
     MyThreadEvent event(MY_EVENT,IdEval);
     if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event.Clone());
 }
 
 void calculate(std::string s)
 {
+    val::replace<char>(s, "ans", ansexpr);
     val::valfunction f(s);
 
     tablestring = "Evaluation of:\n" + s +": \nSymbolic:\n" + f.getinfixnotation() + "\n\ndouble:\n" + val::ToString(f(0),8);
+    ansexpr = "(" + f.getinfixnotation() + ")";
     MyThreadEvent event(MY_EVENT,IdCalculate);
     if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event.Clone() );
 }
