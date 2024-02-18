@@ -8,7 +8,7 @@ BIN = bin
 
 
 objects = PlotFunctionApp.o PlotFunctionMain.o MultiLineDialog.o PlotFunction.o calculus.o
-  
+
 OBJECTS = $(addprefix $(OBJ)/, $(objects))
 
 #PLOTFUNCTION = $(OBJ)/PlotFunctio.o
@@ -28,7 +28,6 @@ $(OBJ)/%.o: $(DIRPATH)/src/%.cpp $(DIRPATH)/src/%.h
 
 clean:
 	rm -r -f $(OBJ) $(BIN)
-	
 
 .PHONY install:
 
@@ -38,6 +37,7 @@ install:
 	mkdir -p $(DESKTOPDIR)
 	cp -f $(DIRPATH)/icons/* $(ICONDIR)
 	cp -f $(BIN)/PlotFunction $(PREFIX)/bin/
+	cp -f $(DIRPATH)/desktop/PlotFunction.desktop $(DESKTOPDIR)
 
 
 .PHONY uninstall:
@@ -46,4 +46,3 @@ uninstall:
 	rm -r $(ICONDIR)
 	rm -f $(PREFIX)/bin/PlotFunction
 	rm -f $(DESKTOPDIR)/PlotFunction.desktop
-	

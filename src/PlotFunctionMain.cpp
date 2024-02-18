@@ -415,6 +415,8 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     //
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnZoom,this,20001);
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnZoom,this,20002);
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnZoom,this,20012);
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnZoom,this,20013);
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMove,this,20003);
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMove,this,20004);
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMove,this,20005);
@@ -432,6 +434,8 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
 
     Accel.push_back(wxAcceleratorEntry(wxACCEL_CTRL, (int) '+',20001));
     Accel.push_back(wxAcceleratorEntry(wxACCEL_CTRL, (int) '-',20002));
+    Accel.push_back(wxAcceleratorEntry(wxACCEL_SHIFT|wxACCEL_CTRL, (int) '+',20012));
+    Accel.push_back(wxAcceleratorEntry(wxACCEL_SHIFT|wxACCEL_CTRL, (int) '-',20013));
     Accel.push_back(wxAcceleratorEntry(wxACCEL_CTRL,WXK_RIGHT,20003));
     Accel.push_back(wxAcceleratorEntry(wxACCEL_CTRL,WXK_LEFT,20004));
     Accel.push_back(wxAcceleratorEntry(wxACCEL_CTRL,WXK_UP,20005));
@@ -455,6 +459,8 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     Accel.push_back(wxAcceleratorEntry(wxACCEL_NORMAL,WXK_MENU,7200));
     Accel.push_back(wxAcceleratorEntry(wxACCEL_CTRL,WXK_MENU,7201));
     Accel.push_back(wxAcceleratorEntry(wxACCEL_CTRL,(int) '0',7202));
+    Accel.push_back(wxAcceleratorEntry(wxACCEL_NORMAL,WXK_F9,7011));
+    Accel.push_back(wxAcceleratorEntry(wxACCEL_SHIFT|wxACCEL_CTRL,(int) 'x',6));
 
     SetAccelerators(Accel);
 
@@ -1204,9 +1210,8 @@ void PlotFunctionFrame::plotvertices(wxDC& dc)
 
     int ypainted = 0, xpainted = 0;
     wxFont normalfont=dc.GetFont(), italicfont=dc.GetFont();
-    int normalsize = normalfont.GetPointSize(), nsize=normalsize , dscale =3,dx=4,dy=6,pen=axis_pen;
+    int normalsize = normalfont.GetPointSize(), nsize=axis_fontsize , dscale =3,dx=4,dy=6,pen=axis_pen;
 
-    nsize = axis_fontsize;
 
     italicfont.MakeItalic();
     italicfont.MakeBold();
@@ -1218,9 +1223,12 @@ void PlotFunctionFrame::plotvertices(wxDC& dc)
     sizex=sz.x -2*abst;
     sizey=sz.y-2*abst;
 
+    /*
     if (sizex <320) {nsize-=2;dscale--;dx--;dy--;}
     if (sizex < 220) {nsize -=2;dscale--;dx--;dy--;}  // evtl. pen--
     if (nsize < 2) nsize =2;
+    */
+
     italicfont.SetPointSize(nsize);
 
     decimalx = decimal((x2-x1)/double(sizex));
@@ -5215,6 +5223,23 @@ void PlotFunctionFrame::SendNotification(const std::string& s)
 void PlotFunctionFrame::OnZoom(wxCommandEvent &event)
 {
     int id = event.GetId();
+
+    if (id == 20012 || id == 20013) {
+        if (SideText->HasFocus()) {
+            if (id == 20012) ++fontsize;
+            else --fontsize;
+            if (fontsize < 10) fontsize = 10;
+            WriteText();
+        }
+        else {
+            if (id == 20012) ++axis_fontsize;
+            else --axis_fontsize;
+            if (axis_fontsize < 2) axis_fontsize = 2;
+            if (axis_fontsize > 30) axis_fontsize = 30;
+            Paint();
+        }
+        return;
+    }
     if (active_function != -1) {
         if (id == 20001) ++pen[active_function];
         else --pen[active_function];
