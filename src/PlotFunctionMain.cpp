@@ -5601,6 +5601,7 @@ void PlotFunctionFrame::CompareSideTextInput()
     if (O_Word == SideText_Word) {
         return;
     }
+    ispainted = 0;
     val::d_array<char> sep{';'}, numsep{':'};
     val::Glist<std::string> words = getwordsfromstring(O_Word,sep,0,val::d_array<char>{'\n'});
     std::string s_func, first_word;
@@ -5730,6 +5731,7 @@ void PlotFunctionFrame::CreateNoteBook()
 
     //panel1->InheritAttributes();
 
+    panel1->SetBackgroundColour(panel1->GetBackgroundColour());
     notebook->AddPage(panel1, "View");
     notebook->AddPage(panel2, "Tools");
     notebook->AddPage(panel3, "Settings");
@@ -5758,6 +5760,7 @@ void PlotFunctionFrame::CreateNoteBook()
 
     // Add items to Tools-Panel:
     int x, b_ysize = 30, dy = b_ysize + 20;
+    b_xsize = 80;
     y = 50;
     val::d_array<wxButton*> ToolButtons{nullptr,n_tools};
     val::d_array<std::string> button_names{"Analyze", "Table", "Tangent", "Normal", "Derive", "Integral", "ArcLen", "PolInt", "Regress", "Intersec", "Zero", "Rotate" };
@@ -5766,6 +5769,7 @@ void PlotFunctionFrame::CreateNoteBook()
 											"Polynomial Regression of set regressiondegree \tAlt-A", "Intersection points of two functions \tShift-Ctrl-I",
 											"Computation of a root in an interval \tAlt-Z", "Rotate geometric element \tAlt-R"};
     i = 0;
+    rows = 6; columns = 2;
     for (int r = 0; r < rows; ++r, y += dy ) {
         x = 15;
         for (int c = 0; c < columns; ++c, x += b_xsize + 10, ++i) {
@@ -5786,7 +5790,7 @@ void PlotFunctionFrame::CreateNoteBook()
     val::d_array<wxStaticText*> SetStatic{nullptr,12};
 
     i = 0; rows = 6; columns = 2; y = 10;
-    int sx = 80, sy = 25;
+    int sx = 80, sy = 30;
     for (int r = 0; r < rows ; ++r, y+= sy + 40) {
         x = 10;
         for (int c = 0; c < columns; ++c, ++i, x+=sx+20) {
