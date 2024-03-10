@@ -143,7 +143,7 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     MenuRecentfiles->Append(601,_("Clear history"));
     Menu1->Append(600,_("Recent files"),MenuRecentfiles);
     Menu1->Append(103,_("Save file\tCtrl-S"));
-    Menu1->Append(104,_("Save file as..."));
+    Menu1->Append(104,_("Save file as...\tCtrl-Shift-S"));
     MenuSave = new wxMenuItem(Menu1, ID_MENUITEM4, _("Export Graphic as...\tCtrl-E"), wxEmptyString, wxITEM_NORMAL);
     Menu1->Append(MenuSave);
     MenuItem1 = new wxMenuItem(Menu1, idMenuQuit, _("Quit\tAlt-F4"), _("Quit the application"), wxITEM_NORMAL);
