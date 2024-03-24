@@ -1296,7 +1296,8 @@ void computeintegral(const myfunction& f,std::string x1,std::string x2,double de
     using namespace val;
     MyThreadEvent event(MY_EVENT,IdIntegral);
     int k=isderived(f),exact=0;
-    double a = val::FromString<double>(x1), b=FromString<double>(x2),wert,exwert = 0;
+    valfunction A(x1), B(x2);
+    double a = A(0), b=B(0), wert,exwert = 0;
     //val::rational r_wert;
     //val::DoubleFunction g;
     val::valfunction g, symbolic;
@@ -1341,7 +1342,6 @@ void computeintegral(const myfunction& f,std::string x1,std::string x2,double de
             if (!F.is_zero()) {
                 name += "integral("+f.getinfixnotation()+") \n= " + F.getinfixnotation() + "\n\n";
                 exact = 1;
-                valfunction A(x1), B(x2);
                 symbolic = F(B) - F(A);
                 exwert = symbolic(0);
             }
