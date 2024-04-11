@@ -277,6 +277,8 @@ AnalysisDialog::AnalysisDialog(wxWindow *parent,int &nchild,const val::d_array<s
 
     surface = new wxPanel(this,100);
 
+    surface->SetBackgroundColour(surface->GetBackgroundColour());
+
     TextEdit = val::d_array<wxTextCtrl*>(nullptr,n_output);
     val::d_array<wxBoxSizer*> BoxSizerText(nullptr,n_output);
     val::d_array<wxBoxSizer*> BoxSizerButton(nullptr,n_point);
