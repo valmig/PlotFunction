@@ -947,6 +947,8 @@ void CompleteTextCtrl::BuildObject()
 
 
     Bind(wxEVT_TEXT,&CompleteTextCtrl::OnInputChanged,this);
+    Bind(wxEVT_CHAR,&CompleteTextCtrl::OnKeyChar,this);
+    Bind(wxEVT_KEY_DOWN,&CompleteTextCtrl::OnKeyDown,this);
     Bind(val_EVENT_COMPLETE,&CompleteTextCtrl::OnCompleteBrackets,this);
     Bind(wxEVT_COMMAND_MENU_SELECTED,&CompleteTextCtrl::OnShortCuts,this,101);
     Bind(wxEVT_COMMAND_MENU_SELECTED,&CompleteTextCtrl::OnShortCuts,this,102);
@@ -1290,5 +1292,37 @@ void CompleteTextCtrl::UnbindAll()
 }
 
 
+void CompleteTextCtrl::OnKeyDown(wxKeyEvent &event)
+{
+    GetSelection(&from, &to);
+
+    if (from != to) textisselected = 1;
+    else textisselected = 0;
+
+    s_text = GetStringSelection();
+    event.Skip();
+}
+
+void CompleteTextCtrl::OnKeyChar(wxKeyEvent &event)
+{
+    if (!textisselected) {
+        event.Skip();
+        return;
+    }
+    int j = -1;
+    wxChar key = event.GetUnicodeKey();
+
+    for (int i = 0; i < o_brackets.length(); ++i) {
+        if (key == o_brackets[i] || key == c_brackets[i]) j = i;
+    }
+    if (j != -1) {
+        //wxMessageBox(s_text);
+        s_text = o_brackets[j] + s_text;
+        s_text += c_brackets[j];
+        Replace(from, from, s_text);
+        textisselected = 0;
+    }
+    else event.Skip();
+}
 
 } // end namespace val

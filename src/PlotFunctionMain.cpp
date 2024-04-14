@@ -169,9 +169,9 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     Menu2->Append(MenuItem2);
     SetMenuBar(MenuBar1);
     //
-    wxMenuItem *sidemenuview =  new wxMenuItem(viewMenu,30101,_("Side Bar \tF2"),wxEmptyString,wxITEM_CHECK);
+    wxMenuItem *sidemenuview =  new wxMenuItem(viewMenu,30101,_("Side Panel \tF2"),wxEmptyString,wxITEM_CHECK);
     viewMenu->Append(sidemenuview);
-    wxMenuItem *notebookmenuview = new wxMenuItem(viewMenu,30102,_("Tools Bar \tF3"),wxEmptyString,wxITEM_CHECK);
+    wxMenuItem *notebookmenuview = new wxMenuItem(viewMenu,30102,_("Tools Panel \tF3"),wxEmptyString,wxITEM_CHECK);
     viewMenu->Append(notebookmenuview);
 #ifdef __APPLE__
     viewMenu->Append(5011,_("Command Line \tAlt-SPACE"));

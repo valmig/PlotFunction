@@ -230,10 +230,13 @@ private:
     wxMemoryDC dc;
     val::d_array<std::string> CandList;
     val::trie_type<std::string> WordList;
+    const val::d_array<wxChar> o_brackets{'(', '{', '[', '"'}, c_brackets{')', '}', ']', '"'};
     char beg = 65, end = 122;
     const val::trie_type<std::string> *WordListPointer = nullptr;
     std::string actualword;
-    int selection = 0, isactiv=0, n_candidates = 0, fontsize, actuallength = 0, formerlength=0;
+    wxString s_text;
+    long from = 0, to = 0;
+    int selection = 0, isactiv=0, n_candidates = 0, fontsize, actuallength = 0, formerlength=0, textisselected = 0;
     bool closebrackets = false, enablecomplete = true;
     wxString bracket = ")";
     wxAcceleratorTable *parenttable = nullptr, *accel = nullptr, *taccel = nullptr;
@@ -249,6 +252,8 @@ private:
     void CompleteBrackets();
     void BindAll();
     void UnbindAll();
+    void OnKeyDown(wxKeyEvent &event);
+    void OnKeyChar(wxKeyEvent &event);
 };
 
 
