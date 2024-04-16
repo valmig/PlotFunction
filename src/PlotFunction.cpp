@@ -15,7 +15,8 @@
 
 
 wxFrame *MyFrame=nullptr;
-std::string fstring="",xstring="-5;5",ystring="-5;5",sizestring="",tablestring="",openfiledir= val::CurrentHomeDir(),
+wxString tablestring="";
+std::string fstring="",xstring="-5;5",ystring="-5;5",sizestring="",openfiledir= val::CurrentHomeDir(),
             savefiledir=val::CurrentHomeDir(), ansexpr = "";
 
 #ifdef _WIN32
@@ -46,7 +47,7 @@ std::string filesep="/",filedir=val::CurrentHomeDir(), valdir= val::CurrentHomeD
 std::string RecentFilesPath = settingsdir + filesep + "recentfiles.txt";
 std::string RecentCommandsPath = settingsdir + filesep + "recentcommands.txt";
 
-//std::mutex compute_mutex;
+std::mutex compute_mutex;
 //std::atomic<int> iscomputing(0);
 
 myfunction global_function;
@@ -588,40 +589,15 @@ int getfunctionfromstring(std::string &fstring,std::string& f_s,double &x1,doubl
         ++i;
     }
 
-    //ns = "";
     ns = extractstringfrombrackets(fstring, '[', ']');
     f_s = fstring;
     val::d_array<char> separators({','}), ignore({' '});
     val::Glist<std::string> values = getwordsfromstring(ns, separators, 0, ignore);
 
-    /*
-    n = fstring.size();
-
-    for (i=0;i<n;++i) {
-        if (fstring[i]=='[') break;
-        f_s+=fstring[i];
-    }
-    for (++i;i<n;++i) {
-        if (fstring[i]==',') break;
-        ns+=fstring[i];
-    }
-    if (ns.size()==0) return colorindex;
-    */
     if (values.isempty()) return colorindex;
-
-    //if (!getpiscale(values[0],factor,x1,0))  x1=val::FromString<double>(delcharfromstring(values[0]));
     if (!getpiscale(values[0],factor,x1,0))  x1=val::FromString<double>(values[0]);
     x2 = x1;
-    /*
-    ns="";
-    for (++i;i<n;++i) {
-        if (fstring[i]==']') break;
-        ns+=fstring[i];
-    }
-    if (ns.size()==0) return colorindex;
-    */
     if (values.length() < 2) return colorindex;
-    //if (!getpiscale(values[1],factor,x2,0)) x2=val::FromString<double>(delcharfromstring(values[1]));
     if (!getpiscale(values[1],factor,x2,0)) x2=val::FromString<double>(values[1]);
     return colorindex;
 }
@@ -641,16 +617,7 @@ val::Glist<double> getdoublevaluesfromstring(const std::string &sf,const val::d_
         }
         else s += sf[i];
     }
-    /*
-    n = s.length();
-    for (int i = 0; i < n ; ++i) {
-        //if (s[i] != '\n' && s[i] != ' ' && !val::isinContainer(s[i],separators)) s2 += s[i];
-        if (!val::isinContainer(s[i],separators)) s2 += s[i];
-    }
-    */
-
     if (emptystring || s != "") values.push_back(double(val::FromString<val::rational>(s)));
-
     return values;
 }
 
@@ -671,18 +638,8 @@ val::Glist<std::string> getwordsfromstring(const std::string &sf,const val::d_ar
         }
         else s += sf[i];
     }
-    //if (i >= n) return values;
-
-    /*
-    n = s.length();
-    for (int i = 0; i < n ; ++i) {
-        //if (s[i] != '\n' && s[i] != ' ' && !val::isinContainer(s[i],separators)) s2 += s[i];
-        if (!val::isinContainer(s[i],separators)) s2 += s[i];
-    }
-    */
 
     if (emptywords || s!= "") values.push_back(s);
-    //else if (s != "") values.push_back(s);
 
     return values;
 }
@@ -715,20 +672,6 @@ int isinarray(const val::rational& value,const val::d_array<val::rational> & x)
 int isderived(const myfunction &f)
 {
     return isderived(f.getinfixnotation());
-    /*
-    std::string sf=f.getinfixnotation();
-
-    if (sf=="") return 0;
-    int n=sf.size()-1,anz=0;
-    //if (sf[n]=='\'') return 1;
-    //else return 0;
-    while (n>=0 && (sf[n]=='\'' || sf[n]==' ')) {
-        if (sf[n]=='\'') ++anz;
-        --n;
-    }
-
-    return anz;
-    */
 }
 
 
@@ -736,11 +679,6 @@ int islinearfunction(const myfunction &F)
 {
     val::valfunction f(F.getinfixnotation());
     return f.islinearfunction();
-    /*
-    if (!f.ispolynomialfunction()) return 0;
-    if (val::totaldegree(f.getn_polynom()) > 1 ) return 0;
-    return 1;
-    */
 }
 
 
@@ -773,64 +711,8 @@ val::rationalfunction derive(const val::rationalfunction &f)
     contnom /= contdenom;
     nom *= contnom;
     return val::rationalfunction(nom,denom);
-    //return val::rationalfunction(f.nominator().derive()*f.denominator()-f.nominator()*f.denominator().derive(),f.denominator()*f.denominator());
 }
 
-
-/*
-val::matrix<val::rational> set_les(const std::string &s)
-{
-    int n=s.length(),i,j;
-    val::matrix<val::rational> A;
-    if (n==0) return A;
-    val::d_array<val::rational> x,y;
-    val::d_array<val::rational>::set_plus_cap(10);
-    std::string svalue="";
-    val::rational value;
-
-    j=0;
-    for (i=0;i<n;++i) {
-        if (s[i]==' ' || s[i]== '\n') {
-            while (i<n && (s[i]==' ' || s[i]=='\n')) ++i;
-            --i;
-            j%=2;
-            value=val::FromString<val::rational>(svalue);
-            svalue="";
-            if (!j) {
-                if (!isinarray(value,x)) {
-                    x.push_back(value);
-                    ++j;
-                }
-            }
-            else {
-                y.push_back(value);
-                ++j;
-            }
-        }
-        else svalue+=s[i];
-    }
-
-    value=val::FromString<val::rational>(svalue);
-    if (!j) {
-        if (!isinarray(value,x)) {
-            x.push_back(value);
-            ++j;
-        }
-    }
-    else {
-        y.push_back(value);
-        ++j;
-    }
-
-    n= val::Min(x.length(),y.length());
-    if (n==0) return A;
-    A = val::matrix<val::rational>(n,n+1);
-    for (i=0;i<n;++i)
-        for (j=0;j<n;++j) A(i,j) = val::power(x[i],j);
-    for (i=0;i<n;++i) A(i,n) = y[i];
-    return A;
-}
-*/
 
 val::matrix<val::rational> set_les(const std::string &s)
 {
@@ -893,12 +775,6 @@ val::matrix<val::rational> set_les(const std::string &s)
     if (n2) n = val::Max(n,n2+2);
     if (n1) n = val::Max(n,n1+1);
     if (n==0) return A;
-    /*
-    for (const auto & v : x) {
-        for (const auto &wert : v) std::cout<<wert<<"  ";
-        std::cout<<std::endl;
-    }
-    */
     //std::cout<<n<<"  "<<dim[0]<<"  "<<dim[1]<<"  "<<dim[2]<<std::endl;
     A = val::matrix<val::rational>(n,n+1);
     for (k=0,l=0;k<3;++k) {
@@ -929,46 +805,6 @@ val::pol<val::rational> interpolation(const std::string &s)
     for (int i=0;i<X.numberofcolumns();++i) f.insert(X(0,i),i);
     return f;
 }
-
-/*
-template<>
-std::string PolToString(const val::pol<val::rational> &f)
-{
-    int i,nenner;
-    val::polIterator<val::rational> it;
-    std::string s="";
-    val::rational value,one(1),minusone(-1),zero; // val::unity_element<val::rational>(),minusone=-one,zero=val::zero_element<val::rational>();
-
-    for (i=0,it=f;it;it++,++i) {
-        nenner=0;
-        if (i==0 && it.actualdegree()==0) {
-            s+=val::ToString(it.actualcoef());
-            return s;
-            //if (it.actualcoef()==minusone) s+='-';
-        }
-        if (it.actualcoef()>zero) {
-            if (i!=0) s+='+';
-        }
-        else s+='-';
-        if (val::denominator(it.actualcoef())!=val::integer(1) && it.actualdegree()!=0) {
-            nenner=1;
-            s+='(';
-        }
-        value=val::abs(it.actualcoef());
-        if (value!=one || it.actualdegree()==0) {
-            s+=val::ToString(value);
-        }
-        if (nenner) s+=')';
-
-        if (it.actualdegree()) {
-            if (it.actualcoef()!=one && it.actualcoef()!=minusone) s+='*';
-            s+='x';
-            if (it.actualdegree()!=1) s+="^" + val::ToString(it.actualdegree());
-        }
-    }
-    return s;
-}
-*/
 
 val::rational eval(const val::rationalfunction &F,const val::rational &x)
 {
@@ -1162,13 +998,11 @@ void computetable(const myfunction& g, double x1,double x2, double dx)
 {
      using namespace val;
      MyThreadEvent event(MY_EVENT,IdTable);
-     //val::DoubleFunction f(val::doublefunction(std::bind(std::cref(g),std::placeholders::_1)));
      Glist<GPair<double>> MP,PM;
      Glist<double> Zeros;
      double y0=g(x1),y1,x0=x1,eps=1e-4;
      int k=4,m=isderived(g), digits, ydigits;
 
-     //for (int i=0;i<m;++i) f=f.derive();
 
      while (dx<eps) {
         eps/=10;
@@ -1276,7 +1110,7 @@ void computeevaluation(const myfunction& f, double par)
 {
     using namespace val;
     d_array<char> sep({';'});
-    Glist<std::string> wlist = getwordsfromstring(tablestring,sep);
+    Glist<std::string> wlist = getwordsfromstring(std::string(tablestring),sep);
 
     if (wlist.isempty()) return;
     int n = wlist.length(), decimals = 4, m = wlist[n-1].length();
@@ -1520,6 +1354,58 @@ void computeregression(const myfunction& f,int degree)
 
     if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event.Clone() );
 }
+
+
+void computepointstatistics(const myfunction& f, std::string input)
+{
+    if (!f.IsPoints() && !f.IsPolygon()) return;
+    val::d_array<double> Points = f.getPolygonPoints();
+    int i, n = Points.length()/2, decimals = 4, m;
+
+    if (n < 1) return;
+
+    double Ex = 0, Ey = 0, Vx = 0, Vy = 0, Cxy = 0, rhoxy = 0, dn = double(n), v, w, sigmax, sigmay, epsilon = 1e-9;
+    wxString sigma(L"\u03C3"), rho(L"\u03C1");
+    val::d_array<char> sep({';', '\n'});
+    auto values = getwordsfromstring(input, sep);
+
+    m = values.length();
+
+    if (m>2) epsilon = val::FromString<double>(values[2]);
+    if (m>4) decimals = val::FromString<int>(values[4]);
+
+    if (epsilon < 0) epsilon = 1e-9;
+    if (decimals < 0 || decimals > 10) decimals = 4;
+
+    for (i = 0; i < n; ++i) {
+        Ex += Points[2*i];
+        Ey += Points[2*i+1];
+    }
+    Ex /= dn; Ey /= dn;
+
+    for (i = 0; i < n; ++i) {
+        v = Points[2*i] - Ex;
+        w = Points[2*i + 1] - Ey;
+        Cxy += v*w;
+        Vx += v*v;
+        Vy += w*w;
+    }
+    Vx /= dn; Vy /= dn; Cxy /= dn;
+    sigmax = val::sqrt(Vx); sigmay = val::sqrt(Vy);
+
+    tablestring = "Number of Points, n = " + val::ToString(n) + "\n";
+    tablestring += "\n E(X) = " +  val::ToString(val::round(Ex,decimals)) + ", V(X) = " + val::ToString(val::round(Vx,decimals)) + " , " + sigma + "(X) = " + val::ToString(val::round(sigmax,decimals));
+    tablestring += "\n E(Y) = " + val::ToString(val::round(Ey,decimals)) + ", V(Y) = " + val::ToString(val::round(Vy,decimals)) + " , " + sigma + "(Y) = " + val::ToString(val::round(sigmay,decimals)) + "\n";
+    tablestring += "\n C(X,Y) = " + val::ToString(val::round(Cxy,decimals));
+
+    if ((val::abs(Vx) > epsilon) && (val::abs(Vy) > epsilon)) {
+        rhoxy = Cxy/val::sqrt(Vx*Vy);
+        tablestring += " , " + rho + "(X,Y) = " + val::ToString(val::round(rhoxy,decimals));
+    }
+    MyThreadEvent event(MY_EVENT,IdPointStat);
+    if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event.Clone());
+}
+
 
 
 void computetangent(std::string sf,const myfunction &f,double x1,double x2,int tangent)
@@ -1976,41 +1862,8 @@ double myfunction::operator()<> (const double& x) const
             }
 
             else if ((i = getindexoffunction(iT().data)) != -1) {
-				if (!G.isempty()) G.actualvalue()=functionpairs[i].y(G.actualvalue());
-			}
-
-            /*
-            else if (iT().data=="sqrt") {
-                if (!G.isempty()) G.actualvalue()=val::sqrt(G.actualvalue());
+                if (!G.isempty()) G.actualvalue()=functionpairs[i].y(G.actualvalue());
             }
-            else if (iT().data=="exp") {
-                if (!G.isempty()) G.actualvalue()=val::exp(G.actualvalue());
-            }
-            else if (iT().data=="log") {
-                if (!G.isempty()) G.actualvalue()=val::log(G.actualvalue());
-            }
-            else if (iT().data=="sin") {
-                if (!G.isempty()) G.actualvalue()=val::sin(G.actualvalue());
-            }            //default: break;
-            else if (iT().data=="cos") {
-                if (!G.isempty()) G.actualvalue()=val::cos(G.actualvalue());
-            }
-            else if (iT().data=="tan") {
-                if (!G.isempty()) G.actualvalue()=val::tan(G.actualvalue());
-            }
-            else if (iT().data=="abs") {
-                if (!G.isempty()) G.actualvalue()=val::abs(G.actualvalue());
-            }
-            else if (iT().data=="arcsin") {
-                if (!G.isempty()) G.actualvalue()=val::arcsin(G.actualvalue());
-            }
-            else if (iT().data=="arccos") {
-                if (!G.isempty()) G.actualvalue()=val::arccos(G.actualvalue());
-            }
-            else if (iT().data=="arctan") {
-                if (!G.isempty()) G.actualvalue()=val::arctan(G.actualvalue());
-            }
-            */
         }
     }
     G.resetactual();
@@ -2386,12 +2239,6 @@ int myfunction::isdifferentiable() const
         }
     }
     return 1;
-/*
-    for (const auto& value : Gdat) {
-        if (value.data=="abs") return 0;
-    }
-    return 1;
-*/
 }
 
 
@@ -2661,57 +2508,11 @@ val::d_array<double> myfunction::getPolygonPoints() const
 void myfunction::settextdata()
 {
     textdata = getstringfrombrackets(s_infix, '{', '}');
-    /*
-    int i,l=s_infix.size();
-
-    for (i=0;i<l;++i) {
-        if (s_infix[i]=='{') {
-            ++i;
-            break;
-        }
-    }
-    for (; i<l; ++i) {
-        if (s_infix[i]!='}') textdata+= s_infix[i];
-        else break;
-    }
-    */
 
     for (int i = 0; i < greek_literals.length(); ++i) {
         //if (textdata.Find(greek_literals[i]) != wxNOT_FOUND) textdata.Replace(greek_literals[i], greek_letters[i]);
         textdata.Replace(greek_literals[i], greek_letters[i]);
     }
-    /*
-    if (textdata == "\\alpha") textdata = L"\u03B1";
-    else if (textdata == "\\beta") textdata = L"\u03B2";
-    else if (textdata == "\\gamma") textdata = L"\u03B3";
-    else if (textdata == "\\delta") textdata = L"\u03B4";
-    else if (textdata == "\\epsilon") textdata = L"\u03B5";
-    else if (textdata == "\\zeta") textdata = L"\u03B6";
-    else if (textdata == "\\eta") textdata = L"\u03B7";
-    else if (textdata == "\\theta") textdata = L"\u03B8";
-    else if (textdata == "\\iota") textdata = L"\u03B9";
-    else if (textdata == "\\kappa") textdata = L"\u03BA";
-    else if (textdata == "\\lambda") textdata = L"\u03BB";
-    else if (textdata == "\\mu") textdata = L"\u03BC";
-    else if (textdata == "\\nu") textdata = L"\u03BD";
-    else if (textdata == "\\xi") textdata = L"\u03BE";
-    else if (textdata == "\\omicron") textdata = L"\u03BF";
-    else if (textdata=="\\pi") textdata = L"\u03C0";
-    else if (textdata=="\\rho") textdata = L"\u03C1";
-    else if (textdata=="\\sigma") textdata = L"\u03C3";
-    else if (textdata=="\\tau") textdata = L"\u03C4";
-    else if (textdata=="\\phi") textdata = L"\u03C6";
-    else if (textdata=="\\chi") textdata = L"\u03C7";
-    else if (textdata=="\\psi") textdata = L"\u03C8";
-    else if (textdata=="\\omega") textdata = L"\u03C9";
-    else if (textdata=="\\Gamma") textdata = L"\u0393";
-    else if (textdata=="\\Delta") textdata = L"\u0394";
-    else if (textdata=="\\Pi") textdata = L"\u03A0";
-    else if (textdata=="\\Sigma") textdata = L"\u03A3";
-    else if (textdata=="\\Phi") textdata = L"\u03A6";
-    else if (textdata=="\\Psi") textdata = L"\u03A8";
-    else if (textdata=="\\Omega") textdata = L"\u03A9";
-    */
     TextWords = getdrawingwords(textdata);
 
     return;

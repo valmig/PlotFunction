@@ -98,9 +98,9 @@ class DLL_PUBLIC MultiLineDialog: public wxDialog
 class DLL_PUBLIC InfoWindow: public wxDialog
 {
 	public:
-		InfoWindow(wxWindow* parent,const std::string &Entry="",const wxPoint &Position=wxDefaultPosition,
+		InfoWindow(wxWindow* parent,const wxString &Entry="",const wxPoint &Position=wxDefaultPosition,
                     const wxSize &Size=wxDefaultSize,const std::string &title="",int fontsize=10,int multilline = 1);
-		InfoWindow(wxWindow* parent,int &nchild,const std::string &Entry="",const wxPoint &Position=wxDefaultPosition,
+		InfoWindow(wxWindow* parent,int &nchild,const wxString &Entry="",const wxPoint &Position=wxDefaultPosition,
                     const wxSize &Size=wxDefaultSize,const std::string &title="",int fontsize=10, int multiline = 1) : InfoWindow(parent,Entry,Position,Size,title,fontsize,multiline)
                     {
                         number = &nchild;

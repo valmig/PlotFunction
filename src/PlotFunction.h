@@ -16,7 +16,7 @@
 #include <fraction.h>
 #include <MyTime.h>
 #include <valfunction.h>
-//#include <mutex>
+#include <mutex>
 #include <trie.h>
 
 
@@ -25,10 +25,11 @@ class myfunction;
 
 
 extern wxFrame *MyFrame;
-extern std::string fstring,xstring,ystring,filesep,filedir,sizestring,tablestring,settingsfile,settingsdir,valdir,iconpath,savefiledir,
+extern wxString tablestring;
+extern std::string fstring,xstring,ystring,filesep,filedir,sizestring,settingsfile,settingsdir,valdir,iconpath,savefiledir,
                    openfiledir,handcursor,RecentFilesPath,alticonpath, RecentCommandsPath, errorfile, ansexpr;
 
-//extern std::mutex compute_mutex;
+extern std::mutex compute_mutex;
 extern myfunction global_function;
 extern val::d_array<val::Glist<val::GPair<double>>> critpoints;//,undef_intervals;
 extern val::d_array<val::d_array<double>> critx;
@@ -83,7 +84,7 @@ private:
 	std::string message;
 };
 
-enum {IdPaint,IdTable,IdIntegral,IdRefresh,IdIteration,IdAnalyze,IdInfo,IdEval, IdIntersection, IdCalculate};
+enum {IdPaint,IdTable,IdIntegral,IdRefresh,IdIteration,IdAnalyze,IdInfo,IdEval, IdIntersection, IdCalculate, IdPointStat};
 
 /*
 void computepoints(const val::d_array<val::pol<double>> &F,val::d_array<val::d_array<double>> &farray,
@@ -185,6 +186,8 @@ void computezeroiteration(const myfunction& f,double x1,double x2,double eps,int
 void computerotation(const val::d_array<myfunction*> F,std::string input);
 
 void computeregression(const myfunction& f,int degree=1);
+
+void computepointstatistics(const myfunction& f, std::string input);
 
 void computetangent(std::string sf,const myfunction& f,double x1,double x2,int tangent=1);
 

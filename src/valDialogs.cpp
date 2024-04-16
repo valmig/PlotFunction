@@ -173,7 +173,7 @@ wxString MultiLineDialog::GetValue() const
 
 // ------------------------------------------InfoWindow---------------------------------------------------------------------------------
 
-InfoWindow::InfoWindow(wxWindow* parent,const std::string &Entry,const wxPoint &Position,const wxSize &Size,
+InfoWindow::InfoWindow(wxWindow* parent,const wxString &Entry,const wxPoint &Position,const wxSize &Size,
                   const std::string &title,int fontsize, int multiline)
 {
     Create(parent, wxID_ANY, title, wxDefaultPosition, wxDefaultSize, wxRESIZE_BORDER, _T("wxID_ANY"));

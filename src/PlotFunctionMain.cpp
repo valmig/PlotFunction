@@ -788,6 +788,7 @@ void PlotFunctionFrame::ResetColours()
 
 void PlotFunctionFrame::GetSettings()
 {
+    std::lock_guard<std::mutex> lock(compute_mutex);
 
     while (iscomputing) {
         wxYield();
@@ -850,19 +851,6 @@ void PlotFunctionFrame::GetSettings()
         n = svalues.length();
         if (n > 0) x1 = double(val::FromString<val::rational>(svalues[0]));
         if (n > 1) x2 = double(val::FromString<val::rational>(svalues[1]));
-        /*
-        n=xstring.size();
-        s="";
-        for (i=0;i<n;++i) {
-            if (xstring[i]==';') {
-                x1=double(val::FromString<val::rational>(s));
-                //i++;
-                s="";
-            }
-            else s+=xstring[i];
-        }
-        x2=double(val::FromString<val::rational>(s));
-        */
         if (x1>=x2) {
             x1=-5;x2=5;
         }
@@ -875,23 +863,8 @@ void PlotFunctionFrame::GetSettings()
         n = svalues.length();
         if (n > 0) y1 = double(val::FromString<val::rational>(svalues[0]));
         if (n > 1) y2 = double(val::FromString<val::rational>(svalues[1]));
-        /*
-        n=ystring.size();
-        s="";
-        for (i=0;i<n;++i) {
-            if (ystring[i]==';') {
-                y1=double(val::FromString<val::rational>(s));
-                //i++;
-                //break;
-                s="";
-            }
-            else s+=ystring[i];
-        }
-        y2=double(val::FromString<val::rational>(s));
-        */
         if (y1>=y2) yset=0;
     }
-
 
     s="";
     if (fstring=="") {setfunctionsmenu(); WriteText(); return;}
@@ -914,34 +887,6 @@ void PlotFunctionFrame::GetSettings()
             N++;
         }
     }
-
-    /*
-
-    n=fstring.size();
-
-    for (i=0;i<n;i++) {
-        if (fstring[i]=='\n') continue;
-        if (fstring[i]==';') {
-            getfunctionfromstring(s,f_s,xr.x,xr.y);
-            //f=myfunction(s);
-            f=myfunction(f_s);
-            if (!f.iszero()) {
-                F.inserttoend(std::move(f));
-                x_range.inserttoend(xr);
-                N++;
-            }
-            s="";
-        }
-        else s+=fstring[i];
-    }
-    getfunctionfromstring(s,f_s,xr.x,xr.y);
-    f=myfunction(f_s);
-    if (!f.iszero()) {
-        F.inserttoend(std::move(f));
-        x_range.inserttoend(xr);
-        N++;
-    }
-    */
 
     if (N==0) {
         fstring="";
@@ -1045,71 +990,6 @@ void PlotFunctionFrame::GetSettings()
 }
 
 
-/*
-void PlotFunctionFrame::valFloodFill(wxMemoryDC& dc, int x, int y)
-{
-    wxColour pcolor, bgc;
-    int xmin = abst, xmax = sizex + abst, ymin = abst, ymax = sizey + abst, paint;
-    int x1, x2, xstart, dy;
-    quadruple s;
-    val::Glist<quadruple> S;
-
-    dc.GetPixel(x,y,&bgc);
-
-    S.push_back(quadruple(x,x,y,1));
-    S.push_back(quadruple(x,x,y-1,-1));
-
-    while (!S.isempty()) {
-        s = S.getelement(); S.skiphead();
-        x = x1 = s.x1; x2 = s.x2; y = s.y; dy = s.dy;
-        paint = 0;
-        dc.GetPixel(x,y,&pcolor);
-        if (x <= xmax && x>=xmin && y <= ymax && y >= ymin && pcolor == bgc) {
-            while (x-1 >= xmin) {
-                dc.GetPixel(x-1,y,&pcolor);
-                if (pcolor != bgc) break;
-                if (!paint) {
-                    paint = 1;
-                    xstart = x -1;
-                }
-                --x;
-            }
-            if (paint) dc.DrawLine(x,y,xstart,y);
-            if (x < x1) S.push_back(quadruple(x, x1-1, y-dy, -dy));
-        }
-        while (x1 <= x2) {
-            paint = 0;
-            while (1) {
-                if (x1 < xmin || x1 > xmax || y < ymin || y > ymax) break;
-                dc.GetPixel(x1,y,&pcolor);
-                if (pcolor != bgc) break;
-                if (!paint) {
-                    paint = 1;
-                    xstart = x1;
-                }
-                ++x1;
-            }
-            if (paint) dc.DrawLine(xstart,y,x1,y);
-            S.push_back(quadruple(x, x1 - 1, y+dy, dy));
-            if (x1 - 1 > x2) S.push_back(quadruple(x2 + 1, x1 - 1, y-dy, -dy));
-            ++x1;
-            while (x1 < x2) {
-                if (x1 > xmax || x1 < xmin || y < ymin || y > ymax) break;
-                dc.GetPixel(x1,y,&pcolor);
-                if (pcolor == bgc) break;
-                ++x1;
-            }
-
-            x = x1;
-        }
-    }
-}
-
-*/
-
-
-
-
 
 void PlotFunctionFrame::valFloodFill(wxMemoryDC& dc, int x, int y, const wxColour &fgc)
 {
@@ -1155,13 +1035,6 @@ void PlotFunctionFrame::valFloodFill(wxMemoryDC& dc, int x, int y, const wxColou
                 p.MoveTo(data,x-1,y); pcolor = wxColour(p.Red(),p.Green(),p.Blue());
                 if (pcolor != bgc) break;
                 p.Red() = red; p.Green() = green; p.Blue() = blue;
-                /*
-                if (!paint) {
-                    paint = 1;
-                    xstart = x -1;
-                }
-                */
-
                 --x;
             }
             //if (paint) dc.DrawLine(x,y,xstart,y);
@@ -1403,9 +1276,6 @@ void PlotFunctionFrame::plotfunction(wxDC& dc,const val::d_array<double> &f,int 
         return;
     }
 
-    //wxPoint *s_points = new wxPoint[ew];
-    //int j = 0;
-
     i = aw;
     do {
         k = 0;
@@ -1457,9 +1327,6 @@ void PlotFunctionFrame::plotfunction(wxDC& dc,const val::d_array<double> &f,int 
         if (i >= ew) ready = 1;
     }
     while (!ready);
-
-    //dc.DrawSpline(ew,s_points);
-    //delete[] s_points;
 }
 
 
@@ -1469,12 +1336,6 @@ void PlotFunctionFrame::plotline(wxDC& dc,const val::d_array<double> &f,int colo
 
     int ix0,iy0,ix1,iy1;
     double arrow;
-    /*
-    {
-        double x1,x2,y1,y2;
-        F[colour].getLinePoints(x1, y1, x2, y2, arrow);
-    }
-    */
 
     if (active_function == colour) dc.SetPen(wxPen(Color[colour],pen[colour]+3));
     else dc.SetPen(wxPen(Color[colour],pen[colour]));
@@ -1702,17 +1563,6 @@ void PlotFunctionFrame::plotfill(wxMemoryDC& dc,const val::d_array<double> &f,in
 #endif // _WIN32
 
     valFloodFill(dc,ix,iy,col);
-/*
-#ifndef __APPLE__
-    dc.GetPixel(ix,iy,&bgc);
-    wxBrush brush(col);
-    dc.SetBrush(brush);
-    dc.FloodFill(ix,iy,bgc);
-#else
-    dc.SetPen(wxPen(col,1));
-    valFloodFill(dc,ix,iy,col);
-#endif // __APPLE
-*/
 }
 
 
@@ -1781,13 +1631,7 @@ void PlotFunctionFrame::plotpoints(wxDC& dc,const val::d_array<double> &f,int co
         if (active_function == colour && i == pointactive) {
             dc.SetPen(wxPen(Color[colour],pen[colour]+4));
         }
-//#ifdef _WIN32
         dc.DrawCircle(ix,iy,r);
-        //dc.FloodFill(ix,iy,dc.GetBackground().GetColour());
-//#else
-        //dc.DrawCircle(ix,iy,1);
-        //dc.DrawPoint(ix,iy);
-//#endif // _WIN32
         if (active_function == colour && i == pointactive) {
             dc.SetPen(wxPen(Color[colour],pen[colour]+2));
         }
@@ -1808,10 +1652,6 @@ void PlotFunctionFrame::plottext(wxDC& dc,const val::d_array<double> &f,int colo
 
     if (font.IsNull()) {
         font = or_font;
-        //int p = font.GetPointSize();
-        //if (active_function == colour) font.SetPointSize(p+5);
-        //dc.SetFont(font);
-        //f_size = font.GetPointSize();
     }
     f_size = font.GetPointSize();
 
@@ -1902,8 +1742,6 @@ void PlotFunctionFrame::plotcurve(wxDC& dc,const val::d_array<val::d_array<doubl
         dc.DrawLine(ix0,iy0,ix1,iy1);
         return;
     }
-
-
 
     critindex.reserve(cx.length());
     for (i_cx=0;i_cx < n_critx;++i_cx) {
@@ -2046,6 +1884,7 @@ void PlotFunctionFrame::plotallfunctions(wxMemoryDC& dc)
 
 void PlotFunctionFrame::Paint()
 {
+    std::lock_guard<std::mutex> lock(compute_mutex);
     if (!ispainted) return;
 
     ispainted=0;
@@ -2059,38 +1898,14 @@ void PlotFunctionFrame::Paint()
     wxMemoryDC dc;
     // Tell memDC to write on “paper”.
     dc.SelectObject( paper );
-    // Call Repin to draw our picture on memDC
-    //dc.SetBackground(wxBrush(BackgroundColor));
-    //dc.SetBackground(*wxTRANSPARENT_BRUSH);
-    //dc.SetFont(dc1.GetFont());
-
-    //dc.Clear();
-
     plottomemoryDc(dc);
-    /*
-    fillfunctions=0;
-    for (int i=0;i<N;++i) {
-        if (F[i].IsFill() && f_menu[i]->IsChecked()) ++fillfunctions;
-    }
 
-    plotvertices(dc);
-    plotallfunctions(dc);
-    if (fillfunctions && gridactiv->IsCheck()) {
-        fillfunctions=0;
-        plotvertices(dc);
-        plotallfunctions(dc);
-    }
-    */
-
-     // this frees up "paper" so that it can write itself to a file.
+    // this frees up "paper" so that it can write itself to a file.
     dc.SelectObject( wxNullBitmap );
     dc1.DrawBitmap(paper,0,0);
     cpaper = nullptr;
-    //delete paper;
-
 
     ispainted=1;
-    //computemutex.unlock();
     iscomputing=0;
     Text_Editrefresh();
 }
@@ -2236,15 +2051,6 @@ void PlotFunctionFrame::OnMenuSaveSelected(wxCommandEvent& event)
     filedir=FileDialogSave1.GetDirectory();
     filename=filedir+filesep+FileDialogSave1.GetFilename();
 
-    /*
-    int n = filename.length();
-    if (n<4) {
-        filename += ".png";
-    }
-    else if (filename[n-1] != 'g' || filename[n-2] != 'n' || filename[n-3] != 'p' || filename[n-4] != '.' ) filename += ".png";
-    */
-
-
     wxSize size;
     if (defaultsize) size=DrawPanel->GetSize();
     else size = bitmapsize;
@@ -2256,30 +2062,7 @@ void PlotFunctionFrame::OnMenuSaveSelected(wxCommandEvent& event)
     wxMemoryDC memDC;
     // Tell memDC to write on “paper”.
     memDC.SelectObject( paper );
-    //memDC.SetBackground(wxBrush(BackgroundColor));
-    //memDC.Clear();
-    //memDC.SetFont(DrawPanel->GetFont());
-
     plottomemoryDc(memDC);
-    /*
-    plotvertices(memDC);
-    for (int i=0;i<N;++i) plotfunction(memDC,farray[i],i);
-
-    fillfunctions=0;
-    for (int i=0;i<N;++i) {
-        if (F[i].IsFill() && f_menu[i]->IsChecked()) ++fillfunctions;
-    }
-
-    plotvertices(memDC);
-    plotallfunctions(memDC);
-    if (fillfunctions && gridactiv->IsCheck()) {
-        fillfunctions=0;
-        plotvertices(memDC);
-        plotallfunctions(memDC);
-    }
-    */
-
-
 
     // Tell memDC to write on a fake bitmap;
     // this frees up "paper" so that it can write itself to a file.
@@ -2288,7 +2071,6 @@ void PlotFunctionFrame::OnMenuSaveSelected(wxCommandEvent& event)
     // Put the contents of "paper” into a png and into a jpeg file.
     paper.SaveFile(filename, wxBITMAP_TYPE_PNG,(wxPalette*)NULL );
     cpaper = nullptr;
-    //paper->SaveFile( _T("RedSquare.jpg"), wxBITMAP_TYPE_JPEG,(wxPalette*)NULL );
 }
 
 
@@ -2719,10 +2501,20 @@ void PlotFunctionFrame::OnMenuTools(wxCommandEvent &event)
         return;
     }
 
+    std::string s;
+
     for (i=0;i<f_menu.length();++i) {
         if (f_menu[i]->IsChecked() && F[i].getmode()==myfunction::FUNCTION) {
             if (id!=7001 && id!= 7007 && F[i].numberofvariables()>1) continue;
             j=i; ++naktiv; List.push_back(F[i].getinfixnotation());indezes.push_back(i);
+        }
+        if (f_menu[i]->IsChecked() && id == 7011 && (F[i].getmode() == myfunction::POINTS || F[i].getmode() == myfunction::POLYGON)) {
+            s = F[i].getinfixnotation();
+            if (s.length() >= 50) {
+                s.resize(47);
+                s += "...";
+            }
+            j=i; ++naktiv; List.push_back(s);indezes.push_back(i);
         }
     }
 
@@ -3524,7 +3316,13 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
         break;
     case ANALYZE: case INTERSECTION:
         {
-            if (F[f_nr].getmode() != myfunction::FUNCTION || F[f_nr].numberofvariables() > 1) return;
+            int analyzepoints = 0;
+            if (F[f_nr].getmode() != myfunction::FUNCTION) {
+                if (F[f_nr].getmode() != myfunction::POINTS && F[f_nr].getmode() != myfunction::POLYGON) return;
+                else if (command != ANALYZE) return;
+                else analyzepoints = 1;
+            }
+            else if (F[f_nr].numberofvariables() > 1) return;
             val::d_array<char> separators{' ', ';', '\n'};
             val::Glist<std::string> s_values = getwordsfromstring(svalue,separators);
             int n = s_values.length(), nr2 = 1;
@@ -3554,8 +3352,14 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
             else nvalue += "\n" + s_values[4];
 
             if (command == ANALYZE) {
-                std::thread t(analyzefunction,std::cref(F[f_nr]),nvalue);
-                t.detach();
+                if (analyzepoints) {
+                    std::thread t(computepointstatistics,std::cref(F[f_nr]),nvalue);
+                    t.detach();
+                }
+                else {
+                    std::thread t(analyzefunction,std::cref(F[f_nr]),nvalue);
+                    t.detach();
+                }
             }
             else {
                 std::thread t(intersection,std::cref(F[f_nr]),std::cref(F[nr2]),nvalue);
@@ -3946,14 +3750,16 @@ void PlotFunctionFrame::OnMyEvent(MyThreadEvent& event)
         AnalysisDialog *adialog = new AnalysisDialog(this,nanalyzewindows,analyze_output,Points,wxSize(sx,sy),Point,fontsize,title);
         adialog->Show();
     }
-    else if (id == IdIntegral || id == IdCalculate) { // Integral or Calculate
+    else if (id == IdIntegral || id == IdCalculate || id == IdPointStat) { // Integral or Calculate
         std::string title;
         if (id == IdIntegral) title = "Integral";
+        else if (id == IdPointStat) title = "Points Statistic";
         else title = "Calculate";
         y=y+dy-200;
         Point.x = x; Point.y = y;
         Size.SetWidth(300);
         Size.SetHeight(200);
+        if (id == IdPointStat) Size.SetWidth(400);
         InfoWindow *tablewindow = new InfoWindow(this,nchildwindows,tablestring,wxDefaultPosition,Size,title,fontsize);
         tablewindow->Show();
         //wxMessageBox("Integral");
