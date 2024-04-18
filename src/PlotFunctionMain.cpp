@@ -1358,12 +1358,12 @@ void PlotFunctionFrame::plotline(wxDC& dc,const val::d_array<double> &f,int colo
     iy1=yzero -int((double(sizey-1)/double(y2-y1)) * g[3]);
 
     if (n_linepoints && colour == N-1) {
-        if (polygonline) {
-            dc.SetPen(wxPen(Color[colour],1));
-            dc.DrawLine(wxPoint(ix0,iy0),actualpolygonpoint);
-            polygonline = 0;
-        }
-		int r = val::Max(1,(pen[colour]+2)/2);
+        //if (polygonline) {
+        dc.SetPen(wxPen(Color[colour],1));
+        dc.DrawLine(wxPoint(ix0,iy0),actualpolygonpoint);
+            //polygonline = 0;
+        //}
+        int r = val::Max(1,(pen[colour]+2)/2);
         dc.SetPen(wxPen(Color[colour],pen[colour]+2));
         dc.SetBrush(wxBrush(Color[colour]));
         dc.DrawCircle(ix0,iy0,r);
@@ -1405,21 +1405,21 @@ void PlotFunctionFrame::plotcircle(wxDC& dc,const val::d_array<double> &f,int co
         int r;
         ix0=abst+int(double(sizex-1)*((x-x1)/(x2-x1)));
         iy0=yzero -int((double(sizey-1)/double(y2-y1)) * y);
-        if (polygonline) {
-            brush.SetStyle(wxBrushStyle::wxBRUSHSTYLE_TRANSPARENT);
-            dc.SetBrush(brush);
-            dc.SetPen(wxPen(Color[colour],1));
-            ix1 = actualpolygonpoint.x - ix0;
-            iy1 = actualpolygonpoint.y - iy0;
-            double dx = double(ix1), dy = double(iy1) , dr = sqrt(dx*dx + dy*dy);
-            dr = val::round(dr,0);
-            r = int(dr);
-            dc.DrawLine(wxPoint(ix0,iy0),actualpolygonpoint);
-            //dc.DrawCircle(ix0,iy0,r);
-            dc.DrawEllipse(ix0-r,iy0-r,2*r,2*r);
-            polygonline = 0;
-        }
-		r = val::Max(1,(pen[colour]+2)/2);
+        //if (polygonline) {
+        brush.SetStyle(wxBrushStyle::wxBRUSHSTYLE_TRANSPARENT);
+        dc.SetBrush(brush);
+        dc.SetPen(wxPen(Color[colour], 1));
+        ix1 = actualpolygonpoint.x - ix0;
+        iy1 = actualpolygonpoint.y - iy0;
+        double dx = double(ix1), dy = double(iy1), dr = sqrt(dx * dx + dy * dy);
+        dr = val::round(dr, 0);
+        r = int(dr);
+        dc.DrawLine(wxPoint(ix0, iy0), actualpolygonpoint);
+        // dc.DrawCircle(ix0,iy0,r);
+        dc.DrawEllipse(ix0 - r, iy0 - r, 2 * r, 2 * r);
+        // polygonline = 0;
+        //}
+        r = val::Max(1,(pen[colour]+2)/2);
         dc.SetPen(wxPen(Color[colour],pen[colour]+2));
         dc.SetBrush(wxBrush(Color[colour]));
         dc.DrawCircle(ix0,iy0,r);
@@ -1489,14 +1489,14 @@ void PlotFunctionFrame::plotrectangle(wxDC& dc,const val::d_array<double> &f,int
     iy1-=iy0;
 
     if (n_rectanglepoints && colour == N-1) {
-        if (polygonline) {
-            dc.SetPen(wxPen(Color[colour],1));
-            ix1 = actualpolygonpoint.x - ix0;
-            iy1 = actualpolygonpoint.y - iy0;
-            dc.DrawRectangle(ix0,iy0,ix1,iy1);
-            polygonline = 0;
-        }
-		int r = val::Max(1,(pen[colour]+2)/2);
+        //if (polygonline) {
+        dc.SetPen(wxPen(Color[colour], 1));
+        ix1 = actualpolygonpoint.x - ix0;
+        iy1 = actualpolygonpoint.y - iy0;
+        dc.DrawRectangle(ix0, iy0, ix1, iy1);
+        // polygonline = 0;
+        //}
+        int r = val::Max(1,(pen[colour]+2)/2);
         dc.SetPen(wxPen(Color[colour],pen[colour]+2));
         dc.SetBrush(wxBrush(Color[colour]));
         dc.DrawCircle(ix0,iy0,r);
@@ -1595,18 +1595,18 @@ void PlotFunctionFrame::plotpolygon(wxDC& dc,const val::d_array<double> &f,int c
     }
 
     if (drawpolygon && colour == N-1) {
-        if (polygonline) {
-            dc.SetPen(wxPen(Color[colour],1));
-            dc.DrawLine(wxPoint(ix0,iy0),actualpolygonpoint);
-            polygonline = 0;
-        }
+        //if (polygonline) {
+        dc.SetPen(wxPen(Color[colour],1));
+        dc.DrawLine(wxPoint(ix0,iy0),actualpolygonpoint);
+            //polygonline = 0;
+        //}
         int r = val::Max(1,(pen[colour]+2)/2);
         dc.SetPen(wxPen(Color[colour],pen[colour]+2));
         dc.SetBrush(wxBrush(Color[colour]));
         dc.DrawCircle(ix0,iy0,r);
         //dc.SetPen(wxPen(Color[colour],8));
         //dc.DrawPoint(ix0,iy0);
-        actualpolygonpoint = wxPoint(ix0,iy0);
+        //actualpolygonpoint = wxPoint(ix0,iy0);
     }
 }
 
@@ -4477,6 +4477,7 @@ void PlotFunctionFrame::OnMouseCaptured(wxMouseEvent &event)
     if (!yset) return;
 
     mouse_x1=event.GetX(); mouse_y1=event.GetY();
+    actualpolygonpoint.x = mouse_x1; actualpolygonpoint.y = mouse_y1;
 
 
     if (drawpoints || drawpolygon || drawline || drawrectangle || drawcircle) {
@@ -4606,7 +4607,7 @@ void PlotFunctionFrame::OnMouseMoved(wxMouseEvent &event)
         }
         StatusBar1->SetStatusText(text,0);
         if (n_polygonpoints || n_linepoints || n_rectanglepoints || n_circlepoints) {
-            polygonline = 1;
+            //polygonline = 1;
             iscomputing = 1;
             actualpolygonpoint.x = xm; actualpolygonpoint.y = ym;
             Paint();
