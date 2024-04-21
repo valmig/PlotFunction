@@ -144,6 +144,7 @@ class PlotFunctionFrame: public wxFrame
         int moveinpointsx = 0, moveinpointsy = 0, drawpolygon = 0, n_polygonpoints=0, drawline = 0, n_linepoints = 0, drawrectangle = 0, n_rectanglepoints = 0;
         int drawcircle = 0, n_circlepoints = 0, bitmapbackground = 0, axis_fontsize = 10, SideText_isshown = 0, widthSideText = 200;
         int notebook_isshown = 0, widthNoteBookPanel = 200, plusw = 12;
+        long InfoStyle = wxRESIZE_BORDER;
         bool closebrackets = true;
         wxPoint actuallinepoint,actualpolygonpoint;
         val::rational pi_factor_x,pi_factor_y,g_pi_factor_x,g_pi_factor_y;
@@ -220,7 +221,9 @@ class PlotFunctionFrame: public wxFrame
         void OnLostFocus(wxFocusEvent&);
         void OnSideBarCheck(wxCommandEvent&);
         void OnSideBarEvaluate(wxCommandEvent&);
-        void CheckFocus();
+        //void TestLostFocus(wxFocusEvent&);
+        //void OnClose(wxCloseEvent &);
+        //void CheckFocus();
         //
         void CreateNoteBook();
         void OnNoteBookSwitch(wxCommandEvent &event);

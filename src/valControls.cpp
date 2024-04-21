@@ -1319,7 +1319,10 @@ void CompleteTextCtrl::OnKeyChar(wxKeyEvent &event)
         //wxMessageBox(s_text);
         s_text = o_brackets[j] + s_text;
         s_text += c_brackets[j];
-        Replace(from, from, s_text);
+#ifndef __APPLE__
+        to = from;
+#endif
+        Replace(from, to, s_text);
         textisselected = 0;
     }
     else event.Skip();

@@ -97,22 +97,19 @@ class DLL_PUBLIC MultiLineDialog: public wxDialog
 
 class DLL_PUBLIC InfoWindow: public wxDialog
 {
-	public:
-		InfoWindow(wxWindow* parent,const wxString &Entry="",const wxPoint &Position=wxDefaultPosition,
-                    const wxSize &Size=wxDefaultSize,const std::string &title="",int fontsize=10,int multilline = 1);
-		InfoWindow(wxWindow* parent,int &nchild,const wxString &Entry="",const wxPoint &Position=wxDefaultPosition,
-                    const wxSize &Size=wxDefaultSize,const std::string &title="",int fontsize=10, int multiline = 1) : InfoWindow(parent,Entry,Position,Size,title,fontsize,multiline)
-                    {
-                        number = &nchild;
-                        ++(*number);
-                    }
-		virtual ~InfoWindow();
-
-	protected:
-	private:
-	    void OnClose(wxCloseEvent &event);
-	    int *number=nullptr;
-
+public:
+    InfoWindow(wxWindow* parent,const wxString &Entry="",const wxPoint &Position=wxDefaultPosition,
+                    const wxSize &Size=wxDefaultSize,const std::string &title="",int fontsize=10,int multiline = 1, long InfoStyle = wxRESIZE_BORDER);
+    InfoWindow(wxWindow* parent,int &nchild,const wxString &Entry="",const wxPoint &Position=wxDefaultPosition,
+                    const wxSize &Size=wxDefaultSize,const std::string &title="",int fontsize=10, int multiline = 1, long InfoStyle = wxRESIZE_BORDER) : InfoWindow(parent,Entry,Position,Size,title,fontsize,multiline,InfoStyle)
+    {
+        number = &nchild;
+        ++(*number);
+    }
+    virtual ~InfoWindow();
+private:
+    void OnClose(wxCloseEvent &event);
+    int *number=nullptr;
 };
 // --------------------------------------------------------------------------------------------------------------------------
 

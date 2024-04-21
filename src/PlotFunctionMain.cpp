@@ -120,7 +120,7 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     DrawPanel->SetForegroundColour(wxColour(255,255,255));
     DrawPanel->SetBackgroundColour(wxColour(255,255,255));
 
-    SideText = new val::CompleteTextCtrl(this,3002,WordTree,wxEmptyString,wxSize(widthSideText,-1),wxDefaultPosition,wxTE_MULTILINE|wxVSCROLL|wxHSCROLL|wxTE_RICH);
+    SideText = new val::CompleteTextCtrl(this,3102,WordTree,wxEmptyString,wxSize(widthSideText,-1),wxDefaultPosition,wxTE_MULTILINE|wxVSCROLL|wxHSCROLL|wxTE_RICH);
     notebook = new wxNotebook(this,3100);
 
     BoxSizer2->Add(SideText, 0, wxALL|wxEXPAND, 5);
@@ -146,7 +146,11 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     Menu1->Append(104,_("Save file as...\tCtrl-Shift-S"));
     MenuSave = new wxMenuItem(Menu1, ID_MENUITEM4, _("Export Graphic as...\tCtrl-E"), wxEmptyString, wxITEM_NORMAL);
     Menu1->Append(MenuSave);
+#ifdef __APPLE__
+    MenuItem1 = new wxMenuItem(Menu1, idMenuQuit, _("Quit\tCtrl-Q"), _("Quit the application"), wxITEM_NORMAL);
+#else
     MenuItem1 = new wxMenuItem(Menu1, idMenuQuit, _("Quit\tAlt-F4"), _("Quit the application"), wxITEM_NORMAL);
+#endif
     Menu1->Append(MenuItem1);
     Menu3 = new wxMenu();
     MenuItem3 = new wxMenuItem(Menu3, ID_MENUITEM1, _("Main Settings...\tAlt-M"), wxEmptyString, wxITEM_NORMAL);
@@ -190,12 +194,6 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     SetStatusBar(StatusBar1);
 
     //DrawPanel->Connect(wxEVT_PAINT,(wxObjectEventFunction)&PlotFunctionFrame::OnDrawPanelPaint,0,this);
-    DrawPanel->Bind(wxEVT_PAINT,&PlotFunctionFrame::OnDrawPanelPaint,this);
-    DrawPanel->Bind(wxEVT_SIZE,&PlotFunctionFrame::OnDrawPanelResize,this);
-    //DrawPanel->Connect(wxEVT_SIZE,(wxObjectEventFunction)&PlotFunctionFrame::OnDrawPanelResize,0,this);
-
-    SideText->Bind(wxEVT_KILL_FOCUS,&PlotFunctionFrame::OnLostFocus,this);
-    SideText->Bind(wxEVT_SET_FOCUS,&PlotFunctionFrame::OnLostFocus,this);
     SideText->Hide();
 
     //Connect(idMenuQuit,wxEVT_COMMAND_MENU_SELECTED,(wxObjectEventFunction)&PlotFunctionFrame::OnQuit);
@@ -475,6 +473,9 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     CreateNoteBook();
     notebook->Hide();
 
+#ifdef __APPLE_
+    InfoStyle = wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER;
+#endif
 
     GetSizeSettings();
     if (settings) {
@@ -491,7 +492,6 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
             sidemenuview->Check(true);
             SideText->Show();
             SideText->SetFocus();
-            //CheckFocus();
         }
         if (notebook_isshown) {
             clientsize_x += widthNoteBookPanel + plusw;
@@ -515,6 +515,15 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     GetSettings();
     Compute();
     Text_Editrefresh();
+
+    DrawPanel->Bind(wxEVT_PAINT,&PlotFunctionFrame::OnDrawPanelPaint,this);
+    DrawPanel->Bind(wxEVT_SIZE,&PlotFunctionFrame::OnDrawPanelResize,this);
+
+    DrawPanel->Bind(wxEVT_SET_FOCUS,&PlotFunctionFrame::OnLostFocus,this);
+    SideText->Bind(wxEVT_SET_FOCUS,&PlotFunctionFrame::OnLostFocus,this);
+    //SideText->Bind(wxEVT_KILL_FOCUS,&PlotFunctionFrame::TestLostFocus,this);
+    notebook->Bind(wxEVT_SET_FOCUS,&PlotFunctionFrame::OnLostFocus,this);
+    //Bind(wxEVT_CLOSE_WINDOW,&PlotFunctionFrame::OnClose,this);
 }
 
 
@@ -523,7 +532,9 @@ PlotFunctionFrame::~PlotFunctionFrame()
 {
     using namespace std;
     ispainted = 0;
-    //std::ofstream file(val::GetExeDir()+filesep+"settings.txt",ios::out | ios::trunc);
+
+    //std::cout << "\n Destructor called!" << std::endl;
+
     std::ofstream file(settingsfile,ios::out | ios::trunc);
     if (file) {
         wxSize MySize=DrawPanel->GetSize();
@@ -568,6 +579,7 @@ PlotFunctionFrame::~PlotFunctionFrame()
     }
     if (SideText->IsShown()) SideText->Hide();
     if (notebook->IsShown()) notebook->Hide();
+
     //(*Destroy(PlotFunctionFrame)
     //*)
 }
@@ -575,8 +587,9 @@ PlotFunctionFrame::~PlotFunctionFrame()
 
 void PlotFunctionFrame::OnQuit(wxCommandEvent& event)
 {
-    //Destroy();
-    Close();
+    //std::cout << "\n Quit Application!" << std::endl;
+    Destroy();
+    //Close();
 }
 
 
@@ -3727,7 +3740,7 @@ void PlotFunctionFrame::OnMyEvent(MyThreadEvent& event)
         Size.SetWidth(sx);
         Size.SetHeight(sy);
         //wxMessageBox(s);
-        InfoWindow *tablewindow = new InfoWindow(this,nchildwindows,tablestring,Point,Size,title,fontsize);
+        InfoWindow *tablewindow = new InfoWindow(this,nchildwindows,tablestring,Point,Size,title,fontsize,1,InfoStyle);
         tablewindow->Show();
     }
     else if (id == IdAnalyze || id == IdIntersection) {
@@ -3760,7 +3773,7 @@ void PlotFunctionFrame::OnMyEvent(MyThreadEvent& event)
         Size.SetWidth(300);
         Size.SetHeight(200);
         if (id == IdPointStat) Size.SetWidth(400);
-        InfoWindow *tablewindow = new InfoWindow(this,nchildwindows,tablestring,wxDefaultPosition,Size,title,fontsize);
+        InfoWindow *tablewindow = new InfoWindow(this,nchildwindows,tablestring,wxDefaultPosition,Size,title,fontsize,1,InfoStyle);
         tablewindow->Show();
         //wxMessageBox("Integral");
     }
@@ -3769,7 +3782,7 @@ void PlotFunctionFrame::OnMyEvent(MyThreadEvent& event)
         Point.x = x; Point.y = y;
         Size.SetWidth(300);
         Size.SetHeight(205);
-        InfoWindow *tablewindow = new InfoWindow(this,nchildwindows,tablestring,wxDefaultPosition,Size,"zero iteration",fontsize);
+        InfoWindow *tablewindow = new InfoWindow(this,nchildwindows,tablestring,wxDefaultPosition,Size,"zero iteration",fontsize,1,InfoStyle);
         tablewindow->Show();
     }
 }
@@ -5434,22 +5447,33 @@ void PlotFunctionFrame::CompareSideTextInput()
 void PlotFunctionFrame::OnSideBarEvaluate(wxCommandEvent &event)
 {
     if (!SideText->HasFocus()) return;
-    int n = SideText->GetInsertionPoint();
+    int n = SideText->GetInsertionPoint(), l1 = SideText->GetValue().length(), l2;
     CompareSideTextInput();
-    SideText->SetInsertionPoint(n);
+    l2 = SideText->GetValue().length();
+    SideText->SetInsertionPoint(n + (l2-l1));
 }
 
-
-
+/*
+void PlotFunctionFrame::OnClose(wxCloseEvent &event)
+{
+    std::cout << "\nClose Event!" << std::endl;
+    Destroy();
+}
+*/
 
 void PlotFunctionFrame::OnLostFocus(wxFocusEvent &event)
 {
-    //wxMessageBox("Focus on Text lost!");
     CompareSideTextInput();
-    //CheckFocus();
     event.Skip();
 }
 
+/*
+void PlotFunctionFrame::TestLostFocus(wxFocusEvent &event)
+{
+    std::cout << "\nLost Focus!" << std::endl;
+    event.Skip();
+}
+*/
 
 void PlotFunctionFrame::OnSideBarCheck(wxCommandEvent &event)
 {
@@ -5467,7 +5491,6 @@ void PlotFunctionFrame::OnSideBarCheck(wxCommandEvent &event)
            closebrackets = SideText->GetCloseBrackets();
            DrawPanel->SetFocus();
 #ifdef _WIN32
-           //CheckFocus();
            SetClientSize(Size);
            Update();
            Paint();
@@ -5482,7 +5505,6 @@ void PlotFunctionFrame::OnSideBarCheck(wxCommandEvent &event)
            SideText->SetFocus();
            SideText->SetCloseBrackets(closebrackets);
         }
-       //CheckFocus();
     }
     else {
         if (SideText_isshown) Size.x += widthSideText + 10;
@@ -5508,7 +5530,7 @@ void PlotFunctionFrame::OnSideBarCheck(wxCommandEvent &event)
     //Move(pos);
 }
 
-
+/*
 void PlotFunctionFrame::CheckFocus()
 {
     return;
@@ -5525,7 +5547,7 @@ void PlotFunctionFrame::CheckFocus()
         Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1009);         // Paste from Clipboard
     }
 }
-
+*/
 
 // NoteBook related functions:
 

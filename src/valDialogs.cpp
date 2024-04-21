@@ -174,9 +174,9 @@ wxString MultiLineDialog::GetValue() const
 // ------------------------------------------InfoWindow---------------------------------------------------------------------------------
 
 InfoWindow::InfoWindow(wxWindow* parent,const wxString &Entry,const wxPoint &Position,const wxSize &Size,
-                  const std::string &title,int fontsize, int multiline)
+                  const std::string &title,int fontsize, int multiline, long InfoStyle)
 {
-    Create(parent, wxID_ANY, title, wxDefaultPosition, wxDefaultSize, wxRESIZE_BORDER, _T("wxID_ANY"));
+    Create(parent, wxID_ANY, title, wxDefaultPosition, wxDefaultSize, InfoStyle, _T("wxID_ANY"));
     wxBoxSizer *BoxSizer1 = new wxBoxSizer(wxVERTICAL);
     if (multiline) {
         int style = wxVSCROLL | wxHSCROLL | wxTE_READONLY | wxTE_MULTILINE;
