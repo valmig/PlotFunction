@@ -33,7 +33,7 @@ extern std::mutex compute_mutex;
 extern myfunction global_function;
 extern val::d_array<val::Glist<val::GPair<double>>> critpoints;//,undef_intervals;
 extern val::d_array<val::d_array<double>> critx;
-extern val::d_array<std::string> analyze_output;
+extern val::d_array<wxString> analyze_output;
 extern val::d_array<val::d_array<val::GPair<double>>> Points;
 extern const val::d_array<wxString> greek_literals;
 extern const val::d_array<wxString> greek_letters;
@@ -84,7 +84,7 @@ private:
 	std::string message;
 };
 
-enum {IdPaint,IdTable,IdIntegral,IdRefresh,IdIteration,IdAnalyze,IdInfo,IdEval, IdIntersection, IdCalculate, IdPointStat};
+enum myevent_id{IdPaint,IdTable,IdIntegral,IdRefresh,IdIteration,IdAnalyze,IdInfo,IdEval, IdIntersection, IdCalculate, IdPointStat, IdTriangle};
 
 /*
 void computepoints(const val::d_array<val::pol<double>> &F,val::d_array<val::d_array<double>> &farray,
@@ -188,6 +188,8 @@ void computerotation(const val::d_array<myfunction*> F,std::string input);
 void computeregression(const myfunction& f,int degree=1);
 
 void computepointstatistics(const myfunction& f, std::string input);
+
+void analyze_triangle(const myfunction &f, std::string input);
 
 void computetangent(std::string sf,const myfunction& f,double x1,double x2,int tangent=1);
 

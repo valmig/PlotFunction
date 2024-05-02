@@ -317,25 +317,27 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
 
     //
     rightclickmenu = new wxMenu();
-    rightclickmenu->Append(1001,_T("Fill Area"));
-    rightclickmenu->Append(1002,_T("Choose Color and Fill Area..."));
-    rightclickmenu->Append(1003,_T("circle..."));
-    rightclickmenu->Append(1004,_T("text..."));
-    addpointsmenu = new wxMenuItem(rightclickmenu,1005,_T("Add Points \tShift-Alt-P"),wxEmptyString,wxITEM_CHECK);
+    rightclickmenu->Append(1101,_T("Fill Area"));
+    rightclickmenu->Append(1102,_T("Choose Color and Fill Area..."));
+    rightclickmenu->Append(1103,_T("circle..."));
+    rightclickmenu->Append(1104,_T("text..."));
+    addpointsmenu = new wxMenuItem(rightclickmenu,1001,_T("Add Points \tShift-Alt-P"),wxEmptyString,wxITEM_CHECK);
     //addpointsmenu->Check(false);
     rightclickmenu->Append(addpointsmenu);
-    linepointsmenu = new wxMenuItem(rightclickmenu,1007,_T("Draw Line \tShift-Ctrl-L"),wxEmptyString,wxITEM_CHECK);
+    linepointsmenu = new wxMenuItem(rightclickmenu,1003,_T("Draw Line \tShift-Ctrl-L"),wxEmptyString,wxITEM_CHECK);
     rightclickmenu->Append(linepointsmenu);
-    polygonpointsmenu = new wxMenuItem(rightclickmenu,1006,_T("Draw Polygon \tShift-Ctrl-P"),wxEmptyString,wxITEM_CHECK);
+    polygonpointsmenu = new wxMenuItem(rightclickmenu,1002,_T("Draw Polygon \tShift-Ctrl-P"),wxEmptyString,wxITEM_CHECK);
     rightclickmenu->Append(polygonpointsmenu);
-    rectanglemenu = new wxMenuItem(rightclickmenu,1010,_T("Draw Rectangle \tShift-Ctrl-R"),wxEmptyString,wxITEM_CHECK);
+    rectanglemenu = new wxMenuItem(rightclickmenu,1004,_T("Draw Rectangle \tShift-Ctrl-R"),wxEmptyString,wxITEM_CHECK);
     rightclickmenu->Append(rectanglemenu);
-    circlemenu = new wxMenuItem(rightclickmenu,1011,_T("Draw Circle \tShift-Ctrl-E"),wxEmptyString,wxITEM_CHECK);
+    circlemenu = new wxMenuItem(rightclickmenu,1005,_T("Draw Circle \tShift-Ctrl-E"),wxEmptyString,wxITEM_CHECK);
     rightclickmenu->Append(circlemenu);
+    trianglemenu = new wxMenuItem(rightclickmenu,1006,_T("Draw Triangle \tShift-Ctrl-T"),wxEmptyString,wxITEM_CHECK);
+    rightclickmenu->Append(trianglemenu);
     rightclickmenu->AppendSeparator();
-    rightclickmenu->Append(1008,_T("Copy Image\tShift-Ctrl-C"));
-    rightclickmenu->Append(1009,_T("Paste Image to Background\tShift-Ctrl-V"));
-    rightclickmenu->Append(1012,_T("Change Background Color \tShift-Ctrl-B"));
+    rightclickmenu->Append(1105,_T("Copy Image\tShift-Ctrl-C"));
+    rightclickmenu->Append(1106,_T("Paste Image to Background\tShift-Ctrl-V"));
+    rightclickmenu->Append(1107,_T("Change Background Color \tShift-Ctrl-B"));
     //
     rightclickfunctionsmenu = new wxMenu();
     rightclickfunctionsmenu->Append(7101,_T("Change Settings"));
@@ -386,21 +388,23 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenunewfunction,this,3004);  // Delete All
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenunewfunction,this,3005);  // undo
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenunewfunction,this,3006);  // redo
-    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1001);         // Fill Area
-    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1002);         // Choose Color and Fill Area
-    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1003);         // circle
-    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1004);         // text
-    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1005);         // Add Points
-    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1006);         // DrawPolygon
-    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1007);         // DrawLine
-    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1008);         // Copy to Clipboard
-    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1009);         // Paste from Clipboard
-    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1010);         // DrawRectangle
-    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1011);         // DrawRectangle
-    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuColours,this,1012);      // Background Color
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1001);         // Add Points
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1002);         // DrawPolygon
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1003);         // DrawLine
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1004);         // DrawRectangle
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1005);         // DrawCircle
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1006);         // DrawTriangle
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1101);         // Fill Area
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1102);         // Choose Color and Fill Area
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1103);         // circle
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1104);         // text
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1105);         // Copy to Clipboard
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1106);         // Paste from Clipboard
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuColours,this,1107);      // Background Color
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,7101);         // Change Settings for marked function
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnInputDialog,this,5011);      // Opens InputDialog
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnSideBarEvaluate,this,5020);  // Evaluate input in SideBar
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::ChangeSideTextStyle,this,5021);  // Evaluate input in SideBar
     Bind(MY_EVENT,&PlotFunctionFrame::OnMyEvent,this);
     Bind(P_EVENT,&PlotFunctionFrame::OnParentEvent,this);
     // Mouse-Events:
@@ -438,20 +442,21 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     Accel.push_back(wxAcceleratorEntry(wxACCEL_CTRL,WXK_LEFT,20004));
     Accel.push_back(wxAcceleratorEntry(wxACCEL_CTRL,WXK_UP,20005));
     Accel.push_back(wxAcceleratorEntry(wxACCEL_CTRL,WXK_DOWN,20006));
-    Accel.push_back(wxAcceleratorEntry(wxACCEL_SHIFT|wxACCEL_ALT,(int) 'P',1005));
+    Accel.push_back(wxAcceleratorEntry(wxACCEL_SHIFT|wxACCEL_ALT,(int) 'P',1001));
     Accel.push_back(wxAcceleratorEntry(wxACCEL_CTRL,WXK_PAGEDOWN,20007));
     Accel.push_back(wxAcceleratorEntry(wxACCEL_NORMAL,WXK_ESCAPE,20008));
-    Accel.push_back(wxAcceleratorEntry(wxACCEL_SHIFT|wxACCEL_CTRL,(int) 'P',1006));
-    Accel.push_back(wxAcceleratorEntry(wxACCEL_SHIFT|wxACCEL_CTRL,(int) 'L',1007));
-    Accel.push_back(wxAcceleratorEntry(wxACCEL_SHIFT|wxACCEL_CTRL,(int) 'C',1008));
-    Accel.push_back(wxAcceleratorEntry(wxACCEL_CTRL,WXK_INSERT,1008));
-    Accel.push_back(wxAcceleratorEntry(wxACCEL_SHIFT|wxACCEL_CTRL,(int) 'V',1009));
-    Accel.push_back(wxAcceleratorEntry(wxACCEL_SHIFT,WXK_INSERT,1009));
+    Accel.push_back(wxAcceleratorEntry(wxACCEL_SHIFT|wxACCEL_CTRL,(int) 'P',1002));
+    Accel.push_back(wxAcceleratorEntry(wxACCEL_SHIFT|wxACCEL_CTRL,(int) 'L',1003));
+    Accel.push_back(wxAcceleratorEntry(wxACCEL_SHIFT|wxACCEL_CTRL,(int) 'C',1105));
+    Accel.push_back(wxAcceleratorEntry(wxACCEL_CTRL,WXK_INSERT,1105));
+    Accel.push_back(wxAcceleratorEntry(wxACCEL_SHIFT|wxACCEL_CTRL,(int) 'V',1106));
+    Accel.push_back(wxAcceleratorEntry(wxACCEL_SHIFT,WXK_INSERT,1106));
     Accel.push_back(wxAcceleratorEntry(wxACCEL_ALT,WXK_RIGHT,20009));
     Accel.push_back(wxAcceleratorEntry(wxACCEL_ALT,WXK_LEFT,20010));
     Accel.push_back(wxAcceleratorEntry(wxACCEL_CTRL,WXK_PAGEUP,20011));
-    Accel.push_back(wxAcceleratorEntry(wxACCEL_SHIFT|wxACCEL_CTRL,(int) 'R',1010));
-    Accel.push_back(wxAcceleratorEntry(wxACCEL_SHIFT|wxACCEL_CTRL,(int) 'E',1011));
+    Accel.push_back(wxAcceleratorEntry(wxACCEL_SHIFT|wxACCEL_CTRL,(int) 'R',1004));
+    Accel.push_back(wxAcceleratorEntry(wxACCEL_SHIFT|wxACCEL_CTRL,(int) 'E',1005));
+    Accel.push_back(wxAcceleratorEntry(wxACCEL_SHIFT|wxACCEL_CTRL,(int) 'T',1006));
     //Accel.push_back(wxAcceleratorEntry(wxACCEL_ALT,(int) 'P',5020));
     Accel.push_back(wxAcceleratorEntry(wxACCEL_CTRL,WXK_RETURN,5020));
     Accel.push_back(wxAcceleratorEntry(wxACCEL_NORMAL,WXK_MENU,7200));
@@ -459,6 +464,7 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     Accel.push_back(wxAcceleratorEntry(wxACCEL_CTRL,(int) '0',7202));
     Accel.push_back(wxAcceleratorEntry(wxACCEL_NORMAL,WXK_F9,7011));
     Accel.push_back(wxAcceleratorEntry(wxACCEL_SHIFT|wxACCEL_CTRL,(int) 'x',6));
+    Accel.push_back(wxAcceleratorEntry(wxACCEL_ALT,(int) 'l',5021));
 
     SetAccelerators(Accel);
 
@@ -473,7 +479,7 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     CreateNoteBook();
     notebook->Hide();
 
-#ifdef __APPLE_
+#ifdef __APPLE__
     InfoStyle = wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER;
 #endif
 
@@ -616,12 +622,15 @@ void PlotFunctionFrame::OnFileMenu(wxCommandEvent& event)
 #else
     wxString filetype = _("all files (*)|*");
 #endif // _WIN32
-
+       //
+    /*
     if (drawpoints) changedrawpoints();
     if (drawpolygon) changedrawpolygon();
     if (drawline) changedrawline();
     if (drawrectangle) changedrawrectangle();
     if (drawcircle) changedrawcircle();
+    */
+    if (dpanelinsertmode) changedpanelinsertmode(insert_type::NORMAL_I);
 
     if (id==101) {   //new
         val::rational rzero;
@@ -1370,8 +1379,8 @@ void PlotFunctionFrame::plotline(wxDC& dc,const val::d_array<double> &f,int colo
     ix1=abst+int(double(sizex-1)*((g[2]-x1)/(x2-x1)));
     iy1=yzero -int((double(sizey-1)/double(y2-y1)) * g[3]);
 
-    if (n_linepoints && colour == N-1) {
-        //if (polygonline) {
+    //if (n_linepoints && colour == N-1) {
+    if (n_points && dpanelinsertmode == insert_type::LINE_I && colour == N-1) {
         dc.SetPen(wxPen(Color[colour],1));
         dc.DrawLine(wxPoint(ix0,iy0),actualpolygonpoint);
             //polygonline = 0;
@@ -1414,7 +1423,8 @@ void PlotFunctionFrame::plotcircle(wxDC& dc,const val::d_array<double> &f,int co
     else dc.SetPen(wxPen(Color[colour],pen[colour]));
     wxBrush brush(Color[colour]);
 
-    if (n_circlepoints && colour == N-1) {
+    //if (n_circlepoints && colour == N-1) {
+    if (n_points && dpanelinsertmode == insert_type::CIRCLE_I && colour == N-1) {
         int r;
         ix0=abst+int(double(sizex-1)*((x-x1)/(x2-x1)));
         iy0=yzero -int((double(sizey-1)/double(y2-y1)) * y);
@@ -1469,13 +1479,17 @@ void PlotFunctionFrame::plotcircle(wxDC& dc,const val::d_array<double> &f,int co
     }
 
 
-    if (active_function == colour) {
+    if (active_function == colour || slice == -1) {
         //double x,y,r,a1,a2;
         //int slice;
         //F[colour].getCirclePoints(x,y,r,a1,a2,slice);
         ix0=abst+int(double(sizex-1)*((x-x1)/(x2-x1)));
         iy0=yzero -int((double(sizey-1)/double(y2-y1)) * y);
-        dc.DrawPoint(ix0,iy0);
+        r = val::Max(1,(pen[colour]+2)/2);
+        dc.SetPen(wxPen(Color[colour],pen[colour]+1));
+        dc.SetBrush(wxBrush(Color[colour]));
+        //dc.DrawPoint(ix0,iy0);
+        dc.DrawCircle(ix0,iy0,r);
     }
 }
 
@@ -1501,7 +1515,8 @@ void PlotFunctionFrame::plotrectangle(wxDC& dc,const val::d_array<double> &f,int
     ix1-=ix0;
     iy1-=iy0;
 
-    if (n_rectanglepoints && colour == N-1) {
+    //if (n_rectanglepoints && colour == N-1) {
+    if (n_points && dpanelinsertmode == insert_type::RECTANGLE_I && colour == N-1) {
         //if (polygonline) {
         dc.SetPen(wxPen(Color[colour], 1));
         ix1 = actualpolygonpoint.x - ix0;
@@ -1537,6 +1552,19 @@ void PlotFunctionFrame::plottriangle(wxDC& dc,const val::d_array<double> &f,int 
     iy1=yzero -int((double(sizey-1)/double(y2-y1)) * f[3]);
     ix2=abst+int(double(sizex-1)*((f[4]-x1)/(x2-x1)));
     iy2=yzero -int((double(sizey-1)/double(y2-y1)) * f[5]);
+
+    if (n_points && dpanelinsertmode == insert_type::TRIANGLE_I && colour == N-1) {
+        dc.SetPen(wxPen(Color[colour],1));
+        if (n_points == 1) {
+            dc.DrawLine(ix0,iy0,actualpolygonpoint.x,actualpolygonpoint.y);
+        }
+        else {
+            dc.DrawLine(ix0,iy0,ix1,iy1);
+            dc.DrawLine(ix1,iy1,actualpolygonpoint.x,actualpolygonpoint.y);
+            dc.DrawLine(ix0,iy0,actualpolygonpoint.x,actualpolygonpoint.y);
+        }
+        return;
+    }
 
     dc.DrawLine(ix0,iy0,ix1,iy1);
     dc.DrawLine(ix1,iy1,ix2,iy2);
@@ -1607,7 +1635,8 @@ void PlotFunctionFrame::plotpolygon(wxDC& dc,const val::d_array<double> &f,int c
         iy0=iy1;
     }
 
-    if (drawpolygon && colour == N-1) {
+    //if (drawpolygon && colour == N-1) {   //
+    if (dpanelinsertmode == insert_type::POLYGON_I && colour == N-1) {
         //if (polygonline) {
         dc.SetPen(wxPen(Color[colour],1));
         dc.DrawLine(wxPoint(ix0,iy0),actualpolygonpoint);
@@ -2125,11 +2154,14 @@ void PlotFunctionFrame::OnMenunewfunction(wxCommandEvent &event)
     int id=event.GetId();
 
     if (id != 3005 && id != 3006) {
+        /*
         if (drawpoints) changedrawpoints();
         if (drawpolygon) changedrawpolygon();
         if (drawline) changedrawline();
         if (drawrectangle) changedrawrectangle();
         if (drawcircle) changedrawcircle();
+        */
+        if (dpanelinsertmode) changedpanelinsertmode(insert_type::NORMAL_I);
     }
     if (id==3000) {   // Add/removeFunction
         std::string input="",output="";
@@ -2177,26 +2209,35 @@ void PlotFunctionFrame::OnMenunewfunction(wxCommandEvent &event)
     else if (id==3005 || id==3006) { // undo/redo:
         if (id==3005) {
             a_fstring--;
+            /*
             if (drawpoints) addingpoints--;
             if (drawpolygon) n_polygonpoints--;
             if (drawline) n_linepoints--;
             if (drawrectangle) n_rectanglepoints--;
             if (drawcircle) n_circlepoints--;
+            */
+            if (dpanelinsertmode) n_points--;
         }
         else {
             a_fstring++;
+            /*
             if (drawpoints) addingpoints++;
             if (drawpolygon) n_polygonpoints++;
             if (drawline) n_linepoints++;
             if (drawrectangle) n_rectanglepoints++;
             if (drawcircle) n_circlepoints++;
+            */
+            if (dpanelinsertmode) n_points++;
         }
 
+        /*
         if (drawpoints && addingpoints<=0) changedrawpoints();
         if (drawpolygon && n_polygonpoints<=0) changedrawpolygon();
         if (drawline && n_linepoints<=0) changedrawline();
         if (drawrectangle && n_rectanglepoints<=0) changedrawrectangle();
         if (drawcircle && n_circlepoints<=0) changedrawcircle();
+        */
+        if (dpanelinsertmode && n_points <= 0) changedpanelinsertmode(insert_type::NORMAL_I);
 
         if (a_fstring<0) {
             a_fstring=0;
@@ -2237,7 +2278,7 @@ void PlotFunctionFrame::OnMenuColours(wxCommandEvent &event)
 {
     int evid = event.GetId();
 
-    if (evid==4400 || evid==1012) {
+    if (evid==4400 || evid==1107) {
         wxColourData data;
         data.SetColour(BackgroundColor);
         wxColourDialog dialog(this,&data);
@@ -2405,11 +2446,14 @@ void PlotFunctionFrame::OnMenuTools(wxCommandEvent &event)
     using namespace val;
     int i,naktiv=0,j=0,id=event.GetId();
 
+    /*
     if (drawpoints) changedrawpoints();
     if (drawpolygon) changedrawpolygon();
     if (drawline) changedrawline();
     if (drawrectangle) changedrawrectangle();
     if (drawcircle) changedrawcircle();
+    */
+    if (dpanelinsertmode) changedpanelinsertmode(insert_type::NORMAL_I);
 
     if (id==7006) {  //interpolation
         MultiLineDialog dialog(this,"","Enter Points:",240,80,"Interpolation",fontsize);
@@ -2521,7 +2565,7 @@ void PlotFunctionFrame::OnMenuTools(wxCommandEvent &event)
             if (id!=7001 && id!= 7007 && F[i].numberofvariables()>1) continue;
             j=i; ++naktiv; List.push_back(F[i].getinfixnotation());indezes.push_back(i);
         }
-        if (f_menu[i]->IsChecked() && id == 7011 && (F[i].getmode() == myfunction::POINTS || F[i].getmode() == myfunction::POLYGON)) {
+        if (f_menu[i]->IsChecked() && id == 7011 && (F[i].getmode() == myfunction::POINTS || F[i].getmode() == myfunction::POLYGON || F[i].getmode() == myfunction::TRIANGLE )) {
             s = F[i].getinfixnotation();
             if (s.length() >= 50) {
                 s.resize(47);
@@ -2769,11 +2813,14 @@ void PlotFunctionFrame::OnGridMenu(wxCommandEvent &event)
 
 void PlotFunctionFrame::OnInputDialog(wxCommandEvent&)
 {
+    /*
     if (drawpoints) changedrawpoints();
     if (drawpolygon) changedrawpolygon();
     if (drawline) changedrawline();
     if (drawrectangle) changedrawrectangle();
     if (drawcircle) changedrawcircle();
+    */
+    if (dpanelinsertmode) changedpanelinsertmode(insert_type::NORMAL_I);
 
     wxSize size = GetSize();
 
@@ -2881,7 +2928,7 @@ void PlotFunctionFrame::ChangeSettings(int command, const std::string &svalue, i
 {
     switch (command)
     {
-    case PANEL_SIZE:
+    case val_settings::PANEL_SIZE:
         {
              val::d_array<char> separators{' ', ',', ';', ':'};
              val::Glist<std::string> words = getwordsfromstring(svalue,separators);
@@ -2916,7 +2963,7 @@ void PlotFunctionFrame::ChangeSettings(int command, const std::string &svalue, i
              }
         }
         break;
-    case FONT_SIZE: case AXIS_FONTSIZE:
+    case val_settings::FONT_SIZE: case val_settings::AXIS_FONTSIZE:
         {
             if (svalue == "") return;
             int fsize = val::FromString<int>(svalue);
@@ -2934,21 +2981,21 @@ void PlotFunctionFrame::ChangeSettings(int command, const std::string &svalue, i
             }
         }
         break;
-    case REGRESSION_DEGREE:
+    case val_settings::REGRESSION_DEGREE:
         {
             regressiondegree = val::FromString<int>(svalue);
             if (regressiondegree<1) regressiondegree = 1;
             if (regressiondegree>4) regressiondegree = 4;
         }
         break;
-    case POINT_DECIMALS:
+    case val_settings::POINT_DECIMALS:
         {
             rounddrawingpoints=val::FromString<int>(svalue);
             if (rounddrawingpoints<-2) rounddrawingpoints=-2;
             if (rounddrawingpoints>9) rounddrawingpoints=9;
         }
         break;
-    case PARAMETER_VALUES:
+    case val_settings::PARAMETER_VALUES:
         {
             val::d_array<char> sep({';', ' '});
             val::Glist<std::string> s_values = getwordsfromstring(svalue,sep);
@@ -2963,7 +3010,7 @@ void PlotFunctionFrame::ChangeSettings(int command, const std::string &svalue, i
             Compute();
         }
         break;
-    case AXIS_RANGE:
+    case val_settings::AXIS_RANGE:
         {
             val::d_array<char> separators{':'};
             val::Glist<std::string> s_values=getwordsfromstring(svalue,separators,1);
@@ -3041,7 +3088,7 @@ void PlotFunctionFrame::ChangeSettings(int command, const std::string &svalue, i
 
         }
         break;
-    case AXIS_SCALE:
+    case val_settings::AXIS_SCALE:
         {
             int n;
 
@@ -3081,7 +3128,7 @@ void PlotFunctionFrame::ChangeSettings(int command, const std::string &svalue, i
             Paint();
         }
         break;
-    case GRID_SCALE:
+    case val_settings::GRID_SCALE:
         {
             val::d_array<char> separators{' ',';'};
             val::Glist<std::string> words = getwordsfromstring(svalue,separators);
@@ -3143,14 +3190,14 @@ void PlotFunctionFrame::ChangeSettings(int command, const std::string &svalue, i
             Paint();
         }
         break;
-    case RESET_COLORS:
+    case val_settings::RESET_COLORS:
         {
             ResetColours();
             Paint();
             WriteText();
         }
         break;
-    case AXIS_COLOR: case GRID_COLOR: case FUNCTION_COLOR: case BACKGROND_COLOR:
+    case val_settings::AXIS_COLOR: case val_settings::GRID_COLOR: case val_settings::FUNCTION_COLOR: case val_settings::BACKGROND_COLOR:
         {
             if (svalue.length() == 0) return;
             val::d_array<char> separators({' ', ',' , ';'});
@@ -3193,7 +3240,7 @@ void PlotFunctionFrame::ChangeSettings(int command, const std::string &svalue, i
             WriteText();
         }
         break;
-    case SHOW_X_AXIS: case SHOW_Y_AXIS: case SHOW_GRID: case SHOW_X_SCALE: case SHOW_Y_SCALE: case SHOW_FUNCTION:
+    case val_settings::SHOW_X_AXIS: case val_settings::SHOW_Y_AXIS: case val_settings::SHOW_GRID: case val_settings::SHOW_X_SCALE: case val_settings::SHOW_Y_SCALE: case val_settings::SHOW_FUNCTION:
         {
             bool show;
             wxMenuItem *menu = nullptr;
@@ -3220,7 +3267,7 @@ void PlotFunctionFrame::ChangeSettings(int command, const std::string &svalue, i
             switchrefresh();
         }
         break;
-    case VALUES_NUMBER:
+    case val_settings::VALUES_NUMBER:
         {
             points = val::FromString<int>(svalue);
             if (points < 500) points = 500;
@@ -3228,7 +3275,7 @@ void PlotFunctionFrame::ChangeSettings(int command, const std::string &svalue, i
             Compute();
         }
         break;
-    case FUNCTION_SIZE:
+    case val_settings::FUNCTION_SIZE:
         {
             if (id <= 0 || id > N) return;
             pen[id-1] = val::FromString<int>(svalue);
@@ -3236,7 +3283,7 @@ void PlotFunctionFrame::ChangeSettings(int command, const std::string &svalue, i
             Paint();
         }
         break;
-    case AXIS_NAMES:
+    case val_settings::AXIS_NAMES:
         {
             val::d_array<char> separators({' ', ';', ','});
             val::Glist<std::string> s_values = getwordsfromstring(svalue,separators);
@@ -3245,7 +3292,7 @@ void PlotFunctionFrame::ChangeSettings(int command, const std::string &svalue, i
             Paint();
         }
         break;
-    case MARGIN:
+    case val_settings::MARGIN:
         {
             abst = val::FromString<int>(svalue);
             if (abst < 10) abst = 10;
@@ -3253,13 +3300,13 @@ void PlotFunctionFrame::ChangeSettings(int command, const std::string &svalue, i
             Paint();
         }
         break;
-    case FUNCTION_SETTINGS:
+    case val_settings::FUNCTION_SETTINGS:
     	{
             if (id <= 0 || id > N) return;
             changefunctionsettings(id-1);
-    	}
+        }
         break;
-    case MOVEINC:
+    case val_settings::MOVEINC:
     	{
       		val::d_array<char> separators({';'});
       		val::Glist<std::string> values = getwordsfromstring(svalue, separators);
@@ -3268,7 +3315,7 @@ void PlotFunctionFrame::ChangeSettings(int command, const std::string &svalue, i
 
             moveinpointsx = moveinpointsy = 0;
 
-      		if (n > 0) {
+            if (n > 0) {
         		l = values[0].length();
         		if (values[0][l - 1] == 'p') {
           			moveinpointsx = 1;
@@ -3304,7 +3351,7 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
     if ((command != REGRESSION && command != INTERPOLATION && command != CALCULATE)  && (f_nr < 0 || f_nr >= N)) return;
     switch (command)
     {
-    case DERIVE:
+    case val_commands::DERIVE:
         {
             std::string sf=F[f_nr].getinfixnotation();
             int n = fstring.length()-1, m = sf.size()-1;
@@ -3327,13 +3374,11 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
             refreshfunctionstring();
         }
         break;
-    case ANALYZE: case INTERSECTION:
+    case val_commands::ANALYZE: case val_commands::INTERSECTION:
         {
-            int analyzepoints = 0;
             if (F[f_nr].getmode() != myfunction::FUNCTION) {
-                if (F[f_nr].getmode() != myfunction::POINTS && F[f_nr].getmode() != myfunction::POLYGON) return;
+                if (F[f_nr].getmode() != myfunction::POINTS && F[f_nr].getmode() != myfunction::POLYGON && F[f_nr].getmode() != myfunction::TRIANGLE) return;
                 else if (command != ANALYZE) return;
-                else analyzepoints = 1;
             }
             else if (F[f_nr].numberofvariables() > 1) return;
             val::d_array<char> separators{' ', ';', '\n'};
@@ -3365,8 +3410,12 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
             else nvalue += "\n" + s_values[4];
 
             if (command == ANALYZE) {
-                if (analyzepoints) {
+                if (F[f_nr].getmode() == myfunction::POINTS || F[f_nr].getmode() == myfunction::POLYGON) {
                     std::thread t(computepointstatistics,std::cref(F[f_nr]),nvalue);
+                    t.detach();
+                }
+                else if (F[f_nr].getmode() == myfunction::TRIANGLE) {
+                    std::thread t(analyze_triangle,std::cref(F[f_nr]),nvalue);
                     t.detach();
                 }
                 else {
@@ -3381,7 +3430,7 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
             return;
         }
         break;
-    case TANGENT: case NORMAL:
+    case val_commands::TANGENT: case val_commands::NORMAL:
         {
             int tangent = 1;
 
@@ -3391,7 +3440,7 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
             return;
         }
         break;
-    case INTERPOLATION:
+    case val_commands::INTERPOLATION:
         {
             std::string nvalue = svalue;
             if (svalue == "") {
@@ -3406,7 +3455,7 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
             return;
         }
         break;
-    case REGRESSION:
+    case val_commands::REGRESSION:
         {
             val::d_array<char> sep{' ', ';'};
             val::Glist<std::string> s_values = getwordsfromstring(svalue,sep);
@@ -3436,7 +3485,7 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
             }
         }
         break;
-    case TABLE:
+    case val_commands::TABLE:
         {
             if (nchildwindows) return;
 
@@ -3474,7 +3523,7 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
 
         }
         break;
-    case EVALUATE:
+    case val_commands::EVALUATE:
         {
             if ((F[f_nr].getmode() != myfunction::FUNCTION) || F[f_nr].numberofvariables() > 1 || isderived(F[f_nr])) return;
             tablestring = svalue;
@@ -3489,14 +3538,14 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
             return;
         }
         break;
-    case CALCULATE:
+    case val_commands::CALCULATE:
     	{
             std::thread t(calculate,svalue);
             t.detach();
             return;
     	}
         break;
-    case INTEGRAL: case ARCLENGTH: case ZERO_ITERATION:
+    case val_commands::INTEGRAL: case val_commands::ARCLENGTH: case val_commands::ZERO_ITERATION:
         {
             int arclength = 0;
 
@@ -3549,7 +3598,7 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
             }
         }
         break;
-    case MOVE:
+    case val_commands::MOVE:
         {
             double dx = 0, dy = 0;
             val::d_array<char> separ{' ', ';' };
@@ -3722,7 +3771,7 @@ void PlotFunctionFrame::OnMyEvent(MyThreadEvent& event)
     int x=Point.x,y=Point.y,dx=Size.GetWidth(), dy = Size.GetHeight(),sx,sy,maxx=display.GetGeometry().GetWidth();
 
 
-    if (id == IdTable || id == IdEval) { //
+    if (id == myevent_id::IdTable || id == myevent_id::IdEval) { //
         //std::string s = ToString(x) + " , " + ToString(y) + " ; " + ToString(dx) + " , " + ToString(dy);
         std::string title;
 
@@ -3743,13 +3792,22 @@ void PlotFunctionFrame::OnMyEvent(MyThreadEvent& event)
         InfoWindow *tablewindow = new InfoWindow(this,nchildwindows,tablestring,Point,Size,title,fontsize,1,InfoStyle);
         tablewindow->Show();
     }
-    else if (id == IdAnalyze || id == IdIntersection) {
+    else if (id == myevent_id::IdAnalyze || id == myevent_id::IdIntersection || id == myevent_id::IdTriangle) {
         std::string title;
+        int dtype;
 
         if (id == IdAnalyze) {
             title = "Analyze Function";
+            dtype = anadialog_type::function_type;
         }
-        else title = "Intersection Points";
+        else if (id == IdTriangle) {
+            title = "Computations on Triangle";
+            dtype = anadialog_type::triangle_type;
+        }
+        else {
+            title = "Intersection Points";
+            dtype = anadialog_type::intersection_type;
+        }
         sx=250;
         sy=110;
 
@@ -3760,10 +3818,10 @@ void PlotFunctionFrame::OnMyEvent(MyThreadEvent& event)
         }
         //x+=dx - sx;
         Point.x = x; Point.y = y;
-        AnalysisDialog *adialog = new AnalysisDialog(this,nanalyzewindows,analyze_output,Points,wxSize(sx,sy),Point,fontsize,title);
+        AnalysisDialog *adialog = new AnalysisDialog(this,nanalyzewindows,analyze_output,Points,wxSize(sx,sy),Point,fontsize,title,dtype);
         adialog->Show();
     }
-    else if (id == IdIntegral || id == IdCalculate || id == IdPointStat) { // Integral or Calculate
+    else if (id == myevent_id::IdIntegral || id == myevent_id::IdCalculate || id == myevent_id::IdPointStat) { // Integral or Calculate
         std::string title;
         if (id == IdIntegral) title = "Integral";
         else if (id == IdPointStat) title = "Points Statistic";
@@ -3827,7 +3885,7 @@ void PlotFunctionFrame::OnMenuFill(wxCommandEvent &event)
     int n=fstring.length()-1;
     double x,y;
 
-    if (id == 1009) {
+    if (id == 1106) {
         if (wxTheClipboard->Open()) {
             if (wxTheClipboard->IsSupported( wxDF_BITMAP )) {
                 actualPanelsize = DrawPanel->GetSize();
@@ -3844,7 +3902,7 @@ void PlotFunctionFrame::OnMenuFill(wxCommandEvent &event)
         }
         return;
     }
-    if (id == 1008) {
+    if (id == 1105) {
         wxBitmap *paper = new wxBitmap(DrawPanel->GetSize());
 
         // Create a memory Device Context
@@ -3888,30 +3946,37 @@ void PlotFunctionFrame::OnMenuFill(wxCommandEvent &event)
         return;
     }
 
-    if (id == 1007) { // right click menu draw line
+    if (id >= 1001 && id <= 1006) {
+        changedpanelinsertmode(id - 1000);
+        return;
+    }
+
+    /*
+    if (id == 1003) { // right click menu draw line
         changedrawline();
         return;
     }
 
-    if (id == 1006) { // right click menu drawpolygon
+    if (id == 1002) { // right click menu drawpolygon
         changedrawpolygon();
         return;
     }
 
-    if (id==1005) {
+    if (id==1001) {
         changedrawpoints();
         return;
     }
-    if (id == 1010) {
+    if (id == 1004) {
         changedrawrectangle();
         return;
     }
-    if (id == 1011) {
+    if (id == 1005) {
         changedrawcircle();
         return;
     }
+    */
 
-    if (id==1003 ||  id==1004) {
+    if (id==1103 ||  id==1104) {
 
         std::string entry,title,descr;
 
@@ -3936,7 +4001,7 @@ void PlotFunctionFrame::OnMenuFill(wxCommandEvent &event)
             else y=gy2;
         }
 
-        if (id==1003) {
+        if (id==1103) {
             entry ="circle "  + val::ToString(x) + " " + val::ToString(y) + " ";
             title = "Draw circle";
             descr = "Entry radius [start-angle end-angle]";
@@ -3954,7 +4019,7 @@ void PlotFunctionFrame::OnMenuFill(wxCommandEvent &event)
 
         if (cdialog.ShowModal()==wxID_OK) {
             if (fstring[n]!=';') fstring+=";";
-            if (id == 1003) fstring+=cdialog.GetSettingsText();
+            if (id == 1103) fstring+=cdialog.GetSettingsText();
             else fstring += "text {" + cdialog.GetSettingsText() + "} " + val::ToString(x) + " " + val::ToString(y) + " ";
             refreshfunctionstring();
             GetSettings();
@@ -3962,7 +4027,7 @@ void PlotFunctionFrame::OnMenuFill(wxCommandEvent &event)
         }
         return;
     }
-    if (id==1002) {
+    if (id==1102) {
         if (N==Color.length()) {
             Color.resize(N+1);
             Color[N] = Color[0];
@@ -4153,11 +4218,14 @@ void PlotFunctionFrame::openfile(const std::string &dirname,const std::string &f
 {
     std::string name = dirname + filesep + filename,line;
 
+    /*
     if (drawpoints) changedrawpoints();
     if (drawpolygon) changedrawpolygon();
     if (drawline) changedrawline();
     if (drawrectangle) changedrawrectangle();
     if (drawcircle) changedrawcircle();
+    */
+    if (dpanelinsertmode) changedpanelinsertmode(insert_type::NORMAL_I);
     /*
     if (!val::FileExists(name)) {
         wxMessageBox("File " + name + "\ndoes not exist!");
@@ -4492,8 +4560,8 @@ void PlotFunctionFrame::OnMouseCaptured(wxMouseEvent &event)
     mouse_x1=event.GetX(); mouse_y1=event.GetY();
     actualpolygonpoint.x = mouse_x1; actualpolygonpoint.y = mouse_y1;
 
-
-    if (drawpoints || drawpolygon || drawline || drawrectangle || drawcircle) {
+    if (dpanelinsertmode) {
+    //if (drawpoints || drawpolygon || drawline || drawrectangle || drawcircle) {
         //mouse_x1=event.GetX();mouse_y1=event.GetY();
         double x,y,gx1,gx2,gy1,gy2;
         int fx,fy;
@@ -4514,6 +4582,18 @@ void PlotFunctionFrame::OnMouseCaptured(wxMouseEvent &event)
             if (val::abs(y-gy1)<=val::abs(y-gy2)) y=gy1;
             else y=gy2;
         }
+        if (!n_points) {
+            switch (dpanelinsertmode) {
+                case insert_type::POINTS_I: fstring += "points"; break;
+                case insert_type::LINE_I: fstring += "line"; break;
+                case insert_type::POLYGON_I: fstring += "polygon"; break;
+                case insert_type::RECTANGLE_I: fstring += "rectangle"; break;
+                case insert_type::CIRCLE_I: fstring += "circle"; break;
+                case insert_type::TRIANGLE_I: fstring += "triangle"; break;
+                default: break;
+            }
+        }
+        /*
         if (drawpoints && !addingpoints) {
             fstring+="points";
         }
@@ -4529,12 +4609,14 @@ void PlotFunctionFrame::OnMouseCaptured(wxMouseEvent &event)
         else if (drawcircle && !n_circlepoints) {
             fstring += "circle";
         }
+        */
         else {
             int n = fstring.length();
             for (--n;n>=0;--n) if (fstring[n]==';') break;
             fstring.resize(n);
         }
-        if (drawcircle && n_circlepoints) {
+        if (dpanelinsertmode == CIRCLE_I && n_points) {
+        //if (drawcircle && n_circlepoints) {
             double dx = x - mx1, dy = y -my1, r = val::sqrt(dx*dx + dy*dy);
             fstring += "  " + val::ToString(r);
         }
@@ -4542,6 +4624,17 @@ void PlotFunctionFrame::OnMouseCaptured(wxMouseEvent &event)
             mx1=x; my1=y;
             fstring+="  " + val::ToString(x) + " " + val::ToString(y);
         }
+
+        ++n_points;
+        if ((dpanelinsertmode == insert_type::LINE_I || dpanelinsertmode == insert_type::RECTANGLE_I || dpanelinsertmode == insert_type::CIRCLE_I) && n_points == 2) {
+            n_points = 0;
+            refreshfunctionstring();
+        }
+        if (dpanelinsertmode == insert_type::TRIANGLE_I && n_points == 3) {
+            n_points = 0;
+            refreshfunctionstring();
+        }
+        /*
         if (drawpoints) addingpoints++;
         else if (drawpolygon) {
             n_polygonpoints++;
@@ -4559,6 +4652,8 @@ void PlotFunctionFrame::OnMouseCaptured(wxMouseEvent &event)
             if (n_circlepoints == 2) n_circlepoints = 0;
         }
         if (!n_linepoints || !n_rectanglepoints || !n_circlepoints) refreshfunctionstring();
+        */
+
         GetSettings();
         Compute();
 
@@ -4603,7 +4698,8 @@ void PlotFunctionFrame::OnMouseMoved(wxMouseEvent &event)
         return;
     }
     */
-    if (drawpoints || drawpolygon || drawline || drawrectangle || drawcircle) {
+    if (dpanelinsertmode) {
+    //if (drawpoints || drawpolygon || drawline || drawrectangle || drawcircle) {
         //if (!addingpoints) return;
         int xm=event.GetX(),ym=event.GetY();
         double x,y,dxm,dym,d=0;
@@ -4612,14 +4708,16 @@ void PlotFunctionFrame::OnMouseMoved(wxMouseEvent &event)
         dxm=(x2-x1)*double(xm-abst) / double (sizex -1) + x1;
         dym=double(yzero-ym)*(y2-y1)/double(sizey -1);
         text = "( " +val::ToString(dxm) + " , " + val::ToString(dym) + " )";
-        if (addingpoints || n_polygonpoints || n_linepoints || n_rectanglepoints || n_circlepoints) {
+        if (n_points) {
+        //if (addingpoints || n_polygonpoints || n_linepoints || n_rectanglepoints || n_circlepoints) {
             x=mx1; y = my1;
             x-=dxm;y-=dym;
             d=val::sqrt(x*x + y*y);
             text+= " ; " + val::ToString(d);
         }
         StatusBar1->SetStatusText(text,0);
-        if (n_polygonpoints || n_linepoints || n_rectanglepoints || n_circlepoints) {
+        if (n_points) {
+        //if (n_polygonpoints || n_linepoints || n_rectanglepoints || n_circlepoints) {
             //polygonline = 1;
             iscomputing = 1;
             actualpolygonpoint.x = xm; actualpolygonpoint.y = ym;
@@ -4664,7 +4762,8 @@ void PlotFunctionFrame::OnMouseMoved(wxMouseEvent &event)
 // mouse - left -up
 void PlotFunctionFrame::OnMouseReleased(wxMouseEvent &event)
 {
-    if (drawpoints || drawpolygon || drawline || drawrectangle || drawcircle) return;
+    //if (drawpoints || drawpolygon || drawline || drawrectangle || drawcircle) return;
+    if (dpanelinsertmode) return;
     if (doubleclicked) {
         doubleclicked = 0;
         return;
@@ -4709,8 +4808,13 @@ void PlotFunctionFrame::OnMouseReleased(wxMouseEvent &event)
 
 void PlotFunctionFrame::OnMouseDouble(wxMouseEvent &event)
 {
+    if (dpanelinsertmode == insert_type::POLYGON_I) {
+        n_points  = 0;
+        iscomputing = 1;
+        Paint();
+    }
+    /*
     if (drawpolygon) {
-        //changedrawpolygon();
         n_polygonpoints = 0;
         drawpolygon = 0;
         iscomputing = 1;
@@ -4719,6 +4823,10 @@ void PlotFunctionFrame::OnMouseDouble(wxMouseEvent &event)
     }
     else if (drawpoints) {
         addingpoints = 0;
+    }
+    */
+    else if (dpanelinsertmode == insert_type::POINTS_I) {
+        n_points = 0;
     }
     else {
         mouse_x1=event.GetX(); mouse_y1=event.GetY();
@@ -4874,7 +4982,7 @@ void PlotFunctionFrame::displacefunction(int i,const double &dx1,const double &d
     }
 }
 
-
+/*
 void PlotFunctionFrame::changedrawpoints()
 {
     if (!drawpoints) {
@@ -4883,23 +4991,19 @@ void PlotFunctionFrame::changedrawpoints()
             if (drawrectangle) changedrawrectangle();
             if (drawcircle) changedrawcircle();
 
-            SendNotification("Insert Points: ON");
-            StatusBar1->SetStatusText(_T("Insert Points"),1);
-            addpointsmenu->Check(true);
-            DrawPanel->SetCursor(wxCursor (wxCURSOR_ARROW));
-            DrawPanel->Bind(wxEVT_MOTION,&PlotFunctionFrame::OnMouseMoved,this);
-            //DrawPanel->CaptureMouse();
+            //SendNotification("Insert Points: ON");
+            //StatusBar1->SetStatusText(_T("Insert Points"),1);
+            //addpointsmenu->Check(true);
+            //DrawPanel->SetCursor(wxCursor (wxCURSOR_ARROW));
+            //DrawPanel->Bind(wxEVT_MOTION,&PlotFunctionFrame::OnMouseMoved,this);
     }
     else {
-             //wxNotificationMessage message(_T("Mouse Mode"),_T("Drawing Points: OFF"),this);
-
-             //message.Show(1);
-             SendNotification("Insert Points: OFF");
-             StatusBar1->SetStatusText(_T(""),1);
-             addpointsmenu->Check(false);
-             DrawPanel->SetCursor(wxCursor (wxCURSOR_HAND));
-             DrawPanel->Unbind(wxEVT_MOTION,&PlotFunctionFrame::OnMouseMoved,this);
-             if (DrawPanel->HasCapture()) DrawPanel->ReleaseMouse();
+             //SendNotification("Insert Points: OFF");
+             //StatusBar1->SetStatusText(_T(""),1);
+             //addpointsmenu->Check(false);
+             //DrawPanel->SetCursor(wxCursor (wxCURSOR_HAND));
+             //DrawPanel->Unbind(wxEVT_MOTION,&PlotFunctionFrame::OnMouseMoved,this);
+             //if (DrawPanel->HasCapture()) DrawPanel->ReleaseMouse();
              addingpoints=0;
     }
     drawpoints=!drawpoints;
@@ -4914,20 +5018,20 @@ void PlotFunctionFrame::changedrawpolygon()
              if (drawrectangle) changedrawrectangle();
              if (drawcircle) changedrawcircle();
 
-             SendNotification("Insert Polygon: ON");
-             StatusBar1->SetStatusText(_T("Insert Polygon!"),1);
-             polygonpointsmenu->Check(true);
-             DrawPanel->SetCursor(wxCursor (wxCURSOR_ARROW));
-             DrawPanel->Bind(wxEVT_MOTION,&PlotFunctionFrame::OnMouseMoved,this);
+             //SendNotification("Insert Polygon: ON");
+             //StatusBar1->SetStatusText(_T("Insert Polygon!"),1);
+             //polygonpointsmenu->Check(true);
+             //DrawPanel->SetCursor(wxCursor (wxCURSOR_ARROW));
+             //DrawPanel->Bind(wxEVT_MOTION,&PlotFunctionFrame::OnMouseMoved,this);
              drawpolygon = 1;
     }
     else {
-             SendNotification("Insert Polygon: OFF");
-             StatusBar1->SetStatusText(_T(""),1);
-             polygonpointsmenu->Check(false);
-             DrawPanel->SetCursor(wxCursor (wxCURSOR_HAND));
-             DrawPanel->Unbind(wxEVT_MOTION,&PlotFunctionFrame::OnMouseMoved,this);
-             if (DrawPanel->HasCapture()) DrawPanel->ReleaseMouse();
+             //SendNotification("Insert Polygon: OFF");
+             //StatusBar1->SetStatusText(_T(""),1);
+             //polygonpointsmenu->Check(false);
+             //DrawPanel->SetCursor(wxCursor (wxCURSOR_HAND));
+             //DrawPanel->Unbind(wxEVT_MOTION,&PlotFunctionFrame::OnMouseMoved,this);
+             //if (DrawPanel->HasCapture()) DrawPanel->ReleaseMouse();
              n_polygonpoints=0;
              drawpolygon = 0;
              iscomputing = 1;
@@ -4943,20 +5047,20 @@ void PlotFunctionFrame::changedrawline()
              if (drawrectangle) changedrawrectangle();
              if (drawcircle) changedrawcircle();
 
-             SendNotification("Insert Line: ON");
-             StatusBar1->SetStatusText(_T("Insert Line!"),1);
-             linepointsmenu->Check(true);
-             DrawPanel->SetCursor(wxCursor (wxCURSOR_ARROW));
-             DrawPanel->Bind(wxEVT_MOTION,&PlotFunctionFrame::OnMouseMoved,this);
+             //SendNotification("Insert Line: ON");
+             //StatusBar1->SetStatusText(_T("Insert Line!"),1);
+             //linepointsmenu->Check(true);
+             //DrawPanel->SetCursor(wxCursor (wxCURSOR_ARROW));
+             //DrawPanel->Bind(wxEVT_MOTION,&PlotFunctionFrame::OnMouseMoved,this);
              drawline = 1;
     }
     else {
-             SendNotification("Insert Line: OFF");
-             StatusBar1->SetStatusText(_T(""),1);
-             linepointsmenu->Check(false);
-             DrawPanel->SetCursor(wxCursor (wxCURSOR_HAND));
-             DrawPanel->Unbind(wxEVT_MOTION,&PlotFunctionFrame::OnMouseMoved,this);
-             if (DrawPanel->HasCapture()) DrawPanel->ReleaseMouse();
+             //SendNotification("Insert Line: OFF");
+             //StatusBar1->SetStatusText(_T(""),1);
+             //linepointsmenu->Check(false);
+             //DrawPanel->SetCursor(wxCursor (wxCURSOR_HAND));
+             //DrawPanel->Unbind(wxEVT_MOTION,&PlotFunctionFrame::OnMouseMoved,this);
+             //if (DrawPanel->HasCapture()) DrawPanel->ReleaseMouse();
              n_linepoints=0;
              drawline = 0;
              iscomputing = 1;
@@ -4973,20 +5077,20 @@ void PlotFunctionFrame::changedrawrectangle()
              if (drawline) changedrawline();
              if (drawcircle) changedrawcircle();
 
-             SendNotification("Insert Rectangle: ON");
-             StatusBar1->SetStatusText(_T("Insert Rectangle!"),1);
-             rectanglemenu->Check(true);
-             DrawPanel->SetCursor(wxCursor (wxCURSOR_ARROW));
-             DrawPanel->Bind(wxEVT_MOTION,&PlotFunctionFrame::OnMouseMoved,this);
+             //SendNotification("Insert Rectangle: ON");
+             //StatusBar1->SetStatusText(_T("Insert Rectangle!"),1);
+             //rectanglemenu->Check(true);
+             //DrawPanel->SetCursor(wxCursor (wxCURSOR_ARROW));
+             //DrawPanel->Bind(wxEVT_MOTION,&PlotFunctionFrame::OnMouseMoved,this);
              drawrectangle = 1;
     }
     else {
-             SendNotification("Insert Rectangle: OFF");
-             StatusBar1->SetStatusText(_T(""),1);
-             rectanglemenu->Check(false);
-             DrawPanel->SetCursor(wxCursor (wxCURSOR_HAND));
-             DrawPanel->Unbind(wxEVT_MOTION,&PlotFunctionFrame::OnMouseMoved,this);
-             if (DrawPanel->HasCapture()) DrawPanel->ReleaseMouse();
+             //SendNotification("Insert Rectangle: OFF");
+             //StatusBar1->SetStatusText(_T(""),1);
+             //rectanglemenu->Check(false);
+             //DrawPanel->SetCursor(wxCursor (wxCURSOR_HAND));
+             //DrawPanel->Unbind(wxEVT_MOTION,&PlotFunctionFrame::OnMouseMoved,this);
+             //if (DrawPanel->HasCapture()) DrawPanel->ReleaseMouse();
              n_rectanglepoints = 0;
              drawrectangle = 0;
              iscomputing = 1;
@@ -5003,27 +5107,64 @@ void PlotFunctionFrame::changedrawcircle()
              if (drawline) changedrawline();
              if (drawrectangle) changedrawrectangle();
 
-             SendNotification("Insert Circle: ON");
-             StatusBar1->SetStatusText(_T("Insert Cicle!"),1);
-             circlemenu->Check(true);
-             DrawPanel->SetCursor(wxCursor (wxCURSOR_ARROW));
-             DrawPanel->Bind(wxEVT_MOTION,&PlotFunctionFrame::OnMouseMoved,this);
+             //SendNotification("Insert Circle: ON");
+             //StatusBar1->SetStatusText(_T("Insert Cicle!"),1);
+             //circlemenu->Check(true);
+             //DrawPanel->SetCursor(wxCursor (wxCURSOR_ARROW));
+             //DrawPanel->Bind(wxEVT_MOTION,&PlotFunctionFrame::OnMouseMoved,this);
              drawcircle = 1;
     }
     else {
-             SendNotification("Insert Circle: OFF");
-             StatusBar1->SetStatusText(_T(""),1);
-             circlemenu->Check(false);
-             DrawPanel->SetCursor(wxCursor (wxCURSOR_HAND));
-             DrawPanel->Unbind(wxEVT_MOTION,&PlotFunctionFrame::OnMouseMoved,this);
-             if (DrawPanel->HasCapture()) DrawPanel->ReleaseMouse();
+             //SendNotification("Insert Circle: OFF");
+             //StatusBar1->SetStatusText(_T(""),1);
+             //circlemenu->Check(false);
+             //DrawPanel->SetCursor(wxCursor (wxCURSOR_HAND));
+             //DrawPanel->Unbind(wxEVT_MOTION,&PlotFunctionFrame::OnMouseMoved,this);
+             //if (DrawPanel->HasCapture()) DrawPanel->ReleaseMouse();
              n_circlepoints = 0;
              drawcircle = 0;
              iscomputing = 1;
              Paint();
     }
 }
+*/
 
+void PlotFunctionFrame::changedpanelinsertmode(int mode)
+{
+    linepointsmenu->Check(false); addpointsmenu->Check(false); polygonpointsmenu->Check(false); rectanglemenu->Check(false); circlemenu->Check(false); trianglemenu->Check(false);
+    DrawPanel->SetCursor(wxCursor(wxCURSOR_HAND));
+    DrawPanel->Unbind(wxEVT_MOTION, &PlotFunctionFrame::OnMouseMoved, this);
+
+    if (dpanelinsertmode) {
+      SendNotification("Insert " + dpanelnotification[dpanelinsertmode - 1] + ": OFF");
+      StatusBar1->SetStatusText(_T(""), 1);
+      if (DrawPanel->HasCapture()) DrawPanel->ReleaseMouse();
+    }
+    if (mode == dpanelinsertmode || mode == 0) {
+        dpanelinsertmode = 0;
+        n_points = 0;
+        iscomputing = 1;
+        Paint();
+        return;
+    }
+    if (mode) {
+        SendNotification("Insert " + dpanelnotification[mode-1] + ": ON");
+        StatusBar1->SetStatusText(_T("Insert " + dpanelnotification[mode-1]),1);
+        switch (mode) {
+            case insert_type::LINE_I: linepointsmenu->Check(true); break;
+            case insert_type::POINTS_I: addpointsmenu->Check(true); break;
+            case insert_type::POLYGON_I: polygonpointsmenu->Check(true); break;
+            case insert_type::RECTANGLE_I: rectanglemenu->Check(true); break;
+            case insert_type::CIRCLE_I: circlemenu->Check(true); break;
+            case insert_type::TRIANGLE_I: trianglemenu->Check(true); break;
+            default: break;
+        }
+        DrawPanel->SetCursor(wxCursor(wxCURSOR_ARROW));
+        DrawPanel->Bind(wxEVT_MOTION, &PlotFunctionFrame::OnMouseMoved, this);
+        dpanelinsertmode = mode;
+        n_points = 0;
+    }
+}
 
 void PlotFunctionFrame::SendNotification(const std::string& s)
 {
@@ -5223,6 +5364,11 @@ void PlotFunctionFrame::OnSelectActiveFunction(wxCommandEvent &event)
         Paint();
     }
     else {
+        if (dpanelinsertmode) {
+            changedpanelinsertmode(insert_type::NORMAL_I);
+            return;
+        }
+        /*
         if (drawpoints) {
             changedrawpoints();
             return;
@@ -5243,6 +5389,7 @@ void PlotFunctionFrame::OnSelectActiveFunction(wxCommandEvent &event)
             changedrawcircle();
             return;
         }
+        */
         if (active_function == -1) return;
         active_function = -1;
         pointactive = 0;
@@ -5539,12 +5686,12 @@ void PlotFunctionFrame::CheckFocus()
 #endif // __APPLE__
 
     if (SideText->HasFocus()) {
-        Unbind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1008);         // Copy to Clipboard
-        Unbind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1009);         // Paste from Clipboard
+        Unbind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1105);         // Copy to Clipboard
+        Unbind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1106);         // Paste from Clipboard
     }
     else {
-        Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1008);         // Copy to Clipboard
-        Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1009);         // Paste from Clipboard
+        Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1105);         // Copy to Clipboard
+        Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1106);         // Paste from Clipboard
     }
 }
 */
@@ -5741,4 +5888,21 @@ void PlotFunctionFrame::Text_Editrefresh()
     Set_TextEdit[SMARGIN]->SetValue(val::ToString(abst)); Set_TextEdit[PDEC]->SetValue(val::ToString(rounddrawingpoints));
     Set_TextEdit[MOVINC]->SetValue(mvstrx + " ; " + mvstry);
     Set_TextEdit[PARVAL]->SetValue(sp); Set_TextEdit[REGDEG]->SetValue(val::ToString(regressiondegree));
+}
+
+
+void PlotFunctionFrame::ChangeSideTextStyle(wxCommandEvent&)
+{
+    long style = SideText->GetWindowStyleFlag();
+    if (wraptext) {
+        style |= wxHSCROLL;
+        wraptext = 0;
+    }
+    else {
+        style &= ~wxHSCROLL;
+        wraptext = 1;
+    }
+    SideText->SetWindowStyleFlag(style);
+    SideText->Clear();
+    WriteText();
 }

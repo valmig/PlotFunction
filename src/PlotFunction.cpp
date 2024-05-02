@@ -54,7 +54,7 @@ myfunction global_function;
 
 val::d_array<val::Glist<val::GPair<double>>> critpoints;// undef_intervals;
 val::d_array<val::d_array<double>> critx;
-val::d_array<std::string> analyze_output(4);
+val::d_array<wxString> analyze_output(4);
 val::d_array<val::d_array<val::GPair<double>>> Points(3);
 val::Glist<std::string> recentcommands;
 
@@ -1362,9 +1362,9 @@ void computepointstatistics(const myfunction& f, std::string input)
     val::d_array<double> Points = f.getPolygonPoints();
     int i, n = Points.length()/2, decimals = 4, m;
 
-    if (n < 1) return;
+    if (n < 2) return;
 
-    double Ex = 0, Ey = 0, Vx = 0, Vy = 0, Cxy = 0, rhoxy = 0, dn = double(n), v, w, sigmax, sigmay, epsilon = 1e-9;
+    double Ex = 0, Ey = 0, Vx = 0, Vy = 0, Cxy = 0, rhoxy = 0, dn = double(n), v, w, sigmax, sigmay, s2x, s2y, epsilon = 1e-9;
     wxString sigma(L"\u03C3"), rho(L"\u03C1");
     val::d_array<char> sep({';', '\n'});
     auto values = getwordsfromstring(input, sep);
@@ -1390,12 +1390,15 @@ void computepointstatistics(const myfunction& f, std::string input)
         Vx += v*v;
         Vy += w*w;
     }
+    s2x = Vx /(dn-1); s2y = Vy/(dn-1);
     Vx /= dn; Vy /= dn; Cxy /= dn;
     sigmax = val::sqrt(Vx); sigmay = val::sqrt(Vy);
 
     tablestring = "Number of Points, n = " + val::ToString(n) + "\n";
     tablestring += "\n E(X) = " +  val::ToString(val::round(Ex,decimals)) + ", V(X) = " + val::ToString(val::round(Vx,decimals)) + " , " + sigma + "(X) = " + val::ToString(val::round(sigmax,decimals));
-    tablestring += "\n E(Y) = " + val::ToString(val::round(Ey,decimals)) + ", V(Y) = " + val::ToString(val::round(Vy,decimals)) + " , " + sigma + "(Y) = " + val::ToString(val::round(sigmay,decimals)) + "\n";
+    tablestring += "\n S2(X) = " + val::ToString(val::round(s2x,decimals)) + ", sx = " + val::ToString(val::round(val::sqrt(s2x),decimals)) + "\n";
+    tablestring += "\n E(Y) = " + val::ToString(val::round(Ey,decimals)) + ", V(Y) = " + val::ToString(val::round(Vy,decimals)) + " , " + sigma + "(Y) = " + val::ToString(val::round(sigmay,decimals));
+    tablestring += "\n S2(Y) = " + val::ToString(val::round(s2y,decimals)) + ", sy = " + val::ToString(val::round(val::sqrt(s2y),decimals)) + "\n";
     tablestring += "\n C(X,Y) = " + val::ToString(val::round(Cxy,decimals));
 
     if ((val::abs(Vx) > epsilon) && (val::abs(Vy) > epsilon)) {
@@ -1406,6 +1409,71 @@ void computepointstatistics(const myfunction& f, std::string input)
     if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event.Clone());
 }
 
+
+void analyze_triangle(const myfunction &f, std::string input)
+{
+    if (!f.IsTriangle()) return;
+    int decimals = 4;
+    double  a, b , c, a2, b2, c2, d, cr2, cr, ir2, ir, u, alpha, beta, gamma;
+    val::vector<double> A(2), B(2), C(2), AB(2), AC(2), BC(2), I(2), U(2);
+    Points.resize(2);
+
+    //Get Parameters
+    val::d_array<char> sep({';', '\n'});
+    auto values = getwordsfromstring(input,sep);
+    if (values.length()>4) decimals = val::FromString<int>(values[4]);
+
+    if (decimals < 0 || decimals > 10) decimals = 4;
+
+    f.getTrianglePoints(A(0), A(1), B(0), B(1), C(0), C(1));
+    AB = B - A; AC = C - A; BC = C - B;
+    a2 = BC*BC; b2 = AC*AC; c2 = AB*AB;
+    a = val::sqrt(a2); b = val::sqrt(b2); c = val::sqrt(c2);
+    u = a + b + c;
+
+    // compute circumcenter and circumradius:
+    d = 2.0*(AB(0)*AC(1) - AB(1)*AC(0));
+    U(0) = (AC(1)*(AB(0)*AB(0) + AB(1)*AB(1)) - AB(1)*(AC(0)*AC(0) + AC(1)*AC(1)))/d;
+    U(1) = (AB(0)*(AC(0)*AC(0) + AC(1)*AC(1)) - AC(0)*(AB(0)*AB(0) + AB(1)*AB(1)))/d;
+    cr2 = U*U; cr = val::sqrt(cr2);
+    U += A;
+    U(0) = val::round(U(0),decimals); U(1) = val::round(U(1),decimals);
+    Points[0].resize(2);
+    Points[0][0].x = U(0); Points[0][0].y = U(1);
+
+    // compute incenter and inradius
+    I = ((a/u)*A + (b/u)*B + (c/u)*C);
+    I(0) = val::round(I(0),decimals); I(1) = val::round(I(1),decimals);
+    ir2 = ((b+c-a)*(a+c-b)*(a+b-c))/(4*u); ir = val::sqrt(ir2);
+    Points[1].resize(2);
+    Points[1][0].x = I(0); Points[1][0].y = I(1);
+
+    // Compute angles:
+    alpha = val::arccos((b2+c2-a2)/(2*b*c)); beta = val::arccos((a2+c2-b2)/(2*a*c));
+    // in degrees:
+    alpha /= val::PI; alpha *= 180.0; beta /= val::PI; beta *= 180.0; gamma = 180 - (alpha + beta);
+
+    // Round:
+    a = val::round(a,decimals); b = val::round(b,decimals); c = val::round(c,decimals);
+    alpha = val::round(alpha,2); beta = val::round(beta,2); gamma = val::round(gamma,2);
+    cr = val::round(cr,decimals); ir = val::round(ir,decimals);
+    Points[0][1].x = cr;
+    Points[1][1].x = ir;
+    //
+
+    analyze_output.resize(3);
+    for (int i = 0; i < 3; ++i) analyze_output[i] = "";
+    analyze_output[0] = "Points of triangle:\n A(" + val::ToString( A(0)) + "," + val::ToString(A(1)) +") + B(" +
+        val::ToString(B(0)) + "," + val::ToString(B(1)) + "); C(" + val::ToString(C(0)) + "," + val::ToString(C(1)) + ").\n";
+    analyze_output[0] += "|AB| = " + val::ToString(c) + "; |AC| = " + val::ToString(b) + "; |BC| = " + val::ToString(c) + ".\n";
+    analyze_output[0] += "\n " + greek_letters[0] + " = " + val::ToString(alpha) + " , " + greek_letters[1] +  " = " + val::ToString(beta) + " , " + greek_letters[2] + " = " + val::ToString(gamma);
+
+    analyze_output[1] = "Circumcenter: (" + val::ToString(U(0)) + " , " + val::ToString(U(1)) + ")\nCircumradius: " + val::ToString(cr);
+    analyze_output[2] = "Incenter: (" + val::ToString(I(0)) + " , " + val::ToString(I(1)) + ")\nInradius: " + val::ToString(ir);
+
+    MyThreadEvent event(MY_EVENT,myevent_id::IdTriangle);
+    if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event.Clone());
+}
 
 
 void computetangent(std::string sf,const myfunction &f,double x1,double x2,int tangent)

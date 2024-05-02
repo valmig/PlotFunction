@@ -49,6 +49,7 @@ class PlotFunctionFrame: public wxFrame
         virtual ~PlotFunctionFrame();
 
     private:
+        enum insert_type{NORMAL_I, POINTS_I, POLYGON_I, LINE_I, RECTANGLE_I, CIRCLE_I, TRIANGLE_I};
 
         //*Handlers(PlotFunctionFrame)
         void OnQuit(wxCommandEvent& event);
@@ -123,11 +124,12 @@ class PlotFunctionFrame: public wxFrame
         //void OnMouseUp(wxMouseEvent &event);
         void OnLostMouse(wxMouseCaptureLostEvent &event);
         void changefunctionsettings(int i);
-        void changedrawpoints();
-        void changedrawpolygon();
-        void changedrawline();
-        void changedrawrectangle();
-        void changedrawcircle();
+        //void changedrawpoints();
+        //void changedrawpolygon();
+        //void changedrawline();
+        //void changedrawrectangle();
+        //void changedrawcircle();
+        void changedpanelinsertmode(int mode = 0);
         void SendNotification(const std::string& s);
         //
         void OnZoom(wxCommandEvent &event);
@@ -136,14 +138,14 @@ class PlotFunctionFrame: public wxFrame
         //
         wxMenu *Menu_functions,*colorsubmenu,*rightclickmenu, *rightclickfunctionsmenu;
         wxMenuItem *hideallmenu,*showallmenu,*deletelastmenu,*deleteallmenu,*x_scaleactiv,*y_scaleactiv,*gridactiv,*undomenu,*redomenu,*addfunction,
-                    *addpointsmenu, *polygonpointsmenu, *linepointsmenu, *rectanglemenu , *circlemenu, *multicolormenu;
+                    *addpointsmenu, *polygonpointsmenu, *linepointsmenu, *rectanglemenu , *circlemenu, *multicolormenu, *trianglemenu;
         int ispainted=0,N=0,points=1000,abst=10,sizex,sizey,yzero,yset=1,defaultsize=1,fontsize=10,nchildwindows=0;
         int settings=0,Posx=0,Posy=0,clientsize_x=0,clientsize_y=0,iter=50,dez=4,mouse_x1,mouse_y1,fillfunctions=0,pi_scale_x=0,pi_scale_y=0;//mouse_x2,mouse_y2;
         int n_fstring=1,a_fstring=0,axis_pen=2,grid_pen=1,iscomputing=0,MaxRecent=10,addingpoints=0,drawpoints=0, doubleclicked = 0;
         int regressiondegree=1,rounddrawingpoints=-2,nanalyzewindows=0,active_function=-1,pointactive=0,decimalx=0,decimaly=0;
-        int moveinpointsx = 0, moveinpointsy = 0, drawpolygon = 0, n_polygonpoints=0, drawline = 0, n_linepoints = 0, drawrectangle = 0, n_rectanglepoints = 0;
-        int drawcircle = 0, n_circlepoints = 0, bitmapbackground = 0, axis_fontsize = 10, SideText_isshown = 0, widthSideText = 200;
-        int notebook_isshown = 0, widthNoteBookPanel = 200, plusw = 12;
+        int moveinpointsx = 0, moveinpointsy = 0;// drawpolygon = 0, n_polygonpoints=0, drawline = 0, n_linepoints = 0, drawrectangle = 0, n_rectanglepoints = 0, drawcircle = 0, n_circlepoints = 0;
+        int bitmapbackground = 0, axis_fontsize = 10, SideText_isshown = 0, widthSideText = 200;
+        int notebook_isshown = 0, widthNoteBookPanel = 200, plusw = 12, dpanelinsertmode = NORMAL_I, n_points = 0, wraptext = 0;
         long InfoStyle = wxRESIZE_BORDER;
         bool closebrackets = true;
         wxPoint actuallinepoint,actualpolygonpoint;
@@ -172,6 +174,7 @@ class PlotFunctionFrame: public wxFrame
         val::Glist<val::rational> Parameter{val::rational(1)};
         val::Glist<val::GPair<double> > x_range;
         val::d_array<std::string> functionstring{30};
+        val::d_array<std::string> dpanelnotification{"Points", "Polygon", "Line", "Rectangle", "Circle", "Triangle"};
         //
         wxMenu* MenuRecentfiles;
         val::Glist<wxMenuItem*> recent_menu;
@@ -221,6 +224,7 @@ class PlotFunctionFrame: public wxFrame
         void OnLostFocus(wxFocusEvent&);
         void OnSideBarCheck(wxCommandEvent&);
         void OnSideBarEvaluate(wxCommandEvent&);
+        void ChangeSideTextStyle(wxCommandEvent&);
         //void TestLostFocus(wxFocusEvent&);
         //void OnClose(wxCloseEvent &);
         //void CheckFocus();

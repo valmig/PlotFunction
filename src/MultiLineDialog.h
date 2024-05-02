@@ -91,12 +91,14 @@ private:
 
 // -----------------------------------------------------------------------------------------------------------
 
+enum anadialog_type{function_type, intersection_type, triangle_type};
 
 class AnalysisDialog : public wxDialog
 {
 public:
-    AnalysisDialog(wxWindow *parent,int &nchild,const val::d_array<std::string> &output,const val::d_array<val::d_array<val::GPair<double>>> &Point,
-                   const wxSize &Size = wxSize(250,80), const wxPoint &Pos=wxDefaultPosition,int fonts=10, const std::string &title = "Analyze Function");
+    AnalysisDialog(wxWindow *parent,int &nchild,const val::d_array<wxString> &output,const val::d_array<val::d_array<val::GPair<double>>> &Point,
+                   const wxSize &Size = wxSize(250,80), const wxPoint &Pos=wxDefaultPosition,int fonts=10, const std::string &title = "Analyze Function",
+                   int dtype = anadialog_type::function_type);
     virtual ~AnalysisDialog();
 private:
     wxWindow *Parent=nullptr;
@@ -106,6 +108,7 @@ private:
     val::d_array<val::SwitchCtrl*> checkbox{nullptr,3};
     val::d_array<wxTextCtrl*> TextEdit;
     int fontsize=10;
+    int dialogtype = anadialog_type::function_type;
     wxPanel *surface = nullptr;
     //
     void OnClose(wxCloseEvent &event);

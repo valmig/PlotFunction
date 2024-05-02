@@ -2164,11 +2164,11 @@ void analyzefunction(const myfunction &f,std::string input)
             analyze_output[2]+="\nNumber of maxima: " + val::ToString(pm) + "\n";
             for (int i=0;i<N;++i) {
                 if (vzw[i]==1) {
-            		digits = intdigits(zeros[i]) + decimals;
-           		digits = val::Min(digits,val::MaxPrec);
+                    digits = intdigits(zeros[i]) + decimals;
+                    digits = val::Min(digits,val::MaxPrec);
                     y = F(zeros[i]);
                     ydigits = intdigits(y) + decimals;
-            		ydigits = val::Min(ydigits,val::MaxPrec);
+                    ydigits = val::Min(ydigits,val::MaxPrec);
                     analyze_output[2]+="( " + val::ToString(val::round(zeros[i],decimals),digits) + " | " + val::ToString(val::round(y,decimals),ydigits) + " )  ";
                     Points[1].push_back(val::GPair<double>(zeros[i],y));
                 }
@@ -2178,11 +2178,11 @@ void analyzefunction(const myfunction &f,std::string input)
             analyze_output[2]+="\nNumber of minima: " + val::ToString(mp) + "\n";
             for (int i=0;i<N;++i) {
                 if (vzw[i]==-1) {
-            		digits = intdigits(zeros[i]) + decimals;
-           		digits = val::Min(digits,val::MaxPrec);
+                    digits = intdigits(zeros[i]) + decimals;
+                    digits = val::Min(digits,val::MaxPrec);
                     y = F(zeros[i]);
                     ydigits = intdigits(y) + decimals;
-            		ydigits = val::Min(ydigits,val::MaxPrec);
+                    ydigits = val::Min(ydigits,val::MaxPrec);
                     analyze_output[2]+="( " + val::ToString(val::round(zeros[i],decimals),digits) + " | " + val::ToString(val::round(y,decimals),ydigits) + " )  ";
                     Points[1].push_back(val::GPair<double>(zeros[i],y));
                 }

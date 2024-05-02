@@ -266,8 +266,8 @@ wxDEFINE_EVENT(P_EVENT,ParentEvent);
 // --------------------------------------------------------------------------------------------
 
 
-AnalysisDialog::AnalysisDialog(wxWindow *parent,int &nchild,const val::d_array<std::string> &output,const val::d_array<val::d_array<val::GPair<double>>> &Point,
-                                const wxSize &Size,const wxPoint &Pos,int fonts, const std::string &title) : Parent(parent), N_child(&nchild) , Points(&Point), fontsize(fonts)
+AnalysisDialog::AnalysisDialog(wxWindow *parent,int &nchild,const val::d_array<wxString> &output,const val::d_array<val::d_array<val::GPair<double>>> &Point,
+                                const wxSize &Size,const wxPoint &Pos,int fonts, const std::string &title, int dtype) : Parent(parent), N_child(&nchild) , Points(&Point), fontsize(fonts), dialogtype(dtype)
 {
     Create(parent, wxID_ANY, title, wxDefaultPosition, wxDefaultSize, wxRESIZE_BORDER|wxCAPTION, _T("wxID_ANY"));
     ++(*N_child);
@@ -299,13 +299,17 @@ AnalysisDialog::AnalysisDialog(wxWindow *parent,int &nchild,const val::d_array<s
         BoxSizerText[i] = new wxBoxSizer(wxVERTICAL);
         //BoxSizerText[i]->Add(TextEdit[i],1,wxALL|wxEXPAND,5);
     }
-    if (n_point == 3) {
+    if (n_point == 3 && dialogtype == anadialog_type::function_type) {
         Text[0] = new wxStaticText(surface,11,_T("Zeros:"));
         Text[1] = new wxStaticText(surface,12,_T("Extrema:"));
         Text[2] = new wxStaticText(surface,13,_T("Inflection Points:"));
     }
-    else if (n_point == 1) {
+    else if (n_point == 1 && dialogtype == anadialog_type::intersection_type) {
         Text[0] = new wxStaticText(surface,11,_T("Intersection points:"));
+    }
+    else if (dialogtype == anadialog_type::triangle_type) {
+        Text[0] = new wxStaticText(surface,11,_T("Circumcircle"));
+        Text[1] = new wxStaticText(surface,11,_T("Incircle"));
     }
 	 //
     /*
@@ -450,11 +454,18 @@ void AnalysisDialog::Paint(int i)
     if (Parent==nullptr) return;
     int n=0;
     ParentEvent p_event(P_EVENT);
-    std::string sf="points";
-    for (const auto &P : (*Points)[i]) {
-        if (val::isNaN(P.x) || val::isNaN(P.y)) continue;
-        sf+=" " + val::ToString(P.x) + " "+ val::ToString(P.y);
-        ++n;
+    std::string sf;
+    if (dialogtype == anadialog_type::function_type || dialogtype == anadialog_type::intersection_type) {
+        sf="points";
+        for (const auto &P : (*Points)[i]) {
+            if (val::isNaN(P.x) || val::isNaN(P.y)) continue;
+            sf+=" " + val::ToString(P.x) + " "+ val::ToString(P.y);
+            ++n;
+        }
+    }
+    else if (dialogtype == anadialog_type::triangle_type) {
+        sf = "circle " + val::ToString((*Points)[i][0].x) + " " + val::ToString((*Points)[i][0].y) + " " + val::ToString((*Points)[i][1].x) + " 0 360 -1";
+        n = 2;
     }
     if (n==0) return;
     p_event.SetPointString(sf);
