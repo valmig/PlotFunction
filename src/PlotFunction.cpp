@@ -1463,10 +1463,11 @@ void analyze_triangle(const myfunction &f, std::string input)
 
     analyze_output.resize(3);
     for (int i = 0; i < 3; ++i) analyze_output[i] = "";
-    analyze_output[0] = "Points of triangle:\n A(" + val::ToString( A(0)) + "," + val::ToString(A(1)) +") + B(" +
+    analyze_output[0] = "Points of triangle:\n A(" + val::ToString( A(0)) + "," + val::ToString(A(1)) +"); B(" +
         val::ToString(B(0)) + "," + val::ToString(B(1)) + "); C(" + val::ToString(C(0)) + "," + val::ToString(C(1)) + ").\n";
-    analyze_output[0] += "|AB| = " + val::ToString(c) + "; |AC| = " + val::ToString(b) + "; |BC| = " + val::ToString(c) + ".\n";
-    analyze_output[0] += "\n " + greek_letters[0] + " = " + val::ToString(alpha) + " , " + greek_letters[1] +  " = " + val::ToString(beta) + " , " + greek_letters[2] + " = " + val::ToString(gamma);
+    analyze_output[0] += "|AB| = " + val::ToString(c) + "; |AC| = " + val::ToString(b) + "; |BC| = " + val::ToString(a) + ".\n";
+    analyze_output[0] += "\n " + greek_letters[0] + " = " + val::ToString(alpha) + _T("° , ")+ greek_letters[1] +  " = " + val::ToString(beta) + _T("° , ") +
+                          greek_letters[2] + " = " + val::ToString(gamma) + _T("°.");
 
     analyze_output[1] = "Circumcenter: (" + val::ToString(U(0)) + " , " + val::ToString(U(1)) + ")\nCircumradius: " + val::ToString(cr);
     analyze_output[2] = "Incenter: (" + val::ToString(I(0)) + " , " + val::ToString(I(1)) + ")\nInradius: " + val::ToString(ir);

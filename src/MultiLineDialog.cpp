@@ -269,7 +269,7 @@ wxDEFINE_EVENT(P_EVENT,ParentEvent);
 AnalysisDialog::AnalysisDialog(wxWindow *parent,int &nchild,const val::d_array<wxString> &output,const val::d_array<val::d_array<val::GPair<double>>> &Point,
                                 const wxSize &Size,const wxPoint &Pos,int fonts, const std::string &title, int dtype) : Parent(parent), N_child(&nchild) , Points(&Point), fontsize(fonts), dialogtype(dtype)
 {
-    Create(parent, wxID_ANY, title, wxDefaultPosition, wxDefaultSize, wxRESIZE_BORDER|wxCAPTION, _T("wxID_ANY"));
+    Create(parent, wxID_ANY, title, wxDefaultPosition, wxDefaultSize, wxRESIZE_BORDER|wxDEFAULT_DIALOG_STYLE, _T("wxID_ANY"));
     ++(*N_child);
     Move(Pos);
     int n_point=Point.length(),i,n_output=output.length();
@@ -282,7 +282,7 @@ AnalysisDialog::AnalysisDialog(wxWindow *parent,int &nchild,const val::d_array<w
     TextEdit = val::d_array<wxTextCtrl*>(nullptr,n_output);
     val::d_array<wxBoxSizer*> BoxSizerText(nullptr,n_output);
     val::d_array<wxBoxSizer*> BoxSizerButton(nullptr,n_point);
-    val::d_array<wxStaticText*> Text(n_point);
+    val::d_array<wxStaticText*> Text(nullptr,n_point);
     //val::d_array<wxButton*> Button(nullptr,n_point);
     wxBoxSizer *BoxSizer = new wxBoxSizer(wxVERTICAL);
     wxBoxSizer *UpBoxSizer = new wxBoxSizer(wxVERTICAL);
@@ -308,8 +308,15 @@ AnalysisDialog::AnalysisDialog(wxWindow *parent,int &nchild,const val::d_array<w
         Text[0] = new wxStaticText(surface,11,_T("Intersection points:"));
     }
     else if (dialogtype == anadialog_type::triangle_type) {
-        Text[0] = new wxStaticText(surface,11,_T("Circumcircle"));
-        Text[1] = new wxStaticText(surface,11,_T("Incircle"));
+        Text[0] = new wxStaticText(surface,11,_T("Circumcircle:"));
+        Text[1] = new wxStaticText(surface,12,_T("Incircle:"));
+    }
+    if (n_point && Text[0] != nullptr) {
+        wxFont font = Text[0]->GetFont();
+        font.SetPointSize(fontsize + 1);
+        for (i = 0; i < n_point; ++i) {
+            if (Text[i] != nullptr) Text[i]->SetFont(font);
+        }
     }
 	 //
     /*
@@ -319,7 +326,7 @@ AnalysisDialog::AnalysisDialog(wxWindow *parent,int &nchild,const val::d_array<w
     */
     for (i=0;i<n_point;++i) {
         BoxSizerButton[i] = new wxBoxSizer(wxHORIZONTAL);
-        BoxSizerButton[i]->Add(Text[i],1,wxALL|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL,0);
+        BoxSizerButton[i]->Add(Text[i],1,wxLEFT|wxALIGN_LEFT|wxALIGN_CENTER_VERTICAL,10);
     }
     for (i=0;i<n_output;++i) BoxSizerText[i]->Add(TextEdit[i],1,wxALL|wxEXPAND,5);
 

@@ -438,10 +438,17 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     Accel.push_back(wxAcceleratorEntry(wxACCEL_CTRL, (int) '-',20002));
     Accel.push_back(wxAcceleratorEntry(wxACCEL_SHIFT|wxACCEL_CTRL, (int) '+',20012));
     Accel.push_back(wxAcceleratorEntry(wxACCEL_SHIFT|wxACCEL_CTRL, (int) '-',20013));
+#ifndef  __APPLE__
     Accel.push_back(wxAcceleratorEntry(wxACCEL_CTRL,WXK_RIGHT,20003));
     Accel.push_back(wxAcceleratorEntry(wxACCEL_CTRL,WXK_LEFT,20004));
     Accel.push_back(wxAcceleratorEntry(wxACCEL_CTRL,WXK_UP,20005));
     Accel.push_back(wxAcceleratorEntry(wxACCEL_CTRL,WXK_DOWN,20006));
+#else
+    Accel.push_back(wxAcceleratorEntry(wxACCEL_CTRL|wxACCEL_AlT,WXK_RIGHT,20003));
+    Accel.push_back(wxAcceleratorEntry(wxACCEL_CTRL|wxACCEL_AlT,WXK_LEFT,20004));
+    Accel.push_back(wxAcceleratorEntry(wxACCEL_CTRL|wxACCEL_AlT,WXK_UP,20005));
+    Accel.push_back(wxAcceleratorEntry(wxACCEL_CTRL|wxACCEL_AlT,WXK_DOWN,20006));
+#endif
     Accel.push_back(wxAcceleratorEntry(wxACCEL_SHIFT|wxACCEL_ALT,(int) 'P',1001));
     Accel.push_back(wxAcceleratorEntry(wxACCEL_CTRL,WXK_PAGEDOWN,20007));
     Accel.push_back(wxAcceleratorEntry(wxACCEL_NORMAL,WXK_ESCAPE,20008));
@@ -3796,6 +3803,9 @@ void PlotFunctionFrame::OnMyEvent(MyThreadEvent& event)
         std::string title;
         int dtype;
 
+        sx=250;
+        sy=110;
+
         if (id == IdAnalyze) {
             title = "Analyze Function";
             dtype = anadialog_type::function_type;
@@ -3803,13 +3813,12 @@ void PlotFunctionFrame::OnMyEvent(MyThreadEvent& event)
         else if (id == IdTriangle) {
             title = "Computations on Triangle";
             dtype = anadialog_type::triangle_type;
+            sx = 300;
         }
         else {
             title = "Intersection Points";
             dtype = anadialog_type::intersection_type;
         }
-        sx=250;
-        sy=110;
 
         x+=dx;
         if (x+sx+23>maxx) {
@@ -5902,7 +5911,7 @@ void PlotFunctionFrame::ChangeSideTextStyle(wxCommandEvent&)
         style &= ~wxHSCROLL;
         wraptext = 1;
     }
-    SideText->SetWindowStyleFlag(style);
     SideText->Clear();
+    SideText->SetWindowStyleFlag(style);
     WriteText();
 }
