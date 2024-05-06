@@ -2345,11 +2345,19 @@ void intersection(const myfunction &f, const myfunction &g, std::string input)
 
     if (!N) analyze_output[1]+="No real intersection points.\n";
     else {
-        int rat;
+        int rat, diff = 0;
         std::string xr,yr;
+        val::valfunction f1, g1;
+        double alpha;
+
+        F.simplify(); G.simplify();
+        if (F.isdifferentiable() && G.isdifferentiable()) {
+            diff = 1;
+            f1 = F.derive(); g1 = G.derive();
+        }
         Points[0].reserve(N);
-   	places.sort();
-	    analyze_output[1]+="Number of real intersection points: "+ val::ToString(N) + "\n";
+        places.sort();
+        analyze_output[1]+="Number of real intersection points: "+ val::ToString(N) + "\n";
         if (!h_p.iszero()) {
             r_places = val::rational_roots(h_p);
             r_places.sort();
@@ -2375,6 +2383,12 @@ void intersection(const myfunction &f, const myfunction &g, std::string input)
                 analyze_output[1] += " [ = ( " + xr + " | " + yr + " )]\n";
             }
             else analyze_output[1] += "\n";
+            if (diff) {
+                alpha = val::abs(val::arctan(f1(x)) - val::arctan(g1(x))) * 180/val::PI;
+                if (alpha > 90) alpha = 180 - alpha;
+                alpha = val::round(alpha,2);
+                analyze_output[1] += "Intersection angle: " + val::ToString(alpha) + _T("°\n");
+            }
         }
     }
 
