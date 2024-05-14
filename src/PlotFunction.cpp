@@ -504,15 +504,15 @@ int isInf(const double  &a)
 void gettangentvalues(const myfunction &f,const double &x,double &m,double &b,int tangent)
 {
     //val::DoubleFunction F(val::doublefunction(std::bind(std::cref(f),std::placeholders::_1)));
-    int n=isderived(f);
+    //int n=isderived(f);
     //for (i=0;i<n;++i) F=F.derive();
 
-    m= derive(f,x,n+1);  //F.derive(x);
+    m= derive(f,x);  //F.derive(x);
     if (!tangent) {
         if (val::abs(m)<=1e-9) m = val::Inf;
         else m = -1/m;
     }
-    b=derive(f,x,n) -m*x;
+    b=derive(f,x) -m*x;
     return;
 }
 
@@ -683,9 +683,9 @@ int islinearfunction(const myfunction &F)
 
 
 
-double derive(const myfunction &f,const double& x,int n)
+double derive(const myfunction &f,const double& x)
 {
-    if (n<=0) return f(x);
+    //if (n<=0) return f(x);
 
     double xh1,xh2,hh,y;
     if (val::abs(x)>1) y=val::abs(x);
@@ -696,10 +696,10 @@ double derive(const myfunction &f,const double& x,int n)
     xh2=x-hh;
     hh=xh1 - xh2;
 
-    if (n==1) {
+    //if (n==1) {
         return (f(xh1)-f(xh2))/hh;
-    }
-    else return (derive(f,xh1,n-1)-derive(f,x,n-1))/(xh1-x);
+    //}
+    //else return (derive(f,xh1,n-1)-derive(f,x,n-1))/(xh1-x);
 }
 
 
@@ -888,7 +888,7 @@ void computepoints(const val::Glist<myfunction> &F,val::d_array<val::d_array<dou
             }
         }
         //farray[i]=val::d_array<double>(points);
-        if (!isderived(F[i])) {
+//        if (!isderived(F[i])) {
             if (F[i].IsLine() || F[i].IsRectangle()) {
                 double arrow = 0.0;
                 farray[i_f].reserve(5);
@@ -968,7 +968,8 @@ void computepoints(const val::Glist<myfunction> &F,val::d_array<val::d_array<dou
                 }
                 ++i_c;
             }
-        }
+  //      }
+  /*
         else {
             farray[i_f].reserve(points);
             //val::DoubleFunction f(val::doublefunction(std::bind(std::cref(F[i]),std::placeholders::_1)));
@@ -985,6 +986,7 @@ void computepoints(const val::Glist<myfunction> &F,val::d_array<val::d_array<dou
             ++i_f;
             //++i_rf;
         }
+        */
     }
 
     //wxMessageBox("Fine!");
@@ -1001,7 +1003,7 @@ void computetable(const myfunction& g, double x1,double x2, double dx)
      Glist<GPair<double>> MP,PM;
      Glist<double> Zeros;
      double y0=g(x1),y1,x0=x1,eps=1e-4;
-     int k=4,m=isderived(g), digits, ydigits;
+     int k=4, digits, ydigits; //m=isderived(g);
 
 
      while (dx<eps) {
@@ -1013,7 +1015,7 @@ void computetable(const myfunction& g, double x1,double x2, double dx)
      tablestring += " x         f(x) \n";
      for (double x=x1;x<=x2;x+=dx) {
         x=val::round(x,k);
-        y1=derive(g,x,m); //f(x);
+        y1 = g(x);  //derive(g,x); //f(x);
         if (val::abs(y1)<eps) Zeros.inserttoend(x);
         else if (y0<0 && y1>0) MP.inserttoend(GPair<double>(x0,x));
         else if (y0>0 && y1<0) PM.inserttoend(GPair<double>(x0,x));
@@ -1507,8 +1509,8 @@ void computetangent(std::string sf,const myfunction &f,double x1,double x2,int t
                 diffbar = 1;
             }
             else {
-                n=isderived(f);
-                m= derive(f,x,n+1);  //F.derive(x);
+                //n=isderived(f);
+                m= derive(f,x);  //F.derive(x);
             }
             if (val::isNaN(m)) return;
             if (!tangent) {

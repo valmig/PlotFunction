@@ -125,7 +125,7 @@ int islinearfunction(const myfunction &F);
 
 int isinarray(const val::rational& value,const val::d_array<val::rational> & x);
 
-double derive(const myfunction &f,const double& x,int n);
+double derive(const myfunction &f,const double& x);
 
 val::rationalfunction derive(const val::rationalfunction &f);
 

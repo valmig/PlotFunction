@@ -155,7 +155,7 @@ class PlotFunctionFrame: public wxFrame
         double x1=-5,x2=5,y1=-5,y2=5,ymin=-5,ymax=5,x_scale=1,y_scale=1,gx_scale=0.5,gy_scale=0.5,delta=1e-8,zoom=1.0,mx1,mx2,my1,my2,movedx = 0.1, movedy = 0.1;
         double movex = 0, movey = 0;
         std::string Program_Name="PlotFunction",x_axis="x",y_axis="y",sx_scale="1",sy_scale="1",sgx_scale="0.5",sgy_scale="0.5",actual_filename="",actual_dirname="";
-        std::string SideText_Word;
+        wxString SideText_Word;
         wxFont defaultFont;
         wxSize bitmapsize,actualPanelsize; //DialogInputSize{wxDefaultSize};
         wxBitmap actualBitmapBackground, *cpaper = nullptr;

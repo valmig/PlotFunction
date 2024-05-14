@@ -1295,7 +1295,7 @@ void computeintegral(const myfunction& f,std::string x1,std::string x2,double de
 {
     using namespace val;
     MyThreadEvent event(MY_EVENT,IdIntegral);
-    int k=isderived(f),exact=0;
+    int exact=0; //k=isderived(f)
     valfunction A(x1), B(x2);
     double a = A(0), b=B(0), wert,exwert = 0;
     //val::rational r_wert;
@@ -1333,10 +1333,12 @@ void computeintegral(const myfunction& f,std::string x1,std::string x2,double de
     }
     */
     if (!arclength) {
+        /*
         if (k) {
             wert=derive(f,b,k-1) - derive(f,a,k-1);
         }
-        else wert=integral(f,a,b,n,delta);
+        else */
+        wert=integral(f,a,b,n,delta);
         {
             val::valfunction F= integral(val::valfunction(f.getinfixnotation()));
             if (!F.is_zero()) {
@@ -1361,7 +1363,8 @@ void computeintegral(const myfunction& f,std::string x1,std::string x2,double de
         tablestring += ToString(val::round(exwert,dez),eprec) + ";\n\ndouble:   ";
     }
     tablestring+=ToString(val::round(wert,dez),wprec);
-    if (k==0) tablestring+= "\nPrecision : " + ToString(delta) + " , Round to decimal: " + ToString(dez) + "\nIterations : " + ToString(n);
+    //if (k==0)
+    tablestring+= "\nPrecision : " + ToString(delta) + " , Round to decimal: " + ToString(dez) + "\nIterations : " + ToString(n);
 
     if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event.Clone() );
 }

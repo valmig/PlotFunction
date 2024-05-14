@@ -3366,12 +3366,14 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
 
             if (fstring[n]!=';') fstring+=';';
             if (sf[m]=='\'') fstring += sf + "\'";
-            else if (F[f_nr].numberofvariables()==1 && F[f_nr].isdifferentiable()) {
-                val::valfunction f(F[f_nr].getinfixnotation()), g = f.derive();
-                g.simplify(1);
-                fstring += g.getinfixnotation();
+            else if (F[f_nr].numberofvariables()==1) {
+                if (F[f_nr].isdifferentiable()) {
+                    val::valfunction f(F[f_nr].getinfixnotation()), g = f.derive();
+                    g.simplify(1);
+                    fstring += g.getinfixnotation();
+                }
+                else return;
             }
-            else fstring += "(" + sf + ")" + "\'";
             if (F[f_nr].iswithparameter()) {
                 Parameter.inserttoend(val::rational(F[f_nr].getparameter()));
             }
@@ -5543,6 +5545,7 @@ void PlotFunctionFrame::WriteText()
     wxFont myfont = SideText->GetFont();
     myfont.SetPointSize(fontsize);
     SideText->SetFont(myfont);
+    wxString s_f;
 
     val::d_array<char> separfunc{';'};
     val::Glist<std::string> s_functions = getwordsfromstring(fstring,separfunc,0,val::d_array<char>{'\n'});
@@ -5564,7 +5567,9 @@ void PlotFunctionFrame::WriteText()
         SideText->WriteText("#" + val::ToString(i+1) + ": ");
         Style.SetTextColour(def_color);
         SideText->SetDefaultStyle(Style);
-        SideText->WriteText(s_functions[i] + ";\n");
+        s_f = s_functions[i];
+        s_f.Replace("PI", L"\u03C0");
+        SideText->WriteText(s_f + ";\n");
     }
     SideText_Word = SideText->GetValue();
 }
@@ -5572,14 +5577,15 @@ void PlotFunctionFrame::WriteText()
 
 void PlotFunctionFrame::CompareSideTextInput()
 {
-    std::string O_Word;
+    wxString O_Word;
     O_Word = SideText->GetValue();
     if (O_Word == SideText_Word) {
         return;
     }
+    O_Word.Replace(L"\u03C0", "PI");
     ispainted = 0;
     val::d_array<char> sep{';'}, numsep{':'};
-    val::Glist<std::string> words = getwordsfromstring(O_Word,sep,0,val::d_array<char>{'\n'});
+    val::Glist<std::string> words = getwordsfromstring(std::string(O_Word),sep,0,val::d_array<char>{'\n'});
     std::string s_func, first_word;
     int m;
 
