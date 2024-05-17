@@ -39,16 +39,10 @@
 #include <wx/string.h>
 #include <wx/clipbrd.h>
 #include <wx/rawbmp.h>
-//#include <wx/dataobj.h>
-//#include <wx/base64.h>
-//#include <wx/mstream.h>
-//#include <wx/sstream.h>
-//#include <wx/textfile.h>
 //
 
 
 
-//*IdInit(PlotFunctionFrame)
 const long PlotFunctionFrame::ID_PANEL1 = 30001;//wxNewId();
 const long PlotFunctionFrame::idMenuQuit = 30002;//wxNewId();
 const long PlotFunctionFrame::ID_MENUITEM4 = 30003;//wxNewId();
@@ -86,8 +80,6 @@ struct quadruple
 
 PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
 {
-    //*Initialize(PlotFunctionFrame)
-    //wxBoxSizer* BoxSizer2;
     wxMenu* Menu1;
     wxMenu* Menu2;
     wxMenuBar* MenuBar1;
@@ -187,23 +179,9 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     //
     StatusBar1 = new wxStatusBar(this, ID_STATUSBAR1, 0, _T("ID_STATUSBAR1"));
     int __wxStatusBarWidths_1[2] = { -3,-1 };
-    //int __wxStatusBarStyles_1[1] = { wxSB_NORMAL };
     StatusBar1->SetFieldsCount(2,__wxStatusBarWidths_1);
-    //StatusBar1->SetStatusStyles(1,__wxStatusBarStyles_1);
-    //StatusBar1->SetFieldsCount(2);
     SetStatusBar(StatusBar1);
-
-    //DrawPanel->Connect(wxEVT_PAINT,(wxObjectEventFunction)&PlotFunctionFrame::OnDrawPanelPaint,0,this);
     SideText->Hide();
-
-    //Connect(idMenuQuit,wxEVT_COMMAND_MENU_SELECTED,(wxObjectEventFunction)&PlotFunctionFrame::OnQuit);
-    //Connect(ID_MENUITEM4,wxEVT_COMMAND_MENU_SELECTED,(wxObjectEventFunction)&PlotFunctionFrame::OnMenuSaveSelected);
-    //Connect(ID_MENUITEM1,wxEVT_COMMAND_MENU_SELECTED,(wxObjectEventFunction)&PlotFunctionFrame::OnAllSettingsSelected);
-    //Connect(ID_MENUITEM2,wxEVT_COMMAND_MENU_SELECTED,(wxObjectEventFunction)&PlotFunctionFrame::OnMenu_xAxisSelected);
-    //Connect(ID_MENUITEM3,wxEVT_COMMAND_MENU_SELECTED,(wxObjectEventFunction)&PlotFunctionFrame::OnMenu_xAxisSelected);
-    //Connect(ID_MENUITEM5,wxEVT_COMMAND_MENU_SELECTED,(wxObjectEventFunction)&PlotFunctionFrame::OnMenuSizeSelected);
-    //Connect(ID_MENUITEM6,wxEVT_COMMAND_MENU_SELECTED,(wxObjectEventFunction)&PlotFunctionFrame::OnMenuFontSize);
-    //Connect(idMenuAbout,wxEVT_COMMAND_MENU_SELECTED,(wxObjectEventFunction)&PlotFunctionFrame::OnAbout);
 
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnQuit,this,idMenuQuit);
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuSaveSelected,this,ID_MENUITEM4);
@@ -240,10 +218,6 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     Menu3->Append(24,_T("Round-decimals for points...\tCtrl-D"));
     Menu3->Append(25,_T("Move Increments...\tCtrl-M"));
     //
-    //wxMenuItem *xrangemenu=new wxMenuItem(Menu3,6,"x-Axis Range...\tCtrl-X",wxEmptyString);
-    //wxMenuItem *yrangemenu=new wxMenuItem(Menu3,7,"y-Axis Range...\tCtrl-Y",wxEmptyString);
-    //Menu3->Insert(3,xrangemenu);
-    //Menu3->Insert(4,yrangemenu);
     wxMenuItem *xrangemenu=new wxMenuItem(submenuaxis,6,"x-Axis Range...\tCtrl-X",wxEmptyString);
     wxMenuItem *yrangemenu=new wxMenuItem(submenuaxis,7,"y-Axis Range...\tCtrl-Y",wxEmptyString);
     x_scaleactiv= new wxMenuItem(submenuaxis,8,"Show x-scale \tShift-Alt-X",wxEmptyString,wxITEM_CHECK);
@@ -313,8 +287,6 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     MenuBar1->Append(Menu_functions, _("Functions"));
     MenuBar1->Append(Menu_Tools,"Tools");
     MenuBar1->Append(Menu2, _("Help"));
-
-
     //
     rightclickmenu = new wxMenu();
     rightclickmenu->Append(1101,_T("Fill Area"));
@@ -322,7 +294,6 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     rightclickmenu->Append(1103,_T("circle..."));
     rightclickmenu->Append(1104,_T("text..."));
     addpointsmenu = new wxMenuItem(rightclickmenu,1001,_T("Add Points \tShift-Alt-P"),wxEmptyString,wxITEM_CHECK);
-    //addpointsmenu->Check(false);
     rightclickmenu->Append(addpointsmenu);
     linepointsmenu = new wxMenuItem(rightclickmenu,1003,_T("Draw Line \tShift-Ctrl-L"),wxEmptyString,wxITEM_CHECK);
     rightclickmenu->Append(linepointsmenu);
@@ -347,8 +318,6 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnFileMenu,this,103);          // Save File
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnFileMenu,this,104);          // Save File as
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuRecent,this,601);        // Clear History
-    //
-    //Bind(MY_EVENT,&PlotFunctionFrame::OnPaint,this,IdPaint);
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuResetColours,this,4);    // Reset Colors
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuParameter,this,7000);    // Parameter Values
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuTools,this,7001);      // Tangent
@@ -444,10 +413,10 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     Accel.push_back(wxAcceleratorEntry(wxACCEL_CTRL,WXK_UP,20005));
     Accel.push_back(wxAcceleratorEntry(wxACCEL_CTRL,WXK_DOWN,20006));
 #else
-    Accel.push_back(wxAcceleratorEntry(wxACCEL_CTRL|wxACCEL_AlT,WXK_RIGHT,20003));
-    Accel.push_back(wxAcceleratorEntry(wxACCEL_CTRL|wxACCEL_AlT,WXK_LEFT,20004));
-    Accel.push_back(wxAcceleratorEntry(wxACCEL_CTRL|wxACCEL_AlT,WXK_UP,20005));
-    Accel.push_back(wxAcceleratorEntry(wxACCEL_CTRL|wxACCEL_AlT,WXK_DOWN,20006));
+    Accel.push_back(wxAcceleratorEntry(wxACCEL_CTRL|wxACCEL_ALT,WXK_RIGHT,20003));
+    Accel.push_back(wxAcceleratorEntry(wxACCEL_CTRL|wxACCEL_ALT,WXK_LEFT,20004));
+    Accel.push_back(wxAcceleratorEntry(wxACCEL_CTRL|wxACCEL_ALT,WXK_UP,20005));
+    Accel.push_back(wxAcceleratorEntry(wxACCEL_CTRL|wxACCEL_ALT,WXK_DOWN,20006));
 #endif
     Accel.push_back(wxAcceleratorEntry(wxACCEL_SHIFT|wxACCEL_ALT,(int) 'P',1001));
     Accel.push_back(wxAcceleratorEntry(wxACCEL_CTRL,WXK_PAGEDOWN,20007));
@@ -464,7 +433,6 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     Accel.push_back(wxAcceleratorEntry(wxACCEL_SHIFT|wxACCEL_CTRL,(int) 'R',1004));
     Accel.push_back(wxAcceleratorEntry(wxACCEL_SHIFT|wxACCEL_CTRL,(int) 'E',1005));
     Accel.push_back(wxAcceleratorEntry(wxACCEL_SHIFT|wxACCEL_CTRL,(int) 'T',1006));
-    //Accel.push_back(wxAcceleratorEntry(wxACCEL_ALT,(int) 'P',5020));
     Accel.push_back(wxAcceleratorEntry(wxACCEL_CTRL,WXK_RETURN,5020));
     Accel.push_back(wxAcceleratorEntry(wxACCEL_NORMAL,WXK_MENU,7200));
     Accel.push_back(wxAcceleratorEntry(wxACCEL_CTRL,WXK_MENU,7201));
@@ -534,9 +502,7 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
 
     DrawPanel->Bind(wxEVT_SET_FOCUS,&PlotFunctionFrame::OnLostFocus,this);
     SideText->Bind(wxEVT_SET_FOCUS,&PlotFunctionFrame::OnLostFocus,this);
-    //SideText->Bind(wxEVT_KILL_FOCUS,&PlotFunctionFrame::TestLostFocus,this);
     notebook->Bind(wxEVT_SET_FOCUS,&PlotFunctionFrame::OnLostFocus,this);
-    //Bind(wxEVT_CLOSE_WINDOW,&PlotFunctionFrame::OnClose,this);
 }
 
 
@@ -545,8 +511,6 @@ PlotFunctionFrame::~PlotFunctionFrame()
 {
     using namespace std;
     ispainted = 0;
-
-    //std::cout << "\n Destructor called!" << std::endl;
 
     std::ofstream file(settingsfile,ios::out | ios::trunc);
     if (file) {
@@ -592,9 +556,6 @@ PlotFunctionFrame::~PlotFunctionFrame()
     }
     if (SideText->IsShown()) SideText->Hide();
     if (notebook->IsShown()) notebook->Hide();
-
-    //(*Destroy(PlotFunctionFrame)
-    //*)
 }
 
 
@@ -630,13 +591,6 @@ void PlotFunctionFrame::OnFileMenu(wxCommandEvent& event)
     wxString filetype = _("all files (*)|*");
 #endif // _WIN32
        //
-    /*
-    if (drawpoints) changedrawpoints();
-    if (drawpolygon) changedrawpolygon();
-    if (drawline) changedrawline();
-    if (drawrectangle) changedrawrectangle();
-    if (drawcircle) changedrawcircle();
-    */
     if (dpanelinsertmode) changedpanelinsertmode(insert_type::NORMAL_I);
 
     if (id==101) {   //new
@@ -647,8 +601,6 @@ void PlotFunctionFrame::OnFileMenu(wxCommandEvent& event)
         pi_scale_x=rzero; pi_scale_y=rzero; pi_factor_x=rzero; pi_factor_y=rzero; g_pi_factor_x=rzero; g_pi_factor_y=rzero;
         abst=10; x_scale=1; y_scale=1; gx_scale = gy_scale = 0.5;
         x_axis="x"; y_axis="y"; sx_scale="1"; sy_scale="1"; sgx_scale = sgy_scale  = "0.5";
-        //a_fstring=0;
-        //n_fstring=1;
         fstring="";
         xstring="-5;5";
         ystring="-5;5";
@@ -758,7 +710,6 @@ void PlotFunctionFrame::GetSizeSettings()
 	if (file) {getline(file,line);SideText_isshown = val::FromString<int>(line);}
 	if (file) {getline(file,line);widthSideText = val::FromString<int>(line);}
 	if (file) {getline(file,line);notebook_isshown = val::FromString<int>(line);}
-	//if (file) {getline(file,line);defaultFont.SetNativeFontInfo(wxString(line));}
     file.close();
 
     if (widthSideText > 500) widthSideText = 500;
@@ -826,7 +777,6 @@ void PlotFunctionFrame::GetSettings()
     F.dellist();
     x_range.dellist();
     critpoints.del();
-    //undef_intervals.del();
     critx.del();
     islinear.del();
 
@@ -856,10 +806,8 @@ void PlotFunctionFrame::GetSettings()
             if (f_menu[i]->IsChecked()) ischecked[i]=1;
             else ischecked[i]=0;
             Menu_functions->Remove(2000+i);
-            //Disconnect(2000+i,wxEVT_COMMAND_MENU_SELECTED,(wxObjectEventFunction)&PlotFunctionFrame::OnMenu_xAxisSelected);
             Unbind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenu_xAxisSelected,this,2000+i);
             delete f_menu[i];
-            //Disconnect(4000+i,wxEVT_COMMAND_MENU_SELECTED,(wxObjectEventFunction)&PlotFunctionFrame::OnMenuColours);
             Unbind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuColours,this,4000+i);
             colorsubmenu->Delete(4000+i);
         }
@@ -982,7 +930,6 @@ void PlotFunctionFrame::GetSettings()
 #ifdef _WIN32
         f_menu[i]->SetTextColour(Color[i]);
 #endif // _WIN32
-        // Only Windows : _menu[i]->SetTextColour(Color[i%Color.length()]);
         Menu_functions->Insert(i,f_menu[i]);
         if (i<nmenu) {
             if (ischecked[i]) f_menu[i]->Check(true);
@@ -1010,7 +957,6 @@ void PlotFunctionFrame::GetSettings()
             continue;
         }
         if (x_range[i].y <= x_range[i].x) {x_range[i].x=x1; x_range[i].y=x2;}
-        //fstring+=F[i].getinfixnotation();
         if (x_range[i].x!=x1 || x_range[i].y!=x2) fstring+= "  [ "+ val::ToString(x_range[i].x) +" , " + val::ToString(x_range[i].y) + " ];\n";
         else fstring+=";\n";
     }
@@ -1025,7 +971,6 @@ void PlotFunctionFrame::valFloodFill(wxMemoryDC& dc, int x, int y, const wxColou
     if (cpaper == nullptr) return;
     dc.SelectObject(wxNullBitmap);
     wxNativePixelData data(*cpaper);
-    //wxNativePixelData data(dc.GetSelectedBitmap());
 
     if (!data) {
         dc.SelectObject(*cpaper);
@@ -1040,58 +985,38 @@ void PlotFunctionFrame::valFloodFill(wxMemoryDC& dc, int x, int y, const wxColou
     quadruple s;
     val::Glist<quadruple> S;
 
-    //dc.GetPixel(x,y,&bgc);
     p.MoveTo(data,x,y);
     bgc = wxColour(p.Red(),p.Green(),p.Blue());
 
     S.push_back(quadruple(x,x,y,1));
     S.push_back(quadruple(x,x,y-1,-1));
 
-    //std::cout << int(bgc.Red()) << " , " << int(bgc.Green()) << " , " << int(bgc.Blue()) << std::endl;
-    //std::cout << xmin << " , " << xmax << std::endl;
-    //return;
-
     while (!S.isempty()) {
         s = S.getelement(); S.skiphead();
         x = x1 = s.x1; x2 = s.x2; y = s.y; dy = s.dy;
-        //paint = 0;
-        //dc.GetPixel(x,y,&pcolor);
         p.MoveTo(data,x,y); pcolor = wxColour(p.Red(),p.Green(),p.Blue());
-
         if (x <= xmax && x>=xmin && y <= ymax && y >= ymin && pcolor == bgc) {
             while (x-1 >= xmin) {
-                //dc.GetPixel(x-1,y,&pcolor);
                 p.MoveTo(data,x-1,y); pcolor = wxColour(p.Red(),p.Green(),p.Blue());
                 if (pcolor != bgc) break;
                 p.Red() = red; p.Green() = green; p.Blue() = blue;
                 --x;
             }
-            //if (paint) dc.DrawLine(x,y,xstart,y);
             if (x < x1) S.push_back(quadruple(x, x1-1, y-dy, -dy));
         }
         while (x1 <= x2) {
-            //paint = 0;
             while (1) {
                 if (x1 < xmin || x1 > xmax || y < ymin || y > ymax) break;
-                //dc.GetPixel(x1,y,&pcolor);
                 p.MoveTo(data,x1,y); pcolor = wxColour(p.Red(),p.Green(),p.Blue());
                 if (pcolor != bgc) break;
-                /*
-                if (!paint) {
-                    paint = 1;
-                    xstart = x1;
-                }
-                */
                 p.Green() = green; p.Red() = red; p.Blue() = blue;
                 ++x1;
             }
-            //if (paint) dc.DrawLine(xstart,y,x1,y);
             S.push_back(quadruple(x, x1 - 1, y+dy, dy));
             if (x1 - 1 > x2) S.push_back(quadruple(x2 + 1, x1 - 1, y-dy, -dy));
             ++x1;
             while (x1 < x2) {
                 if (x1 > xmax || x1 < xmin || y < ymin || y > ymax) break;
-                //dc.GetPixel(x1,y,&pcolor);
                 p.MoveTo(data,x1,y); pcolor = wxColour(p.Red(),p.Green(),p.Blue());
                 if (pcolor == bgc) break;
                 ++x1;
@@ -1114,7 +1039,6 @@ void PlotFunctionFrame::plotvertices(wxDC& dc)
     wxFont normalfont=dc.GetFont(), italicfont=dc.GetFont();
     int normalsize = normalfont.GetPointSize(), nsize=axis_fontsize , dscale =3,dx=4,dy=6,pen=axis_pen;
 
-
     italicfont.MakeItalic();
     italicfont.MakeBold();
     wxString pi = L"\u03C0",swert;
@@ -1124,12 +1048,6 @@ void PlotFunctionFrame::plotvertices(wxDC& dc)
 
     sizex=sz.x -2*abst;
     sizey=sz.y-2*abst;
-
-    /*
-    if (sizex <320) {nsize-=2;dscale--;dx--;dy--;}
-    if (sizex < 220) {nsize -=2;dscale--;dx--;dy--;}  // evtl. pen--
-    if (nsize < 2) nsize =2;
-    */
 
     italicfont.SetPointSize(nsize);
 
@@ -1218,12 +1136,8 @@ void PlotFunctionFrame::plotvertices(wxDC& dc)
             dc.SetFont(normalfont);
             int cw = dc.GetCharWidth(), ch = dc.GetCharHeight()/2;
             int iy,xzero=abst+1+ int(double(sizex-1)*((-x1)/(x2-x1)));
-
-            //if (nsize >= 15) {cw -= 1;}
-            //if (nsize >= 20) {cw -= 2;}
-            //dyaxis = nsize;
-
             int f=int(y1/y_scale);
+
             for (double y= double(f)*y_scale;y <= y2;y+=y_scale,++f) {
                 if (y<y1) continue;
                 if (val::abs(y) < 1e-16) y = 0.0;
@@ -1335,7 +1249,6 @@ void PlotFunctionFrame::plotfunction(wxDC& dc,const val::d_array<double> &f,int 
             index=int (val::round(double(i)*faktor_x,0));
             if (index<0 || index >=points) return;
             yvalue = f[index];
-            //iy1=yzero -int(val::round(faktor_y* yvalue,0));
             iy1= int(val::round(dyzero - faktor_y*yvalue,0)); //yzero -int(val::round(faktor_y* yvalue,0));
             if (isInf(yvalue) || val::isNaN(yvalue)) { // || (iy1 > ylimit) || (iy1 < abst)) {
                 ++i;
@@ -1349,9 +1262,6 @@ void PlotFunctionFrame::plotfunction(wxDC& dc,const val::d_array<double> &f,int 
                 break;
             }
             dc.DrawLine(ix0,iy0,ix1,iy1);
-            //s_points[j].x = ix1;
-            //s_points[j].y = iy1;
-            //++j;
         }
         if (i >= ew) ready = 1;
     }
@@ -1386,18 +1296,13 @@ void PlotFunctionFrame::plotline(wxDC& dc,const val::d_array<double> &f,int colo
     ix1=abst+int(double(sizex-1)*((g[2]-x1)/(x2-x1)));
     iy1=yzero -int((double(sizey-1)/double(y2-y1)) * g[3]);
 
-    //if (n_linepoints && colour == N-1) {
     if (n_points && dpanelinsertmode == insert_type::LINE_I && colour == N-1) {
         dc.SetPen(wxPen(Color[colour],1));
         dc.DrawLine(wxPoint(ix0,iy0),actualpolygonpoint);
-            //polygonline = 0;
-        //}
         int r = val::Max(1,(pen[colour]+2)/2);
         dc.SetPen(wxPen(Color[colour],pen[colour]+2));
         dc.SetBrush(wxBrush(Color[colour]));
         dc.DrawCircle(ix0,iy0,r);
-        //dc.SetPen(wxPen(Color[colour],8));
-        //dc.DrawPoint(ix0,iy0);
         return;
     }
 
@@ -1430,7 +1335,6 @@ void PlotFunctionFrame::plotcircle(wxDC& dc,const val::d_array<double> &f,int co
     else dc.SetPen(wxPen(Color[colour],pen[colour]));
     wxBrush brush(Color[colour]);
 
-    //if (n_circlepoints && colour == N-1) {
     if (n_points && dpanelinsertmode == insert_type::CIRCLE_I && colour == N-1) {
         int r;
         ix0=abst+int(double(sizex-1)*((x-x1)/(x2-x1)));
@@ -1445,16 +1349,11 @@ void PlotFunctionFrame::plotcircle(wxDC& dc,const val::d_array<double> &f,int co
         dr = val::round(dr, 0);
         r = int(dr);
         dc.DrawLine(wxPoint(ix0, iy0), actualpolygonpoint);
-        // dc.DrawCircle(ix0,iy0,r);
         dc.DrawEllipse(ix0 - r, iy0 - r, 2 * r, 2 * r);
-        // polygonline = 0;
-        //}
         r = val::Max(1,(pen[colour]+2)/2);
         dc.SetPen(wxPen(Color[colour],pen[colour]+2));
         dc.SetBrush(wxBrush(Color[colour]));
         dc.DrawCircle(ix0,iy0,r);
-        //dc.SetPen(wxPen(Color[colour],8));
-        //dc.DrawPoint(ix0,iy0);
         return;
     }
 
@@ -1487,15 +1386,11 @@ void PlotFunctionFrame::plotcircle(wxDC& dc,const val::d_array<double> &f,int co
 
 
     if (active_function == colour || slice == -1) {
-        //double x,y,r,a1,a2;
-        //int slice;
-        //F[colour].getCirclePoints(x,y,r,a1,a2,slice);
         ix0=abst+int(double(sizex-1)*((x-x1)/(x2-x1)));
         iy0=yzero -int((double(sizey-1)/double(y2-y1)) * y);
         r = val::Max(1,(pen[colour]+2)/2);
         dc.SetPen(wxPen(Color[colour],pen[colour]+1));
         dc.SetBrush(wxBrush(Color[colour]));
-        //dc.DrawPoint(ix0,iy0);
         dc.DrawCircle(ix0,iy0,r);
     }
 }
@@ -1504,7 +1399,6 @@ void PlotFunctionFrame::plotcircle(wxDC& dc,const val::d_array<double> &f,int co
 void PlotFunctionFrame::plotrectangle(wxDC& dc,const val::d_array<double> &f,int colour)
 {
     if (!yset) return;
-    //if (f[0]<x1 || f[0]>x2 || f[1]<y1 || f[1]>y2 || f[2]<x1 || f[2]>x2 || f[3]<y1 || f[3]>y2) return;
 
     int ix0,iy0,ix1,iy1;
 
@@ -1522,25 +1416,20 @@ void PlotFunctionFrame::plotrectangle(wxDC& dc,const val::d_array<double> &f,int
     ix1-=ix0;
     iy1-=iy0;
 
-    //if (n_rectanglepoints && colour == N-1) {
     if (n_points && dpanelinsertmode == insert_type::RECTANGLE_I && colour == N-1) {
-        //if (polygonline) {
         dc.SetPen(wxPen(Color[colour], 1));
         ix1 = actualpolygonpoint.x - ix0;
         iy1 = actualpolygonpoint.y - iy0;
         dc.DrawRectangle(ix0, iy0, ix1, iy1);
-        // polygonline = 0;
-        //}
         int r = val::Max(1,(pen[colour]+2)/2);
         dc.SetPen(wxPen(Color[colour],pen[colour]+2));
         dc.SetBrush(wxBrush(Color[colour]));
         dc.DrawCircle(ix0,iy0,r);
-        //dc.SetPen(wxPen(Color[colour],8));
-        //dc.DrawPoint(ix0,iy0);
         return;
     }
     dc.DrawRectangle(ix0,iy0,ix1,iy1);
 }
+
 
 void PlotFunctionFrame::plottriangle(wxDC& dc,const val::d_array<double> &f,int colour)
 {
@@ -1619,8 +1508,6 @@ void PlotFunctionFrame::plotpolygon(wxDC& dc,const val::d_array<double> &f,int c
     if (!yset) return;
     int i,n=f.length();
 
-    //if (n<2) return;
-
     for (i=0;i<n;i+=2) {
         if (f[i]<x1 || f[i]>x2) return;
         if (f[i+1]<y1 || f[i+1]>y2) return;
@@ -1642,22 +1529,16 @@ void PlotFunctionFrame::plotpolygon(wxDC& dc,const val::d_array<double> &f,int c
         iy0=iy1;
     }
 
-    //if (drawpolygon && colour == N-1) {   //
     if (dpanelinsertmode == insert_type::POLYGON_I && colour == N-1) {
-        //if (polygonline) {
         dc.SetPen(wxPen(Color[colour],1));
         dc.DrawLine(wxPoint(ix0,iy0),actualpolygonpoint);
-            //polygonline = 0;
-        //}
         int r = val::Max(1,(pen[colour]+2)/2);
         dc.SetPen(wxPen(Color[colour],pen[colour]+2));
         dc.SetBrush(wxBrush(Color[colour]));
         dc.DrawCircle(ix0,iy0,r);
-        //dc.SetPen(wxPen(Color[colour],8));
-        //dc.DrawPoint(ix0,iy0);
-        //actualpolygonpoint = wxPoint(ix0,iy0);
     }
 }
+
 
 void PlotFunctionFrame::plotpoints(wxDC& dc,const val::d_array<double> &f,int colour)
 {
@@ -1666,7 +1547,6 @@ void PlotFunctionFrame::plotpoints(wxDC& dc,const val::d_array<double> &f,int co
     if (n<2) return;
 
     int ix,iy, r = val::Max(1,(pen[colour]+2)/2);
-
 
     dc.SetPen(wxPen(Color[colour],pen[colour]+2));
     dc.SetBrush(wxBrush(Color[colour]));
@@ -1736,8 +1616,6 @@ void PlotFunctionFrame::plottext(wxDC& dc,const val::d_array<double> &f,int colo
         ix1 += val::Max(x_sub,x_sup);
     }
 
-    //dc.DrawText(text,ix0,iy0);
-
     if (active_function == colour) {
         wxBrush brush;
         font.SetPointSize(f_size);
@@ -1751,6 +1629,7 @@ void PlotFunctionFrame::plottext(wxDC& dc,const val::d_array<double> &f,int colo
 
     dc.SetFont(or_font);
 }
+
 
 void PlotFunctionFrame::plotcurve(wxDC& dc,const val::d_array<val::d_array<double> > &f,const val::Glist<val::GPair<double>>& cpoints,
                                   const val::d_array<double>& cx,int colour)
@@ -1776,6 +1655,7 @@ void PlotFunctionFrame::plotcurve(wxDC& dc,const val::d_array<val::d_array<doubl
             if (i>=ew) return;
         }
         while (iy0 < abst || iy0 > ylimit);
+
         if (i > ew) return;
         ix0 = i-1 + abst;
 
@@ -1890,8 +1770,7 @@ void PlotFunctionFrame::plotcurve(wxDC& dc,const val::d_array<val::d_array<doubl
 
 void PlotFunctionFrame::plotallfunctions(wxMemoryDC& dc)
 {
-    int i_f=0,i_c=0;// i_rf = 0;
-
+    int i_f=0,i_c=0;
     for (int i=0;i<N;++i) {
         if (F[i].numberofvariables()==1) {
             if (f_menu[i]->IsChecked()) {
@@ -1914,7 +1793,6 @@ void PlotFunctionFrame::plotallfunctions(wxMemoryDC& dc)
                         if (fillfunctions) {plotfill(dc,farray[i_f],i);} break;
                     default:
                         {
-                            //wxGCDC gdc(dc);
                             plotfunction(dc,farray[i_f],i);
                         } break;
                 }
@@ -1984,9 +1862,7 @@ void PlotFunctionFrame::plottomemoryDc(wxMemoryDC &memDC)
     }
 
     plotvertices(memDC);
-    //wxGCDC gdc(memDC);
     plotallfunctions(memDC);
-    //plotallfunctions(gdc);
     if (fillfunctions && gridactiv->IsCheck()) {
         fillfunctions=0;
         plotvertices(memDC);
@@ -1997,7 +1873,6 @@ void PlotFunctionFrame::plottomemoryDc(wxMemoryDC &memDC)
 
 void PlotFunctionFrame::OnDrawPanelPaint(wxPaintEvent &event)
 {
-    //event.Skip();
     if (!ispainted || iscomputing) return;
 #ifndef _WIN32
     iscomputing=1;
@@ -2008,7 +1883,6 @@ void PlotFunctionFrame::OnDrawPanelPaint(wxPaintEvent &event)
 
 void PlotFunctionFrame::OnDrawPanelResize(wxSizeEvent &event)
 {
-    //event.Skip();
     if (!ispainted || iscomputing) return;
 #ifdef _WIN32
     iscomputing=1;
@@ -2161,13 +2035,6 @@ void PlotFunctionFrame::OnMenunewfunction(wxCommandEvent &event)
     int id=event.GetId();
 
     if (id != 3005 && id != 3006) {
-        /*
-        if (drawpoints) changedrawpoints();
-        if (drawpolygon) changedrawpolygon();
-        if (drawline) changedrawline();
-        if (drawrectangle) changedrawrectangle();
-        if (drawcircle) changedrawcircle();
-        */
         if (dpanelinsertmode) changedpanelinsertmode(insert_type::NORMAL_I);
     }
     if (id==3000) {   // Add/removeFunction
@@ -2183,12 +2050,9 @@ void PlotFunctionFrame::OnMenunewfunction(wxCommandEvent &event)
 #ifdef __APPLE__
         dialog.Centre();
 #endif // __APPLE__
-        //dialog.SetSize(DialogInputSize);
         if (dialog.ShowModal()==wxID_CANCEL) return;
         closebrackets = dialog.GetCloseBrackets();
         // sonst OK:
-        //output=dialog.GetSettingsText();
-        //DialogInputSize = dialog.GetSize();
         output=dialog.GetValue();
         if (input==output) return;
         fstring=output;
@@ -2216,34 +2080,13 @@ void PlotFunctionFrame::OnMenunewfunction(wxCommandEvent &event)
     else if (id==3005 || id==3006) { // undo/redo:
         if (id==3005) {
             a_fstring--;
-            /*
-            if (drawpoints) addingpoints--;
-            if (drawpolygon) n_polygonpoints--;
-            if (drawline) n_linepoints--;
-            if (drawrectangle) n_rectanglepoints--;
-            if (drawcircle) n_circlepoints--;
-            */
             if (dpanelinsertmode) n_points--;
         }
         else {
             a_fstring++;
-            /*
-            if (drawpoints) addingpoints++;
-            if (drawpolygon) n_polygonpoints++;
-            if (drawline) n_linepoints++;
-            if (drawrectangle) n_rectanglepoints++;
-            if (drawcircle) n_circlepoints++;
-            */
             if (dpanelinsertmode) n_points++;
         }
 
-        /*
-        if (drawpoints && addingpoints<=0) changedrawpoints();
-        if (drawpolygon && n_polygonpoints<=0) changedrawpolygon();
-        if (drawline && n_linepoints<=0) changedrawline();
-        if (drawrectangle && n_rectanglepoints<=0) changedrawrectangle();
-        if (drawcircle && n_circlepoints<=0) changedrawcircle();
-        */
         if (dpanelinsertmode && n_points <= 0) changedpanelinsertmode(insert_type::NORMAL_I);
 
         if (a_fstring<0) {
@@ -2453,13 +2296,6 @@ void PlotFunctionFrame::OnMenuTools(wxCommandEvent &event)
     using namespace val;
     int i,naktiv=0,j=0,id=event.GetId();
 
-    /*
-    if (drawpoints) changedrawpoints();
-    if (drawpolygon) changedrawpolygon();
-    if (drawline) changedrawline();
-    if (drawrectangle) changedrawrectangle();
-    if (drawcircle) changedrawcircle();
-    */
     if (dpanelinsertmode) changedpanelinsertmode(insert_type::NORMAL_I);
 
     if (id==7006) {  //interpolation
@@ -2503,13 +2339,11 @@ void PlotFunctionFrame::OnMenuTools(wxCommandEvent &event)
         }
         if (naktiv==0) return;
         if (naktiv>1) {
-            //val::SingleChoiceDialog dialog(this,"Available functions:","Rotate...",List);
             val::MultiChoiceDialog dialog(this,"Available functions:","Rotate...",List);
 #ifdef __APPLE__
             dialog.Centre();
 #endif // __APPLE__
             if (dialog.ShowModal()==wxID_OK) {
-                //j = indezes[dialog.GetSelection()];
                 val::d_array<int> sel = dialog.GetSelections();
                 if (sel.isempty()) return;
                 for (int k : sel) ind.push_back(indezes[k]);
@@ -2525,12 +2359,8 @@ void PlotFunctionFrame::OnMenuTools(wxCommandEvent &event)
 
         val::d_array<myfunction*> H;
         for (int i : ind) H.push_back(&F[i]);
-        //std::thread t(computerotation,std::cref(F[j]),dialog.GetSettingsText());
         std::thread t(computerotation,H,dialog.GetSettingsText());
         t.detach();
-        //computerotation(H,dialog.GetSettingsText());
-        //GetSettings();
-        //Compute();
         return;
     }
 
@@ -2559,8 +2389,6 @@ void PlotFunctionFrame::OnMenuTools(wxCommandEvent &event)
             }
             else return;
         }
-        //std::thread t(computeregression,std::cref(F[j]),regressiondegree);
-        //t.detach();
         ExecuteCommand(REGRESSION,j);
         return;
     }
@@ -2646,17 +2474,11 @@ void PlotFunctionFrame::OnMenuTools(wxCommandEvent &event)
         else return;
     }
 
-    //if (F[j].numberofvariables()>1 || F[j].getmode()!=myfunction::FUNCTION) return;
-    //if (isderived(F[j])) return;
-
-    //int n=fstring.size()-1;
     if (id==7001 || id ==7007) { // Tangente, Normale
-        //int tangent=1;
         std::string type,input;
         if (id==7001) type = "tangent";
         else {
             type = "normal";
-            //tangent=0;
         }
         MultiLineDialog tangentdialog(this,"","Entry x-value or point",240,2*fontsize+6,"Set Point for " + type,fontsize,1);
 #ifdef __APPLE__
@@ -2664,7 +2486,6 @@ void PlotFunctionFrame::OnMenuTools(wxCommandEvent &event)
 #endif // __APPLE__
         if (tangentdialog.ShowModal()==wxID_CANCEL) return;
         input=tangentdialog.GetSettingsText();
-        //input+=" ";
         ExecuteCommand(TANGENT,j,input,id);
         return;
     }
@@ -2752,7 +2573,6 @@ void PlotFunctionFrame::OnChangeParmeterMenu(wxCommandEvent & event)
     pardialog.Centre();
 #endif // __APPLE__
     if (pardialog.ShowModal()==wxID_CANCEL) return;
-    //Parameter.dellist();
 
     pars=pardialog.GetSettingsText();
     if (pars == "") pars = "1";
@@ -2763,7 +2583,6 @@ void PlotFunctionFrame::OnChangeParmeterMenu(wxCommandEvent & event)
 void PlotFunctionFrame::OnRangeMenu(wxCommandEvent &event)
 {
     int id=event.GetId();
-    //std::string entry,info,title,svalue;
     std::string entry,info,title,svalue;
 
     if (id==6) {
@@ -2780,10 +2599,7 @@ void PlotFunctionFrame::OnRangeMenu(wxCommandEvent &event)
     svalue = rangedialog.GetSettingsText();
 
     ChangeSettings(AXIS_RANGE,svalue,id);
-
-    //svalue=rangedialog.GetSettingsText();
 }
-
 
 
 void PlotFunctionFrame::OnScaleMenu(wxCommandEvent &event)
@@ -2820,13 +2636,6 @@ void PlotFunctionFrame::OnGridMenu(wxCommandEvent &event)
 
 void PlotFunctionFrame::OnInputDialog(wxCommandEvent&)
 {
-    /*
-    if (drawpoints) changedrawpoints();
-    if (drawpolygon) changedrawpolygon();
-    if (drawline) changedrawline();
-    if (drawrectangle) changedrawrectangle();
-    if (drawcircle) changedrawcircle();
-    */
     if (dpanelinsertmode) changedpanelinsertmode(insert_type::NORMAL_I);
 
     wxSize size = GetSize();
@@ -2840,7 +2649,6 @@ void PlotFunctionFrame::OnInputDialog(wxCommandEvent&)
 #ifdef __APPLE__
     point.y -= 30;
 #endif // __APPLE__
-
 
     if (SideText_isshown) {
         size.x -= (widthSideText + 10);
@@ -2870,7 +2678,6 @@ void PlotFunctionFrame::OnInputDialog(wxCommandEvent&)
         --n;
     }
 
-
     if (!n) return;
 
     {
@@ -2879,7 +2686,6 @@ void PlotFunctionFrame::OnInputDialog(wxCommandEvent&)
         else recentcommands.push_back(svalue);
         if (l >= 100) recentcommands.skiphead();
     }
-
 
     command = val::getfirstwordofstring(svalue,separators);
 
@@ -2977,7 +2783,6 @@ void PlotFunctionFrame::ChangeSettings(int command, const std::string &svalue, i
             if (command == FONT_SIZE) {
                 fontsize = fsize;
                 if (fontsize<10) fontsize=10;
-                //if (fontsize>16) fontsize=16;
                 WriteText();
             }
             else {
@@ -3053,7 +2858,6 @@ void PlotFunctionFrame::ChangeSettings(int command, const std::string &svalue, i
                         yset = 0;
                     }
                     Compute();
-                    //Text_Editrefresh();
                     return;
                 }
                 else if (id == 6) {
@@ -3070,7 +2874,6 @@ void PlotFunctionFrame::ChangeSettings(int command, const std::string &svalue, i
                     yset = 0;
                     xstring = val::ToString(x1) + ";" + val::ToString(x2);
                     Compute();
-                    //Text_Editrefresh();
                     return;
                 }
                 values = getdoublevaluesfromstring(s_values[1],separators,0);
@@ -3103,7 +2906,6 @@ void PlotFunctionFrame::ChangeSettings(int command, const std::string &svalue, i
             val::Glist<std::string> words = getwordsfromstring(svalue,separators);
 
             n = words.length();
-            //x_axis=y_axis="";
 
             if (n>0) {
                 sx_scale = words[0];
@@ -3160,40 +2962,6 @@ void PlotFunctionFrame::ChangeSettings(int command, const std::string &svalue, i
                 g_pi_factor_y = g_pi_factor_x;
             }
 
-            /*
-            int i,n=svalue.size();
-            std::string swert;
-            for (i=0;i<n;++i) {
-                if (svalue[i]==';' || svalue[i] == ' ' || i==n-1) {
-                    if (i==n-1) swert+=svalue[i];
-                    sgx_scale=swert;
-                    if (!getpiscale(swert,g_pi_factor_x,gx_scale)) {
-                        gx_scale=val::FromString<double>(swert);
-                        if (gx_scale<=0.0) gx_scale=1.0;
-                    }
-                    ++i;
-                    break;
-                }
-                else swert+=svalue[i];
-            }
-            swert="";
-            if (i>=n) {
-                gy_scale=gx_scale;
-                sgy_scale=sgx_scale;
-                Paint();
-                //Text_Editrefresh();
-                return;
-            }
-
-            for (;i<n;++i)
-                if (svalue[i]=='\n') continue;
-                else swert+=svalue[i];
-            sgy_scale=swert;
-            if (!getpiscale(swert,g_pi_factor_y,gy_scale)) {
-                gy_scale=val::FromString<double>(swert);
-                if (gy_scale<=0) gy_scale=1.0;
-            }
-            */
             Paint();
         }
         break;
@@ -3314,33 +3082,32 @@ void PlotFunctionFrame::ChangeSettings(int command, const std::string &svalue, i
         }
         break;
     case val_settings::MOVEINC:
-    	{
-      		val::d_array<char> separators({';'});
-      		val::Glist<std::string> values = getwordsfromstring(svalue, separators);
-      		int n = values.length(), l;
-
+        {
+            val::d_array<char> separators({';'});
+            val::Glist<std::string> values = getwordsfromstring(svalue, separators);
+            int n = values.length(), l;
 
             moveinpointsx = moveinpointsy = 0;
 
             if (n > 0) {
-        		l = values[0].length();
-        		if (values[0][l - 1] == 'p') {
-          			moveinpointsx = 1;
-          			values[0].resize(l - 1);
-        		}
-        		movedx = val::FromString<double>(values[0]);
-        		moveinpointsy = moveinpointsx;
-       	 	movedy = movedx;
-      		}
-      		if (n > 1) {
-        		l = values[1].length();
+                l = values[0].length();
+                if (values[0][l - 1] == 'p') {
+                    moveinpointsx = 1;
+                    values[0].resize(l - 1);
+                }
+                movedx = val::FromString<double>(values[0]);
+                moveinpointsy = moveinpointsx;
+                movedy = movedx;
+            }
+            if (n > 1) {
+                l = values[1].length();
                 if (values[1][l - 1] == 'p') {
-          			moveinpointsy = 1;
-          			values[1].resize(l - 1);
-        		}
+                    moveinpointsy = 1;
+                    values[1].resize(l - 1);
+                }
                 else moveinpointsy = 0;
-        		movedy = val::FromString<double>(values[1]);
-      		}
+                movedy = val::FromString<double>(values[1]);
+            }
             if (movedx <= 0) movedx = 0.1;
             if (movedy <= 0) movedy = 0.1;
             Text_Editrefresh();
@@ -3349,7 +3116,6 @@ void PlotFunctionFrame::ChangeSettings(int command, const std::string &svalue, i
     default:
         break;
     }
-    //Text_Editrefresh();
 }
 
 
@@ -3479,7 +3245,6 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
             }
             else s = svalue;
 
-
             if (s != "") {
                 global_function = myfunction("points " + s);
                 std::thread t(computeregression,std::cref(global_function),deg);
@@ -3501,7 +3266,6 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
             val::rational x_1(x1),x_2(x2),d_x(0.5);
             int rat=0;
 
-            //if (svalue=="") return;
             int n=svalue.size();
 
             if (n > 0 && svalue[n-1] == ';') rat = 1;
@@ -3510,7 +3274,6 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
             val::Glist<std::string> s_values = getwordsfromstring(svalue,separ);
 
             n = s_values.length();
-            //if (n == 0) return;
             if (n > 0) x_1 = val::FromString<val::rational>(s_values[0]);
             if (n > 1) x_2 = val::FromString<val::rational>(s_values[1]);
             if (n > 2) d_x = val::FromString<val::rational>(s_values[2]);
@@ -3518,7 +3281,6 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
             if (x_1>x_2) return;
             if (d_x<=val::rational(0)) return;
 
-            //wxMessageBox(val::ToString(x1) + " ; " + val::ToString(x2) + " ; " + val::ToString(dx));
             if (!F[f_nr].israt() || !rat || isderived(F[f_nr])) {
                 std::thread t(computetable,std::cref(F[f_nr]),double(x_1),double(x_2),double(d_x));
                 t.detach();
@@ -3529,7 +3291,6 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
                 t.detach();
                 return;
             }
-
         }
         break;
     case val_commands::EVALUATE:
@@ -3580,8 +3341,6 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
                 n = 5;
             }
 
-            //if (n != 5) return;
-
             if (n>0) dez = val::FromString<int>(s_values[0]);
             if (n>1) iter = val::FromString<int>(s_values[1]);
             if (n>2) delta = val::FromString<double>(s_values[2]);
@@ -3595,7 +3354,6 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
             if (delta>0.1) delta=0.1;
 
             if (command == INTEGRAL || command == ARCLENGTH) {
-                //std::thread t(computeintegral,std::cref(F[f_nr]),xr1,xr2,delta,iter,dez,arclength);
                 std::thread t(computeintegral,std::cref(F[f_nr]),sxr1,sxr2,delta,iter,dez,arclength);
                 t.detach();
                 return;
@@ -3634,17 +3392,14 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
                     tf = "\tAlt-" + val::ToString(f_nr+1);
                     tc = "\tCtrl-" + val::ToString(f_nr+1);
                 }
-                //else t="";
                 if (s.length()>40) {
                     s.resize(40);
                     s+="...";
                 }
-                //s+=t;
                 f_menu[f_nr]->SetItemLabel(s + tf);
                 c_menu[f_nr]->SetItemLabel(s + tc);
             }
 
-            //iscomputing = 1;
             Compute(f_nr);
             return;
         }
@@ -3672,69 +3427,6 @@ void PlotFunctionFrame::OnMoveMenu(wxCommandEvent &)
     svalue=movedialog.GetSettingsText();
     if (svalue=="") return;
     ChangeSettings(MOVEINC,svalue);
-
-    /*
-    val::d_array<char> separators(';');
-    val::Glist<std::string> values = getwordsfromstring(svalue,separators);
-    int n = values.length(), l;
-
-    if (n > 0) {
-        l = values[0].length();
-        if (values[0][l-1] == 'p') {
-            moveinpointsx = 1;
-            values[0].resize(l-1);
-        }
-        movedx = val::FromString<double>(values[0]);
-        moveinpointsy = moveinpointsx;
-        movedy = movedx;
-    }
-    if (n > 1) {
-        l = values[1].length();
-        if (values[1][l-1] == 'p') {
-            moveinpointsy = 1;
-            values[0].resize(l-1);
-        }
-        else moveinpointsy = 0;
-        movedy = val::FromString<double>(values[0]);
-    }
-
-
-  	int i,n=svalue.size() , nfound = 0, m;
-    std::string swert;
-
-    moveinpointsx = moveinpointsy = 0;
-    movedy = 0;
-    for (i=0 ; i<n ; ++i) {
-        if (svalue[i] == ';' || i == n-1) {
-            if (i==n-1) {
-                swert += svalue[n-1];
-                //wxMessageBox(swert);
-            }
-            for (m=swert.length();m>0;--m) {
-                if (swert[m-1] == ' ' || swert[m-1] == '\n') continue;
-                else if (swert[m-1] == 'p') {
-                    if (nfound == 0 ) moveinpointsx = 1;
-                    else moveinpointsy = 1;
-                }
-                else break;
-            }
-            swert.resize(m);
-            if (nfound == 0) movedx = val::FromString<double>(swert);
-            else movedy = val::FromString<double>(swert);
-            swert ="";
-            nfound++;
-        }
-        else swert += svalue[i];
-    }
-    if (movedy == 0) {
-        movedy = movedx;
-        moveinpointsy = moveinpointsx;
-    }
-
-    if (movedx <= 0) movedx = 0.1;
-    if (movedy <= 0) movedy = 0.1;
-    Text_Editrefresh();
-    */
 }
 
 
@@ -3759,8 +3451,6 @@ void PlotFunctionFrame::OnMyEvent(MyThreadEvent& event)
         if (active_function == -1) StatusBar1->SetStatusText(s + "; ymin= "+val::ToString(val::round(ymin))+ "; ymax= "+val::ToString(val::round(ymax)));
         else StatusBar1->SetStatusText(F[active_function].getinfixnotation());
 
-        //wxMessageBox("Anzahl algebraische Kurven: " + val::ToString(curvearray.length()));
-
         ispainted=1;
         Paint();
         return;
@@ -3781,7 +3471,6 @@ void PlotFunctionFrame::OnMyEvent(MyThreadEvent& event)
 
 
     if (id == myevent_id::IdTable || id == myevent_id::IdEval) { //
-        //std::string s = ToString(x) + " , " + ToString(y) + " ; " + ToString(dx) + " , " + ToString(dy);
         std::string title;
 
         if (id  == IdTable) title = "Table";
@@ -3790,14 +3479,12 @@ void PlotFunctionFrame::OnMyEvent(MyThreadEvent& event)
         sy=dy;
         x+=dx;
         if (x+sx+23>maxx) {
-            //wxMessageBox(val::ToString(maxx));
             x-=maxx-(x+sx+23);
         }
 
         Point.x = x; Point.y = y;
         Size.SetWidth(sx);
         Size.SetHeight(sy);
-        //wxMessageBox(s);
         InfoWindow *tablewindow = new InfoWindow(this,nchildwindows,tablestring,Point,Size,title,fontsize,1,InfoStyle);
         tablewindow->Show();
     }
@@ -3824,10 +3511,8 @@ void PlotFunctionFrame::OnMyEvent(MyThreadEvent& event)
 
         x+=dx;
         if (x+sx+23>maxx) {
-            //wxMessageBox(val::ToString(maxx));
             x-=maxx-(x+sx+23);
         }
-        //x+=dx - sx;
         Point.x = x; Point.y = y;
         AnalysisDialog *adialog = new AnalysisDialog(this,nanalyzewindows,analyze_output,Points,wxSize(sx,sy),Point,fontsize,title,dtype);
         adialog->Show();
@@ -3844,7 +3529,6 @@ void PlotFunctionFrame::OnMyEvent(MyThreadEvent& event)
         if (id == IdPointStat) Size.SetWidth(400);
         InfoWindow *tablewindow = new InfoWindow(this,nchildwindows,tablestring,wxDefaultPosition,Size,title,fontsize,1,InfoStyle);
         tablewindow->Show();
-        //wxMessageBox("Integral");
     }
     else { // zero-iteration:
         y+=dy-200;
@@ -3920,28 +3604,7 @@ void PlotFunctionFrame::OnMenuFill(wxCommandEvent &event)
         wxMemoryDC memDC;
         // Tell memDC to write on “paper”.
         memDC.SelectObject( *paper );
-        //memDC.SetBackground(wxBrush(BackgroundColor));
-        //memDC.Clear();
-        //memDC.SetFont(DrawPanel->GetFont());
-
         plottomemoryDc(memDC);
-        /*
-        plotvertices(memDC);
-        for (int i=0;i<N;++i) plotfunction(memDC,farray[i],i);
-
-        fillfunctions=0;
-        for (int i=0;i<N;++i) {
-            if (F[i].IsFill() && f_menu[i]->IsChecked()) ++fillfunctions;
-        }
-
-        plotvertices(memDC);
-        plotallfunctions(memDC);
-        if (fillfunctions && gridactiv->IsCheck()) {
-            fillfunctions=0;
-            plotvertices(memDC);
-            plotallfunctions(memDC);
-        }
-        */
 
         // Tell memDC to write on a fake bitmap;
         // this frees up "paper" so that it can write itself to a file.
@@ -3953,7 +3616,6 @@ void PlotFunctionFrame::OnMenuFill(wxCommandEvent &event)
         }
 
         delete paper;
-
         return;
     }
 
@@ -3961,31 +3623,6 @@ void PlotFunctionFrame::OnMenuFill(wxCommandEvent &event)
         changedpanelinsertmode(id - 1000);
         return;
     }
-
-    /*
-    if (id == 1003) { // right click menu draw line
-        changedrawline();
-        return;
-    }
-
-    if (id == 1002) { // right click menu drawpolygon
-        changedrawpolygon();
-        return;
-    }
-
-    if (id==1001) {
-        changedrawpoints();
-        return;
-    }
-    if (id == 1004) {
-        changedrawrectangle();
-        return;
-    }
-    if (id == 1005) {
-        changedrawcircle();
-        return;
-    }
-    */
 
     if (id==1103 ||  id==1104) {
 
@@ -4101,8 +3738,6 @@ void PlotFunctionFrame::OnMouseDown(wxMouseEvent &event)
     mouse_x1=event.GetX();mouse_y1=event.GetY();
 
     PopupMenu(rightclickmenu);
-    //mouse_x1=event.GetX();mouse_y1=event.GetY();
-    //StatusBar1->SetStatusText(val::ToString(mouse_x1) + " " + val::ToString(mouse_y1));
 }
 
 
@@ -4113,19 +3748,13 @@ void PlotFunctionFrame::OnMouseWheel(wxMouseEvent &event)
     if (event.GetWheelRotation()< 0) zoom*=0.96;
     else zoom*=1.04;
 
-
-    //if (f<0) return;
     if (!iscomputing) {
-        //iscomputing=1;
         x1*=zoom;x2*=zoom;y1*=zoom;y2*=zoom;
         zoom=1.0;
         xstring=val::ToString(x1) + ";" + val::ToString(x2);
         ystring=val::ToString(y1) + ";" + val::ToString(y2);
-        //StatusBar1->SetStatusText(val::ToString(a) + "  " + val::ToString(f));
         Compute();
-        //Paint();
     }
-   // }
 }
 
 
@@ -4194,18 +3823,6 @@ void PlotFunctionFrame::savefile(const std::string &dirname,const std::string &f
         //
 
         if (bitmapbackground) {
-            /*
-            wxMemoryOutputStream mos;
-            if ( BackgroundImage.SaveFile(mos, wxBITMAP_TYPE_PNG) ) {
-                const wxStreamBuffer* buff = mos.GetOutputStreamBuffer();
-                const wxString encoded = wxBase64Encode(buff->GetBufferStart(), buff->GetBufferSize());
-               // wxLogDebug(encoded);
-                file<<'1'<<std::endl;
-                file<<encoded<<std::endl;
-            }
-            else wxMessageBox("Save Background failed!");
-            */
-            //
             file<<1<<std::endl;
             std::string nfilename = dirname + filesep +filename;
 #ifdef _WIN32
@@ -4229,21 +3846,7 @@ void PlotFunctionFrame::openfile(const std::string &dirname,const std::string &f
 {
     std::string name = dirname + filesep + filename,line;
 
-    /*
-    if (drawpoints) changedrawpoints();
-    if (drawpolygon) changedrawpolygon();
-    if (drawline) changedrawline();
-    if (drawrectangle) changedrawrectangle();
-    if (drawcircle) changedrawcircle();
-    */
     if (dpanelinsertmode) changedpanelinsertmode(insert_type::NORMAL_I);
-    /*
-    if (!val::FileExists(name)) {
-        wxMessageBox("File " + name + "\ndoes not exist!");
-        return;
-    }
-    */
-
     std::ifstream file(name,std::ios::in);
 
     if (!file) {
@@ -4252,19 +3855,10 @@ void PlotFunctionFrame::openfile(const std::string &dirname,const std::string &f
     }
     ispainted = 0;
 
-
     actual_dirname=openfiledir=dirname; actual_filename=filename;
     SetLabel(Program_Name + " " +actual_filename);
 
-    /*
     getline(file,line);
-    if (line!="plotfunctionfile") {
-        wxMessageBox("Wrong Type of file!");
-        return;
-    }
-    */
-    getline(file,line);
-
 
     int xsize,ysize,iwert,i,m=0;
 
@@ -4273,15 +3867,12 @@ void PlotFunctionFrame::openfile(const std::string &dirname,const std::string &f
     //Axis:
     file>>abst>>x_scale>>y_scale>>pi_scale_x>>pi_scale_y>>pi_factor_x>>pi_factor_y;
     getline(file,sx_scale); getline(file,sy_scale); getline(file,x_axis); getline(file,y_axis);
-    //wxMessageBox(sx_scale +"\n" + sy_scale + "\n" + x_axis + "\n" + y_axis);
     file>>axis_pen>>iwert; axis_color.SetRGB(iwert);
     //Grid:
     file>>gx_scale>>gy_scale>>g_pi_factor_x>>g_pi_factor_y>>grid_pen>>iwert; grid_color.SetRGB(iwert);
-    //file>>grid_pen>>iwert; grid_color.SetRGB(iwert);
     getline(file,line);getline(file,sgx_scale); getline(file,sgy_scale);
     //Range:
     getline(file,xstring); getline(file,ystring);
-    //wxMessageBox(xstring + " " + ystring);
     //Functions:
     file>>N;
     getline(file,line);
@@ -4310,30 +3901,9 @@ void PlotFunctionFrame::openfile(const std::string &dirname,const std::string &f
     bitmapbackground = 0;
 
     int bm=0;
-    //if (file) getline(file,line);
     if (file) getline(file,line);
     bm = val::FromString<int>(line);
     if (bm == 1) {
-        /*
-        file.close();
-        wxTextFile wxfile(name);
-        if (!wxfile.Open()) {
-            wxMessageBox("cannot open file");
-        }
-        else {
-            wxString is = wxfile.GetLastLine();
-            wxMessageBox(is);
-            wxStringInputStream istrm(is);
-            if (BackgroundImage.LoadFile(istrm)) {
-                actualPanelsize = DrawPanel->GetSize();
-                wxImage image = BackgroundImage.Scale(actualPanelsize.x,actualPanelsize.y);
-                actualBitmapBackground = wxBitmap(image);
-                bitmapbackground = 1;
-            }
-            else wxMessageBox("Cannot load Background!");
-        }
-        //
-        */
         name += ".png";
         if (BackgroundImage.LoadFile(name,wxBITMAP_TYPE_PNG)) {
             //wxMessageBox("loaded: " + name);
@@ -4355,7 +3925,6 @@ void PlotFunctionFrame::openfile(const std::string &dirname,const std::string &f
         if (Parameter.isempty()) Parameter.push_back(1);
     }
 
-
     file.close();
     xsize +=  20; ysize += 20;
     if (xsize < 50) xsize = 50;
@@ -4363,12 +3932,9 @@ void PlotFunctionFrame::openfile(const std::string &dirname,const std::string &f
     if (SideText_isshown) xsize += widthSideText + 10;
     if (notebook_isshown) xsize += widthNoteBookPanel + plusw;
 
-
 #ifdef _WIN32
-    // DrawPanel->Disconnect(wxEVT_SIZE,(wxObjectEventFunction)&PlotFunctionFrame::OnDrawPanelResize,0,this);
     DrawPanel->Unbind(wxEVT_SIZE,&PlotFunctionFrame::OnDrawPanelResize,this);
     SetClientSize(wxSize(xsize,ysize));
-    // DrawPanel->Connect(wxEVT_SIZE,(wxObjectEventFunction)&PlotFunctionFrame::OnDrawPanelResize,0,this);
     DrawPanel->Bind(wxEVT_SIZE,&PlotFunctionFrame::OnDrawPanelResize,this);
     Update();
 #else
@@ -4389,7 +3955,6 @@ int PlotFunctionFrame::findactivefunction(int x, int y)
 
     endx = val::Min(sizex+abst,x+10);
 
-
     for (i=0; i<N; ++i) {
         if (!f_menu[i]->IsChecked()) {
             if (F[i].numberofvariables() > 1) i_c++;
@@ -4400,8 +3965,6 @@ int PlotFunctionFrame::findactivefunction(int x, int y)
         {
         case myfunction::FUNCTION :
             {
-                //wxMessageBox(val::ToString(i) + " , " + val::ToString(i_f));
-                //wxMessageBox(val::ToString(ix) + ", " + val::ToString(endx));
                 if (F[i].numberofvariables()>1) {
                     for (ix = val::Max(abst,x); ix < endx; ++ix) {
                         index = int (val::round(double(ix-abst)*faktor_x,0));
@@ -4421,19 +3984,15 @@ int PlotFunctionFrame::findactivefunction(int x, int y)
                     index = int (val::round(double(ix-abst)*faktor_x,0));
                     fy = farray[i_f][index];
                     iy = yzero - int(val::round(faktor_y*fy,0));
-                    //wxMessageBox(val::ToString(ix) + " , " + val::ToString(index) + " , " + val::ToString(fy) + " , " + val::ToString(y) + " , " + val::ToString(iy));
                     if (val::abs(y-iy) <10) {
-                        //undef_intervals[i_rf].dellist();
                         return i;
                     }
                 }
-                //++i_rf;
                 ++i_f;
             }
             break;
         case myfunction::TEXT :
             {
-                //ix = val::Max(abst,x);
                 int ix0=abst+int(double(sizex)*((farray[i_f][0]-x1)/(x2-x1))), sx, sy, l = F[i].getTextData().length(), p = Font[i].GetPointSize(), dx, dy;
 
                 sy = p + 10; sx = (l*p*2)/3;
@@ -4441,9 +4000,6 @@ int PlotFunctionFrame::findactivefunction(int x, int y)
                 dx = x -ix0; dy = y - iy;
 
                 if (dx >= 0 && dx <= sx && dy >= 0 && dy <= sy) return i;
-
-                //if (val::abs(ix-ix0)<15 && val::abs(y-iy) < 15 ) return i;
-                //if (val::abs(endx-ix0)<15 && val::abs(y-iy) < 15 ) return i;
                 ++i_f;
             }
             break;
@@ -4461,7 +4017,6 @@ int PlotFunctionFrame::findactivefunction(int x, int y)
                 D = coordinatesdistance(mx,my,px,py,r,angle);
                 dx = int(val::round(double(sizex) * D.x / (x2-x1), 0));
                 dy = int(val::round(double(sizey) * D.y / (y2-y1), 0));
-                //wxMessageBox(val::ToString(D.x) + " , " + val::ToString(D.y));
                 if (dx < 10 && dy < 10) return i;
                 ++i_f;
             }
@@ -4530,22 +4085,15 @@ int PlotFunctionFrame::findactivefunction(int x, int y)
                     }
                 }
 
-                //ix = val::Max(abst,x);
-
                 ix0 = abst+int(double(sizex)*((g[0]-x1)/(x2-x1)));
                 iy = yzero -int((double(sizey)/double(y2-y1)) * g[1]);
                 l0.x = l1.x = ix0; l0.y = l1.y = iy;
-                //wxMessageBox(val::ToString(farray[i_f][0]) + " , " + val::ToString(farray[i_f][1]));
-                //wxMessageBox(val::ToString(l1.x) + " , " + val::ToString(l1.y));
 
                 for (j = 2; j < g.length(); ++j) {
                     if (j%2 == 0) ix0 = abst+int(double(sizex)*((g[j]-x1)/(x2-x1)));
                     else {
                         iy = yzero -int((double(sizey)/double(y2-y1)) * g[j]);
                         l2.x = ix0; l2.y = iy;
-                        //wxMessageBox(val::ToString(l2.x) + " , " + val::ToString(l2.y));
-                        //wxMessageBox(val::ToString(farray[i_f][j-1]) + " , " + val::ToString(farray[i_f][j]));
-                        //wxMessageBox(val::ToString(squaredistance(l1,l2,p)));
                         if (squaredistance(l1,l2,p)<100) return i;
                         l1 = l2;
                     }
@@ -4572,8 +4120,6 @@ void PlotFunctionFrame::OnMouseCaptured(wxMouseEvent &event)
     actualpolygonpoint.x = mouse_x1; actualpolygonpoint.y = mouse_y1;
 
     if (dpanelinsertmode) {
-    //if (drawpoints || drawpolygon || drawline || drawrectangle || drawcircle) {
-        //mouse_x1=event.GetX();mouse_y1=event.GetY();
         double x,y,gx1,gx2,gy1,gy2;
         int fx,fy;
 
@@ -4604,30 +4150,12 @@ void PlotFunctionFrame::OnMouseCaptured(wxMouseEvent &event)
                 default: break;
             }
         }
-        /*
-        if (drawpoints && !addingpoints) {
-            fstring+="points";
-        }
-        else if (drawpolygon && !n_polygonpoints) {
-            fstring+="polygon";
-        }
-        else if (drawline && !n_linepoints) {
-            fstring += "line";
-        }
-        else if (drawrectangle && !n_rectanglepoints) {
-            fstring += "rectangle";
-        }
-        else if (drawcircle && !n_circlepoints) {
-            fstring += "circle";
-        }
-        */
         else {
             int n = fstring.length();
             for (--n;n>=0;--n) if (fstring[n]==';') break;
             fstring.resize(n);
         }
         if (dpanelinsertmode == CIRCLE_I && n_points) {
-        //if (drawcircle && n_circlepoints) {
             double dx = x - mx1, dy = y -my1, r = val::sqrt(dx*dx + dy*dy);
             fstring += "  " + val::ToString(r);
         }
@@ -4645,25 +4173,6 @@ void PlotFunctionFrame::OnMouseCaptured(wxMouseEvent &event)
             n_points = 0;
             refreshfunctionstring();
         }
-        /*
-        if (drawpoints) addingpoints++;
-        else if (drawpolygon) {
-            n_polygonpoints++;
-        }
-        else if (drawline) {
-            n_linepoints++;
-            if (n_linepoints == 2) n_linepoints = 0;
-        }
-        else if (drawrectangle) {
-            n_rectanglepoints++;
-            if (n_rectanglepoints == 2) n_rectanglepoints = 0;
-        }
-        else if (drawcircle) {
-            n_circlepoints++;
-            if (n_circlepoints == 2) n_circlepoints = 0;
-        }
-        if (!n_linepoints || !n_rectanglepoints || !n_circlepoints) refreshfunctionstring();
-        */
 
         GetSettings();
         Compute();
@@ -4676,22 +4185,18 @@ void PlotFunctionFrame::OnMouseCaptured(wxMouseEvent &event)
         if (active_function == -1) return;
     }
 
-    //mousecaptured=1;
     DrawPanel->CaptureMouse();
-    //DrawPanel->SetCursor(wxCursor (wxCURSOR_HAND));
     DrawPanel->SetCursor(*closeHand);
-    //mouse_x1=event.GetX(); mouse_y1=event.GetY();
 
     if (active_function != -1) {
         iscomputing = 1;
-        //computemutex.lock();
         Paint();
     }
 
-    if (mouse_x1<abst) return;//mouse_x1=abst;
-    if (mouse_x1>sizex + abst) return;//mouse_x1 = sizex + abst;
-    if (mouse_y1<abst) return;//mouse_y1=abst;
-    if (mouse_y1 > sizey + abst) return;//mouse_y1 = sizey + abst;
+    if (mouse_x1<abst) return;
+    if (mouse_x1>sizex + abst) return;
+    if (mouse_y1<abst) return;
+    if (mouse_y1 > sizey + abst) return;
 
     mx1=x1;mx2=x2;my1=y1;my2=y2;
     DrawPanel->Bind(wxEVT_MOTION,&PlotFunctionFrame::OnMouseMoved,this);
@@ -4702,16 +4207,7 @@ void PlotFunctionFrame::OnMouseMoved(wxMouseEvent &event)
 {
     doubleclicked = 0;
     if (iscomputing) return;
-    /*
-    if (drawpolygon) {
-        if (!n_polygonpoints) return;
-        // Todo
-        return;
-    }
-    */
     if (dpanelinsertmode) {
-    //if (drawpoints || drawpolygon || drawline || drawrectangle || drawcircle) {
-        //if (!addingpoints) return;
         int xm=event.GetX(),ym=event.GetY();
         double x,y,dxm,dym,d=0;
         std::string text;
@@ -4720,7 +4216,6 @@ void PlotFunctionFrame::OnMouseMoved(wxMouseEvent &event)
         dym=double(yzero-ym)*(y2-y1)/double(sizey -1);
         text = "( " +val::ToString(dxm) + " , " + val::ToString(dym) + " )";
         if (n_points) {
-        //if (addingpoints || n_polygonpoints || n_linepoints || n_rectanglepoints || n_circlepoints) {
             x=mx1; y = my1;
             x-=dxm;y-=dym;
             d=val::sqrt(x*x + y*y);
@@ -4728,8 +4223,6 @@ void PlotFunctionFrame::OnMouseMoved(wxMouseEvent &event)
         }
         StatusBar1->SetStatusText(text,0);
         if (n_points) {
-        //if (n_polygonpoints || n_linepoints || n_rectanglepoints || n_circlepoints) {
-            //polygonline = 1;
             iscomputing = 1;
             actualpolygonpoint.x = xm; actualpolygonpoint.y = ym;
             Paint();
@@ -4737,8 +4230,6 @@ void PlotFunctionFrame::OnMouseMoved(wxMouseEvent &event)
         return;
     }
 
-
-    //wxSize panelsize = DrawPanel->GetSize();
     int mousex=event.GetX(),mousey = event.GetY();
     if (mousex<abst) mousex = abst;
     if (mousex>sizex+abst) mousex = sizex-abst;
@@ -4750,30 +4241,24 @@ void PlotFunctionFrame::OnMouseMoved(wxMouseEvent &event)
 
     dx1 = (x2-x1)*double(dx)/double(sizex);
     dy1 = (y2-y1)*double(dy)/double(sizey);
-    //x1-=dx1; x2-=dx1; y1+=dy1; y2+=dy1;
+
     if (active_function != -1) {
         displacefunction(active_function,dx1,-dy1);
         mouse_x1=mousex;
         mouse_y1=mousey;
-        //iscomputing = 1;
         Compute(active_function,0);
     }
     else {
         x1=mx1-dx1; x2=mx2-dx1; y1=my1+dy1; y2=my2+dy1;
         xstring=val::ToString(x1) + ";" + val::ToString(x2);
         ystring=val::ToString(y1) + ";" + val::ToString(y2);
-        //iscomputing=1;
         Compute(-1,0);
     }
-    //computemutex.lock();
-    //StatusBar1->SetStatusText(val::ToString(dx) + " , " + val::ToString(dy));
-
 }
 
 // mouse - left -up
 void PlotFunctionFrame::OnMouseReleased(wxMouseEvent &event)
 {
-    //if (drawpoints || drawpolygon || drawline || drawrectangle || drawcircle) return;
     if (dpanelinsertmode) return;
     if (doubleclicked) {
         doubleclicked = 0;
@@ -4781,14 +4266,10 @@ void PlotFunctionFrame::OnMouseReleased(wxMouseEvent &event)
     }
 
     DrawPanel->Unbind(wxEVT_MOTION,&PlotFunctionFrame::OnMouseMoved,this);
-    //DrawPanel->SetCursor(*wxSTANDARD_CURSOR);
     DrawPanel->SetCursor(wxCursor (wxCURSOR_HAND));
     if (DrawPanel->HasCapture()) DrawPanel->ReleaseMouse();
-    //if (iscomputing) return;
 
     if (active_function != -1) {
-        //computemutex.lock();
-
         while (iscomputing) {
             wxYield();
         }
@@ -4801,7 +4282,6 @@ void PlotFunctionFrame::OnMouseReleased(wxMouseEvent &event)
             ++i;
         }
         refreshfunctionstring();
-        //iscomputing=1;
         active_function=-1;
         GetSettings();
         Compute();
@@ -4824,24 +4304,11 @@ void PlotFunctionFrame::OnMouseDouble(wxMouseEvent &event)
         iscomputing = 1;
         Paint();
     }
-    /*
-    if (drawpolygon) {
-        n_polygonpoints = 0;
-        drawpolygon = 0;
-        iscomputing = 1;
-        Paint();
-        drawpolygon = 1;
-    }
-    else if (drawpoints) {
-        addingpoints = 0;
-    }
-    */
     else if (dpanelinsertmode == insert_type::POINTS_I) {
         n_points = 0;
     }
     else {
         mouse_x1=event.GetX(); mouse_y1=event.GetY();
-        //wxMessageBox(val::ToString(mouse_x1) + " " + val::ToString(mouse_y1));
         active_function = findactivefunction(mouse_x1,mouse_y1);
         if (active_function == -1) return;
         doubleclicked = 1;
@@ -4895,19 +4362,11 @@ void PlotFunctionFrame::displacefunction(int i,const double &dx1,const double &d
             {
                 int j,k=0;
                 std::string nf="text {" + getstringfrombrackets(F[i].getinfixnotation(), '{', '}') + "}";
-                /*
-                int n = sf.length();
-                for (j = 0; j < n; ++j) {
-                    nf += sf[j];
-                    if (sf[j] == '}') break;
-                }
-                */
                 for (j = 0; j < i; ++j ) {
                     if (F[j].numberofvariables() == 1) k++;
                 }
                 nf += " " + val::ToString(farray[k][0] + dx) + " " + val::ToString(farray[k][1] + dy);
                 F[i].infix_to_postfix(nf);
-                //wxMessageBox(F[i].getTextData());
             }
             break;
         case myfunction::CIRCLE :
@@ -4926,7 +4385,6 @@ void PlotFunctionFrame::displacefunction(int i,const double &dx1,const double &d
                 int j,k=0;
                 std::string nf = "points";
 
-                //wxMessageBox(val::ToString(pointactive)); m
                 for (j=0;j<i;++j) {
                     if (F[j].numberofvariables() == 1) ++k;
                 }
@@ -4993,152 +4451,6 @@ void PlotFunctionFrame::displacefunction(int i,const double &dx1,const double &d
     }
 }
 
-/*
-void PlotFunctionFrame::changedrawpoints()
-{
-    if (!drawpoints) {
-            if (drawline) changedrawline();
-            if (drawpolygon) changedrawpolygon();
-            if (drawrectangle) changedrawrectangle();
-            if (drawcircle) changedrawcircle();
-
-            //SendNotification("Insert Points: ON");
-            //StatusBar1->SetStatusText(_T("Insert Points"),1);
-            //addpointsmenu->Check(true);
-            //DrawPanel->SetCursor(wxCursor (wxCURSOR_ARROW));
-            //DrawPanel->Bind(wxEVT_MOTION,&PlotFunctionFrame::OnMouseMoved,this);
-    }
-    else {
-             //SendNotification("Insert Points: OFF");
-             //StatusBar1->SetStatusText(_T(""),1);
-             //addpointsmenu->Check(false);
-             //DrawPanel->SetCursor(wxCursor (wxCURSOR_HAND));
-             //DrawPanel->Unbind(wxEVT_MOTION,&PlotFunctionFrame::OnMouseMoved,this);
-             //if (DrawPanel->HasCapture()) DrawPanel->ReleaseMouse();
-             addingpoints=0;
-    }
-    drawpoints=!drawpoints;
-}
-
-
-void PlotFunctionFrame::changedrawpolygon()
-{
-    if (!drawpolygon) {
-             if (drawpoints) changedrawpoints();
-             if (drawline) changedrawline();
-             if (drawrectangle) changedrawrectangle();
-             if (drawcircle) changedrawcircle();
-
-             //SendNotification("Insert Polygon: ON");
-             //StatusBar1->SetStatusText(_T("Insert Polygon!"),1);
-             //polygonpointsmenu->Check(true);
-             //DrawPanel->SetCursor(wxCursor (wxCURSOR_ARROW));
-             //DrawPanel->Bind(wxEVT_MOTION,&PlotFunctionFrame::OnMouseMoved,this);
-             drawpolygon = 1;
-    }
-    else {
-             //SendNotification("Insert Polygon: OFF");
-             //StatusBar1->SetStatusText(_T(""),1);
-             //polygonpointsmenu->Check(false);
-             //DrawPanel->SetCursor(wxCursor (wxCURSOR_HAND));
-             //DrawPanel->Unbind(wxEVT_MOTION,&PlotFunctionFrame::OnMouseMoved,this);
-             //if (DrawPanel->HasCapture()) DrawPanel->ReleaseMouse();
-             n_polygonpoints=0;
-             drawpolygon = 0;
-             iscomputing = 1;
-             Paint();
-    }
-}
-
-void PlotFunctionFrame::changedrawline()
-{
-    if (!drawline) {
-             if (drawpolygon) changedrawpolygon();
-             if (drawpoints) changedrawpoints();
-             if (drawrectangle) changedrawrectangle();
-             if (drawcircle) changedrawcircle();
-
-             //SendNotification("Insert Line: ON");
-             //StatusBar1->SetStatusText(_T("Insert Line!"),1);
-             //linepointsmenu->Check(true);
-             //DrawPanel->SetCursor(wxCursor (wxCURSOR_ARROW));
-             //DrawPanel->Bind(wxEVT_MOTION,&PlotFunctionFrame::OnMouseMoved,this);
-             drawline = 1;
-    }
-    else {
-             //SendNotification("Insert Line: OFF");
-             //StatusBar1->SetStatusText(_T(""),1);
-             //linepointsmenu->Check(false);
-             //DrawPanel->SetCursor(wxCursor (wxCURSOR_HAND));
-             //DrawPanel->Unbind(wxEVT_MOTION,&PlotFunctionFrame::OnMouseMoved,this);
-             //if (DrawPanel->HasCapture()) DrawPanel->ReleaseMouse();
-             n_linepoints=0;
-             drawline = 0;
-             iscomputing = 1;
-             Paint();
-    }
-}
-
-
-void PlotFunctionFrame::changedrawrectangle()
-{
-    if (!drawrectangle) {
-             if (drawpolygon) changedrawpolygon();
-             if (drawpoints) changedrawpoints();
-             if (drawline) changedrawline();
-             if (drawcircle) changedrawcircle();
-
-             //SendNotification("Insert Rectangle: ON");
-             //StatusBar1->SetStatusText(_T("Insert Rectangle!"),1);
-             //rectanglemenu->Check(true);
-             //DrawPanel->SetCursor(wxCursor (wxCURSOR_ARROW));
-             //DrawPanel->Bind(wxEVT_MOTION,&PlotFunctionFrame::OnMouseMoved,this);
-             drawrectangle = 1;
-    }
-    else {
-             //SendNotification("Insert Rectangle: OFF");
-             //StatusBar1->SetStatusText(_T(""),1);
-             //rectanglemenu->Check(false);
-             //DrawPanel->SetCursor(wxCursor (wxCURSOR_HAND));
-             //DrawPanel->Unbind(wxEVT_MOTION,&PlotFunctionFrame::OnMouseMoved,this);
-             //if (DrawPanel->HasCapture()) DrawPanel->ReleaseMouse();
-             n_rectanglepoints = 0;
-             drawrectangle = 0;
-             iscomputing = 1;
-             Paint();
-    }
-}
-
-
-void PlotFunctionFrame::changedrawcircle()
-{
-    if (!drawcircle) {
-             if (drawpolygon) changedrawpolygon();
-             if (drawpoints) changedrawpoints();
-             if (drawline) changedrawline();
-             if (drawrectangle) changedrawrectangle();
-
-             //SendNotification("Insert Circle: ON");
-             //StatusBar1->SetStatusText(_T("Insert Cicle!"),1);
-             //circlemenu->Check(true);
-             //DrawPanel->SetCursor(wxCursor (wxCURSOR_ARROW));
-             //DrawPanel->Bind(wxEVT_MOTION,&PlotFunctionFrame::OnMouseMoved,this);
-             drawcircle = 1;
-    }
-    else {
-             //SendNotification("Insert Circle: OFF");
-             //StatusBar1->SetStatusText(_T(""),1);
-             //circlemenu->Check(false);
-             //DrawPanel->SetCursor(wxCursor (wxCURSOR_HAND));
-             //DrawPanel->Unbind(wxEVT_MOTION,&PlotFunctionFrame::OnMouseMoved,this);
-             //if (DrawPanel->HasCapture()) DrawPanel->ReleaseMouse();
-             n_circlepoints = 0;
-             drawcircle = 0;
-             iscomputing = 1;
-             Paint();
-    }
-}
-*/
 
 void PlotFunctionFrame::changedpanelinsertmode(int mode)
 {
@@ -5176,6 +4488,7 @@ void PlotFunctionFrame::changedpanelinsertmode(int mode)
         n_points = 0;
     }
 }
+
 
 void PlotFunctionFrame::SendNotification(const std::string& s)
 {
@@ -5238,11 +4551,10 @@ void PlotFunctionFrame::OnZoom(wxCommandEvent &event)
         zoom=1.0;
         xstring=val::ToString(x1) + ";" + val::ToString(x2);
         ystring=val::ToString(y1) + ";" + val::ToString(y2);
-        //StatusBar1->SetStatusText(val::ToString(a) + "  " + val::ToString(f));
         Compute();
-        //Paint();
     }
 }
+
 
 void PlotFunctionFrame::OnMove(wxCommandEvent &event)
 {
@@ -5255,7 +4567,6 @@ void PlotFunctionFrame::OnMove(wxCommandEvent &event)
         if (!SideText_isshown) return;
         if (id == 20009) widthSideText += 5;
         else widthSideText -= 5;
-        //if (widthSideText > 200) widthSideText = 200;
         if (widthSideText < 100) widthSideText = 100;
         wxSize Size = DrawPanel->GetSize(), TextSize = SideText->GetSize();
 
@@ -5268,14 +4579,6 @@ void PlotFunctionFrame::OnMove(wxCommandEvent &event)
         Size.x += 30 + widthSideText;
         if (notebook_isshown) Size.x += widthNoteBookPanel + plusw;
         Size.y += 20;
-        //DrawPanel->Hide();
-
-        //wxMessageBox(val::ToString(widthSideText));
-        //BoxSizer2->Clear();
-        //BoxSizer2->Add(SideText, 0, wxALL|wxEXPAND, 5);
-        //BoxSizer2->Add(DrawPanel, 1, wxALL|wxEXPAND, 5);
-
-        //BoxSizer2->Fit(SideText);
 
         BoxSizer1->Fit(this);
         BoxSizer1->SetSizeHints(this);
@@ -5285,7 +4588,6 @@ void PlotFunctionFrame::OnMove(wxCommandEvent &event)
     }
 
     if (!yset) return;
-    //double dx = 0.1, dy = 0.1;
 
     switch (id)
     {
@@ -5310,17 +4612,14 @@ void PlotFunctionFrame::OnMove(wxCommandEvent &event)
         xstring=val::ToString(x1) + ";" + val::ToString(x2);
         ystring=val::ToString(y1) + ";" + val::ToString(y2);
         movex=movey=0;
-        //iscomputing=1;
         Compute();
     }
-
 }
 
 
 void PlotFunctionFrame::OnSelectActiveFunction(wxCommandEvent &event)
 {
     if (iscomputing) return;
-    //wxMessageBox("active Function");
     int id = event.GetId();
     if (id == 20007 || id == 20011) {
         if (N==0) return;
@@ -5332,7 +4631,6 @@ void PlotFunctionFrame::OnSelectActiveFunction(wxCommandEvent &event)
                 if (F[i].numberofvariables() == 1) ++i_f;
             }
             n = farray[i_f].length();
-            //wxMessageBox(val::ToString(n));
             if (id == 20007) pointactive += 2;
             else pointactive -= 2;
             if (pointactive < n && pointactive >= 0) {
@@ -5343,14 +4641,10 @@ void PlotFunctionFrame::OnSelectActiveFunction(wxCommandEvent &event)
             else pointactive = 0;
         }
 
-        //j = active_function;
-
-
         val::d_array<int> checked;
 
         checked.reserve(N);
         for (i=0;i<N;++i) {
-            //if (f_menu[i]->IsChecked() && !F[i].IsFill()) checked.push_back(i);
             if (f_menu[i]->IsChecked()) checked.push_back(i);
         }
         n = checked.length();
@@ -5362,12 +4656,6 @@ void PlotFunctionFrame::OnSelectActiveFunction(wxCommandEvent &event)
         else --j;
         j %= n;
         if (j < 0) j = n-1;
-        /*
-        for (i = 0; i < n; ++i) {
-            if (j <= checked[i]) break;
-        }
-        */
-        //active_function = checked[i%n];
         active_function = checked[j];
         StatusBar1->SetStatusText(F[active_function].getinfixnotation());
         iscomputing = 1;
@@ -5379,28 +4667,6 @@ void PlotFunctionFrame::OnSelectActiveFunction(wxCommandEvent &event)
             changedpanelinsertmode(insert_type::NORMAL_I);
             return;
         }
-        /*
-        if (drawpoints) {
-            changedrawpoints();
-            return;
-        }
-        if (drawpolygon) {
-            changedrawpolygon();
-            return;
-        }
-        if (drawline) {
-            changedrawline();
-            return;
-        }
-        if (drawrectangle) {
-            changedrawrectangle();
-            return;
-        }
-        if (drawcircle) {
-            changedrawcircle();
-            return;
-        }
-        */
         if (active_function == -1) return;
         active_function = -1;
         pointactive = 0;
@@ -5431,9 +4697,6 @@ void PlotFunctionFrame::setfunctionsmenu()
 #endif // _WIN32
 
 
-
-
-
 void PlotFunctionFrame::OnMenuRecent(wxCommandEvent& event)
 {
     if (event.GetId()==601) {
@@ -5450,7 +4713,6 @@ void PlotFunctionFrame::OnMenuRecent(wxCommandEvent& event)
 
     int m=event.GetId()-6000,isvalid=1;
     std::string f,dirname,filename;
-
 
     f=recentfiles[m];
     if (!val::FileExists(f)) {
@@ -5539,7 +4801,6 @@ void PlotFunctionFrame::appendrecentfiles(const std::string& filename)
 
 void PlotFunctionFrame::WriteText()
 {
-    //if (!SideText_isshown) return;
     SideText->SetValue("");
     wxColour def_color = SideText->GetForegroundColour();
     wxFont myfont = SideText->GetFont();
@@ -5602,7 +4863,6 @@ void PlotFunctionFrame::CompareSideTextInput()
     refreshfunctionstring();
     GetSettings();
     Compute();
-    //WriteText();
 }
 
 
@@ -5615,13 +4875,6 @@ void PlotFunctionFrame::OnSideBarEvaluate(wxCommandEvent &event)
     SideText->SetInsertionPoint(n + (l2-l1));
 }
 
-/*
-void PlotFunctionFrame::OnClose(wxCloseEvent &event)
-{
-    std::cout << "\nClose Event!" << std::endl;
-    Destroy();
-}
-*/
 
 void PlotFunctionFrame::OnLostFocus(wxFocusEvent &event)
 {
@@ -5629,13 +4882,6 @@ void PlotFunctionFrame::OnLostFocus(wxFocusEvent &event)
     event.Skip();
 }
 
-/*
-void PlotFunctionFrame::TestLostFocus(wxFocusEvent &event)
-{
-    std::cout << "\nLost Focus!" << std::endl;
-    event.Skip();
-}
-*/
 
 void PlotFunctionFrame::OnSideBarCheck(wxCommandEvent &event)
 {
@@ -5689,27 +4935,8 @@ void PlotFunctionFrame::OnSideBarCheck(wxCommandEvent &event)
 #ifdef _WIN32
     DrawPanel->SetMinSize(wxSize(80,80));
 #endif
-    //Move(pos);
 }
 
-/*
-void PlotFunctionFrame::CheckFocus()
-{
-    return;
-#ifdef __APPLE__
-    return;
-#endif // __APPLE__
-
-    if (SideText->HasFocus()) {
-        Unbind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1105);         // Copy to Clipboard
-        Unbind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1106);         // Paste from Clipboard
-    }
-    else {
-        Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1105);         // Copy to Clipboard
-        Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1106);         // Paste from Clipboard
-    }
-}
-*/
 
 // NoteBook related functions:
 
@@ -5719,8 +4946,6 @@ void PlotFunctionFrame::CreateNoteBook()
         *panel2 = new wxPanel(notebook,8002,wxDefaultPosition,wxSize(widthNoteBookPanel,100)),
         *panel3 = new wxPanel(notebook,8003,wxDefaultPosition,wxSize(widthNoteBookPanel,100));
     int i, n_view = 5,viewf_size = 12, viewdy = viewf_size + 30, y, rows = 4, columns = 3, n_tools = rows*columns, b_xsize = 50;
-
-    //panel1->InheritAttributes();
 
     panel1->SetBackgroundColour(panel1->GetBackgroundColour());
     notebook->AddPage(panel1, "View");
@@ -5801,7 +5026,6 @@ void PlotFunctionFrame::OnNoteBookSwitch(wxCommandEvent &event)
 {
     int id = event.GetId();
     id -= 8100;
-    //wxMessageBox("Switch Ctrl! Nr: " + val::ToString(id));
     switch (id) {
         case VGRID: gridactiv->Check(ViewSwitches[VGRID]->GetValue()); break;
         case VXAXIS: Menu_xAxis->Check(ViewSwitches[VXAXIS]->GetValue()); break;
@@ -5818,7 +5042,6 @@ void PlotFunctionFrame::OnNoteBookButtons(wxCommandEvent &event)
     int id = event.GetId();
     id -= 8200;
     wxCommandEvent bevent(wxEVT_COMMAND_MENU_SELECTED);
-    //wxMessageBox("Button pressed! Nr: " + val::ToString(id));
     switch (id) {
         case 0: bevent.SetId(7011); break;        // Analyze
         case 1: bevent.SetId(7003); break;        // Table
@@ -5864,15 +5087,6 @@ void PlotFunctionFrame::ProcessText_Edit(int id)
         case SMARGIN: ChangeSettings(MARGIN,svalue); break;
         case PDEC: ChangeSettings(POINT_DECIMALS,svalue); break;
         case MOVINC: ChangeSettings(MOVEINC,svalue); break;
-/*	        {
-	            val::d_array<char> sep{' ', ';'};
-	            val::Glist<std::string> values = getwordsfromstring(svalue, sep);
-	            if (values.isempty()) return;
-                int n = values.length();
-                movedx = movedy = val::FromString<double>(values[0]);
-                if (n > 1) movedy = val::FromString<double>(values[1]);
-            }
-*/
         case PARVAL: ChangeSettings(PARAMETER_VALUES,svalue); break;
         case REGDEG: ChangeSettings(REGRESSION_DEGREE,svalue); break;
     }

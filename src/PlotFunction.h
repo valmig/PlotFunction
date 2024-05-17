@@ -86,19 +86,11 @@ private:
 
 enum myevent_id{IdPaint,IdTable,IdIntegral,IdRefresh,IdIteration,IdAnalyze,IdInfo,IdEval, IdIntersection, IdCalculate, IdPointStat, IdTriangle};
 
-/*
-void computepoints(const val::d_array<val::pol<double>> &F,val::d_array<val::d_array<double>> &farray,
-                   const double &x1,const double &x2,double &ymax,double &ymin);
-                */
 
 void inserttocand(val::Glist<val::GPair<int>> &cand,const val::GPair<int> &q,int y);
 
 namespace val
 {
-//double round(const double& x,int k=4); // Rundet auf 1e-4
-//template <class T> T power(const T &x,int n);
-//template <class T> T myabs(const T&);
-//template <> val::rational myabs(const val::rational&);
 val::rational abs(const val::rational&);
 int operator <(const val::GPair<double>& p,const val::GPair<double>& q);
 const int MaxPrec = 19;
@@ -149,21 +141,7 @@ val::matrix<val::rational> set_les(const std::string &s);
 
 val::pol<val::rational> interpolation(const std::string &s);
 
-//template <class T> std::string PolToString(const val::pol<T> &f);
-
-//template<> std::string PolToString(const val::pol<val::rational> &f);
-
-//std::string PolfractionToString(const val::rationalfunction &F);
-
-//std::string head(const std::string &s,int l);
-
 std::string delcharfromstring(const std::string& s,const char z=' ');
-
-/*
-void computepoints(const val::Glist<myfunction> &F,val::d_array<val::d_array<double>> &farray,val::d_array<val::d_array<val::d_array<double> > > &carray,
-                   val::d_array<val::d_array<val::d_array<double> > > &y_carray,
-                   int points,int yset,const double &x1,const double &x2,const double &y1,const double &y2,double &ymax,double &ymin);
-*/
 
 void computepoints(const val::Glist<myfunction> &F,val::d_array<val::d_array<double>> &farray,val::d_array<val::d_array<val::d_array<double> > > &carray,
                    int points,const double &x1,const double &x2,double &ymax,double &ymin,int activef,int comppoints);
@@ -175,13 +153,10 @@ void computetable_rat(const myfunction& f,val::rational x1,val::rational x2,val:
 void computeevaluation(const myfunction& f, double par);
 
 void calculate(std::string s);
-//void computeintegral(const myfunction& f,val::rational x1,val::rational x2,double delta,int n,int dez,int arclength=0);
 
 void computeinterpolation(std::string input,std::string &Fstring);
 
 void computezeroiteration(const myfunction& f,double x1,double x2,double eps,int n,int dez);
-
-//void computerotation(const myfunction& f,std::string input);
 
 void computerotation(const val::d_array<myfunction*> F,std::string input);
 
@@ -196,10 +171,8 @@ void computetangent(std::string sf,const myfunction& f,double x1,double x2,int t
 template <class T>
 double kepler_simpson_sum(const T& f,const double& a,const double& b,int n);
 
-
 template <class T>
 double integral(const T& f,const double &a,const double &b,int iter = 50, const double& delta=1e-8);
-
 
 // Iterationsverfahren zur Bestimmung einer Nullstelle nach der Sekanten-Methode:
 // Rückgabe: -2 Iterationsgrenze wird nicht erreicht, Methode fehlgeschlagen.
@@ -464,58 +437,7 @@ double integral(const T& f,const double &a,const double &b,int iter, const doubl
         wert1=wert2;
     } while (n<=iter);
 
-    //std::cout<<"\n Schritte: "<<n<<std::endl;
     return wert2;
 }
 
-/*
-template <class T>
-int SecantMethod(const T& f,double& x0,double& x1,const double& eps,int n)
-{
-    int i;
-    double y0,y1,x2;
-
-    y0=f(x0);
-    if (abs(y0)<eps) {x1=x0;return 0;}
-
-    for (i=0;i<n;i++) {
-        if (abs(y1=f(x1))<eps) {
-            //cout<<"\nAnzahl Iterationen in secantmethod: "<<i+1<<endl;
-            return i;
-        }
-        if (y0==y1) return -2;
-        x2= x1-y1 * (x1-x0)/(y1-y0);
-        y0=y1;
-        x0=x1;
-        x1=x2;
-    }
-    return -1;
-}
-*/
-
-/*
-template <class T>//,typename std::enable_if_t<std::is_arithmetic<T>::value || val::is_nongeneric_ring<T>::value,int> = 0>
-std::string PolToString(const val::pol<T> &f)
-{
-    int i;
-    val::polIterator<T> it;
-    std::string s="";
-    T one=val::unity_element<T>(),minusone=-one,zero=val::zero_element<T>();
-
-    for (i=0,it=f;it;it++,++i) {
-        if (i!=0 && it.actualcoef()>zero) s+='+';
-        if (it.actualcoef()==minusone) {
-            s+='-';
-            if (it.actualdegree()==0) s+='1';
-        }
-        else if (it.actualcoef()!=one) s+=val::ToString(it.actualcoef());
-        if (it.actualdegree()) {
-            if (it.actualcoef()!=one && it.actualcoef()!=minusone) s+='*';
-            s+='x';
-            if (it.actualdegree()!=1) s+="^" + val::ToString(it.actualdegree());
-        }
-    }
-    return s;
-}
-*/
 #endif // PLOTFUNCTION_H_INCLUDED

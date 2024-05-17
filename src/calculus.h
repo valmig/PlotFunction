@@ -16,7 +16,6 @@ void intersection(const myfunction &f, const myfunction &g, std::string input);
 
 val::valfunction integral(const val::valfunction &f, int k = 1);
 
-//void computeintegral(const myfunction& f,val::rational x1,val::rational x2,double delta,int n,int dez,int arclength=0);
 void computeintegral(const myfunction& f,std::string x1,std::string x2,double delta,int n,int dez,int arclength=0);
 
 

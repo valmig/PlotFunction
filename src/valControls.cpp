@@ -1128,8 +1128,10 @@ void CompleteTextCtrl::OnInputChanged(wxCommandEvent &tevent)
 		}
         //listbox->SetFont(input->GetFont());
         //fontsize = input->GetFont().GetPointSize();
+        int ps = 15;
+        if (anz < 2) ps = 16;
         listbox->Move(screenpos.x+pos.x,screenpos.y+pos.y+20);
-        listbox->SetSize(200,anz * (fontsize + 15));
+        listbox->SetSize(200,anz * (fontsize + ps));
         listbox->SetSelection(selection);
         listbox->Show(true);
         BindAll();

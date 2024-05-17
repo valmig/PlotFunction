@@ -88,9 +88,6 @@ class PlotFunctionFrame: public wxFrame
         wxMenuItem* Menu_yAxis;
         wxPanel* DrawPanel;
         wxStatusBar* StatusBar1;
-        //*)
-        //wxBoxSizer* BoxSizer1;
-        //wxBoxSizer* BoxSizer2;
         wxBoxSizer *BoxSizer1, *BoxSizer2;
         val::CompleteTextCtrl *SideText = nullptr;
 
@@ -121,14 +118,8 @@ class PlotFunctionFrame: public wxFrame
         void OnMouseReleased(wxMouseEvent& event);
         void OnMouseMoved(wxMouseEvent& event);
         void OnMouseDouble(wxMouseEvent& event);
-        //void OnMouseUp(wxMouseEvent &event);
         void OnLostMouse(wxMouseCaptureLostEvent &event);
         void changefunctionsettings(int i);
-        //void changedrawpoints();
-        //void changedrawpolygon();
-        //void changedrawline();
-        //void changedrawrectangle();
-        //void changedrawcircle();
         void changedpanelinsertmode(int mode = 0);
         void SendNotification(const std::string& s);
         //
@@ -163,13 +154,11 @@ class PlotFunctionFrame: public wxFrame
         wxColour axis_color ,grid_color, defaultpaintcolor;
         val::d_array<val::d_array<double> > farray;
         val::d_array<val::d_array<val::d_array<double> > > curvearray;
-        //val::d_array<val::d_array<val::d_array<double> > > y_curvearray;
         wxColour BackgroundColor = wxColour(255,255,255);
         val::d_array<wxColor> Color;
         val::d_array<wxFont> Font;
         val::d_array<wxMenuItem*> f_menu,c_menu;
         val::d_array<int> pen,islinear;
-        //val::d_array<val::pol<double>> F;
         val::Glist<myfunction> F;
         val::Glist<val::rational> Parameter{val::rational(1)};
         val::Glist<val::GPair<double> > x_range;
@@ -188,9 +177,6 @@ class PlotFunctionFrame: public wxFrame
         //
         void ResetColours();
         void GetSettings();
-        //void OnPaint(MyThreadEvent& event);
-        //void OnTable(MyThreadEvent& event);
-        //void OnRefresh(MyThreadEvent& event);
         void OnMyEvent(MyThreadEvent& event);
         void OnParentEvent(ParentEvent& event);
 
@@ -205,7 +191,6 @@ class PlotFunctionFrame: public wxFrame
         void plotpolygon(wxDC& dc,const val::d_array<double> &f,int colour=0);
         void plotpoints(wxDC& dc,const val::d_array<double> &f,int colour=0);
         void plottext(wxDC& dc,const val::d_array<double> &f,int colour=0);
-        //void plotcurve(wxDC& dc,const val::d_array<val::d_array<double> > &c,const val::d_array<val::d_array<double> > &y_c,int colour=0);
         void plotcurve(wxDC& dc,const val::d_array<val::d_array<double> > &c,const val::Glist<val::GPair<double>>& critpoints
                        ,const val::d_array<double> &critx,int colour=0);
         void plotallfunctions(wxMemoryDC& dc);
@@ -225,9 +210,6 @@ class PlotFunctionFrame: public wxFrame
         void OnSideBarCheck(wxCommandEvent&);
         void OnSideBarEvaluate(wxCommandEvent&);
         void ChangeSideTextStyle(wxCommandEvent&);
-        //void TestLostFocus(wxFocusEvent&);
-        //void OnClose(wxCloseEvent &);
-        //void CheckFocus();
         //
         void CreateNoteBook();
         void OnNoteBookSwitch(wxCommandEvent &event);
@@ -237,8 +219,6 @@ class PlotFunctionFrame: public wxFrame
         void ProcessText_Edit(int id);
         void switchrefresh();
         void Text_Editrefresh();
-
-        //DECLARE_EVENT_TABLE()
 };
 
 #endif // PLOTFUNCTIONMAIN_H

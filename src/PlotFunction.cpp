@@ -33,7 +33,7 @@ std::string filesep="/",filedir=val::CurrentHomeDir(), valdir= val::CurrentHomeD
             iconpath = val::CurrentHomeDir() + "/.local/share/icons/MVPrograms/MV_Plot.xpm",
             handcursor = val::CurrentHomeDir() + "/.local/share/icons/MVPrograms/hand.png",
             alticonpath = val::CurrentHomeDir() + "/.local/share/icons/MVPrograms/MV_Plot.xpm",
-    		errorfile = settingsdir + "/error.log";
+            errorfile = settingsdir + "/error.log";
 #endif
 #ifdef __APPLE__
 std::string filesep="/",filedir=val::CurrentHomeDir(), valdir= val::CurrentHomeDir() + "/Library/Application Support",
@@ -41,14 +41,13 @@ std::string filesep="/",filedir=val::CurrentHomeDir(), valdir= val::CurrentHomeD
             iconpath = val::CurrentHomeDir() + "/.local/share/icons/MVPrograms/MV_Plot.xpm",
             handcursor = val::CurrentHomeDir() + "/.local/share/icons/MVPrograms/hand.png",
             alticonpath = val::GetExeDir() + "/../Resources/MV_Plot.xpm",
-    		errorfile = settingsdir + "/error.log";
+            errorfile = settingsdir + "/error.log";
 #endif //
 
 std::string RecentFilesPath = settingsdir + filesep + "recentfiles.txt";
 std::string RecentCommandsPath = settingsdir + filesep + "recentcommands.txt";
 
 std::mutex compute_mutex;
-//std::atomic<int> iscomputing(0);
 
 myfunction global_function;
 
@@ -142,14 +141,9 @@ const val::d_array<std::string> CommandsParList({"derive [#nr = 1]",
                                                  });
 
 
-
-//const val::d_array<std::string> InputDialogList(SettingsList);
-
 const val::trie_type<std::string> WordTree(WordList + defaultcolornames, 58, int('A'));
 
-
 const val::trie_type<std::string> InputDialogTree(SettingsList + CommandsList + defaultcolornames, 78, int('-'));
-
 
 wxDEFINE_EVENT(MY_EVENT,MyThreadEvent);
 
@@ -171,37 +165,37 @@ int operator <(const val::GPair<double>& p,const val::GPair<double>& q)
 
 std::string getstringfunction(const std::string &s, int j)
 {
-	int n = s.length() - j, m, found, i;
+    int n = s.length() - j, m, found, i;
 
-	for (const auto& sf : WordList) {
-		m = sf.length();
-		found = 0;
-		if (n >= m) {
-			found = 1;
-			for (i = 0; i < m; ++i) {
-				if (sf[i] != s[i+j]) {
-					found = 0;
-					break;
-				}
-			}
-		}
-		if (found) return sf;
-	}
+    for (const auto& sf : WordList) {
+        m = sf.length();
+        found = 0;
+        if (n >= m) {
+            found = 1;
+            for (i = 0; i < m; ++i) {
+                if (sf[i] != s[i+j]) {
+                    found = 0;
+                    break;
+                }
+            }
+        }
+        if (found) return sf;
+    }
 
-	return "";
+    return "";
 }
 
 int getindexoffunction(const std::string &sf)
 {
-	if (sf =="") return -1;
-	int i = 0;
+    if (sf =="") return -1;
+    int i = 0;
 
-	for (const auto &f : functionpairs) {
-		if (f.x == sf) return i;
-		++i;
-	}
+    for (const auto &f : functionpairs) {
+        if (f.x == sf) return i;
+        ++i;
+    }
 
-	return -1;
+    return -1;
 }
 
 
@@ -262,8 +256,6 @@ val::Glist<val::GPair<double>> critical_points_pl_alg_curve(const val::valfuncti
     h=val::primitivpart(f.gets_polynom());
     g=f.derive(2);
     h1=val::primitivpart(g.gets_polynom());
-    //h.reord();
-    //h1.reord();
     G.sinsert(std::move(h));
     G.sinsert(std::move(h1));
     val::primitiv_groebner(G);
@@ -278,7 +270,6 @@ val::Glist<val::GPair<double>> critical_points_pl_alg_curve(const val::valfuncti
             if (!isinList(crit_points,Paar,1e-4)) crit_points.sinsert(Paar);
         }
     }
-
 
     val::s_expo::setordtype(oldordns);
     val::n_expo::setordtype(oldordn);
@@ -359,10 +350,6 @@ double squaredistance(const wxPoint& l1, const wxPoint &l2, const wxPoint &p)
     b = double(l2.x) - double(l1.x);
     c = double(l1.x) * a + double(l1.y) * b;
     d = double(p.x) * a + double(p.y) * b;
-
-
-    //wxMessageBox(val::ToString(a) + ", " + val::ToString(b) + ", " + val::ToString(c)+ ", " + val::ToString(d));
-    //wxMessageBox(val::ToString(l1.x) + ", " + val::ToString(l1.y) + ", " + val::ToString(l2.x)+ ", " + val::ToString(l2.y));
 
     distanceline = ((c-d)*(c-d))/(a*a + b*b);
 
@@ -463,16 +450,6 @@ int getpiscale(const std::string& is,val::rational &factor,double &scale, int po
     }
     if (!found) return 0;
     ++i;
-    /*
-    found=0;
-    for (;i<n;++i) {
-        if (s[i]=='I') {
-            found=1;
-            break;
-        }
-    }
-    if (!found) return 0;
-    */
     factor=val::rational(1);
     if (i==1 && n>=3) {
         for (i=3;i<n;++i) {
@@ -503,10 +480,6 @@ int isInf(const double  &a)
 
 void gettangentvalues(const myfunction &f,const double &x,double &m,double &b,int tangent)
 {
-    //val::DoubleFunction F(val::doublefunction(std::bind(std::cref(f),std::placeholders::_1)));
-    //int n=isderived(f);
-    //for (i=0;i<n;++i) F=F.derive();
-
     m= derive(f,x);  //F.derive(x);
     if (!tangent) {
         if (val::abs(m)<=1e-9) m = val::Inf;
@@ -576,7 +549,6 @@ int getfunctionfromstring(std::string &fstring,std::string& f_s,double &x1,doubl
     std::string ns="";
     f_s="";
     int i, colorindex = -1;
-    //int i, n, colorindex = -1;
 
     ns = extractstringfrombrackets(fstring,'<','>');
 
@@ -612,7 +584,6 @@ val::Glist<double> getdoublevaluesfromstring(const std::string &sf,const val::d_
     for (int i = 0; i < n ; ++i) {
         if (val::isinContainer(sf[i],separators)) {
             if (emptystring || s != "") values.push_back(double(val::FromString<val::rational>(s)));
-            //if (s != "") values.push_back(double(val::FromString<val::rational>(s)));
             s = "";
         }
         else s += sf[i];
@@ -633,8 +604,6 @@ val::Glist<std::string> getwordsfromstring(const std::string &sf,const val::d_ar
         if (val::isinContainer(sf[i],ignore)) continue;
         if (val::isinContainer(sf[i],separators)) {
             if (emptywords || s != "") values.push_back(s);
-            //else if (s != "") values.push_back(s);
-            s = "";
         }
         else s += sf[i];
     }
@@ -650,8 +619,6 @@ int isderived(const std::string &sf)
 {
     if (sf=="") return 0;
     int n=sf.size()-1,anz=0;
-    //if (sf[n]=='\'') return 1;
-    //else return 0;
     while (n>=0 && (sf[n]=='\'' || sf[n]==' ')) {
         if (sf[n]=='\'') ++anz;
         --n;
@@ -685,8 +652,6 @@ int islinearfunction(const myfunction &F)
 
 double derive(const myfunction &f,const double& x)
 {
-    //if (n<=0) return f(x);
-
     double xh1,xh2,hh,y;
     if (val::abs(x)>1) y=val::abs(x);
     else y=1.0;
@@ -696,10 +661,7 @@ double derive(const myfunction &f,const double& x)
     xh2=x-hh;
     hh=xh1 - xh2;
 
-    //if (n==1) {
-        return (f(xh1)-f(xh2))/hh;
-    //}
-    //else return (derive(f,xh1,n-1)-derive(f,x,n-1))/(xh1-x);
+    return (f(xh1)-f(xh2))/hh;
 }
 
 
@@ -775,7 +737,6 @@ val::matrix<val::rational> set_les(const std::string &s)
     if (n2) n = val::Max(n,n2+2);
     if (n1) n = val::Max(n,n1+1);
     if (n==0) return A;
-    //std::cout<<n<<"  "<<dim[0]<<"  "<<dim[1]<<"  "<<dim[2]<<std::endl;
     A = val::matrix<val::rational>(n,n+1);
     for (k=0,l=0;k<3;++k) {
         for (i=0;i<dim[k];++i,++l) {
@@ -820,12 +781,6 @@ val::rational eval(const val::rationalfunction &F,const val::rational &x)
 void computepoints(const val::Glist<myfunction> &F,val::d_array<val::d_array<double>> &farray,val::d_array<val::d_array<val::d_array<double> > > &carray,
                    int points,const double &x1,const double &x2,double &ymax,double &ymin,int activef, int comppoints)
 {
-    //if (iscomputing) return;
-    //iscomputing=1;
-    //compute_mutex.lock();
-
-    //std::lock_guard<std::mutex> lock(computemutex);
-
     MyThreadEvent event(MY_EVENT,IdPaint);
 
     if (F.isempty()) {
@@ -836,7 +791,6 @@ void computepoints(const val::Glist<myfunction> &F,val::d_array<val::d_array<dou
     int m=F.length(),i,j,nf=0,nc=0,i_f=0,i_c=0;// nrf = 0, i_rf = 0;
     val::pol<double> p;
     val::vector<double> zeros;
-    //farray = val::d_array<val::d_array<double>>(m);
 
     if (activef == -1) {
         carray.del();
@@ -844,7 +798,6 @@ void computepoints(const val::Glist<myfunction> &F,val::d_array<val::d_array<dou
 
         for (i=0;i<m;++i)
             if (F[i].numberofvariables()==1) {
-                //if (F[i].getmode() == myfunction::FUNCTION) ++nrf;
                 ++nf;
             }
             else ++nc;
@@ -854,22 +807,15 @@ void computepoints(const val::Glist<myfunction> &F,val::d_array<val::d_array<dou
         if (critpoints.isempty()) {
             critpoints.reserve(nc);
             critx.reserve(nc);
-            //computepoints=1;
         }
-        //if (undef_intervals.isempty()) undef_intervals.reserve(nrf);
     }
-    //y_carray.reserve(nc);
     double delta=(x2-x1)/(double(points-1)),x,y;//deltay = (y2-y1)/(double(points-1));
-    //int dec = decimal(delta);
 
     if (carray.isempty() && farray.isempty()) {
         ymax=-val::Inf;
         ymin=val::Inf;
     }
 
-
-
-    //wxMessageBox("Fine!");
     for (i=0;i<m;++i) {
         if (activef != -1) {
             if (activef != i) {
@@ -883,12 +829,9 @@ void computepoints(const val::Glist<myfunction> &F,val::d_array<val::d_array<dou
                 critx[i_c].del();
             }
             else {
-                //if (F[i].getmode() == myfunction::FUNCTION) undef_intervals[i_rf].dellist();
                 farray[i_f].del();
             }
         }
-        //farray[i]=val::d_array<double>(points);
-//        if (!isderived(F[i])) {
             if (F[i].IsLine() || F[i].IsRectangle()) {
                 double arrow = 0.0;
                 farray[i_f].reserve(5);
@@ -930,36 +873,24 @@ void computepoints(const val::Glist<myfunction> &F,val::d_array<val::d_array<dou
             else if (F[i].numberofvariables()==1) {
                 farray[i_f].reserve(points);
                 for (x=x1,j=0;j<points;++j,x+=delta) {
-                    //y=farray[i_f][j]=F[i](val::round(x,dec));
                     y=farray[i_f][j]=F[i](x);
                     ymax=val::Max(ymax,y);
                     ymin=val::Min(ymin,y);
                 }
-                /*
-                if (comppoints) {
-                    val::valfunction f(F[i].getinfixnotation());
-                    undef_intervals[i_rf] = f.get_undefined_intervals(x1,x2,points);
-                }
-                */
                 ++i_f;
-                //++i_rf;
             }
             else { //algebraische Kurve.
-                //std::ofstream file("/home/miguel/test/log",std::ios::out | std::ios::trunc);
                 carray[i_c].reserve(points);
                 for (x=x1,j=0;j<points;++j,x+=delta) {
                     p=F[i].getpol(x);
                     val::realRoots(p,zeros,1e-9);
                     zeros.sort();
                     carray[i_c][j].reserve(zeros.dimension());
-                    //file<<x<<":       ";
                     for (int k=0;k<zeros.dimension();++k) {
-                        //file<<zeros[k]<<" , ";
                         carray[i_c][j][k] = y = zeros[k];
                         ymax=val::Max(ymax,y);
                         ymin=val::Min(ymin,y);
                     }
-                    //file<<std::endl;
                 }
                 if (comppoints) { // || critpoints[i_c].isempty()) {
                     val::valfunction f(F[i].getinfixnotation());
@@ -968,29 +899,7 @@ void computepoints(const val::Glist<myfunction> &F,val::d_array<val::d_array<dou
                 }
                 ++i_c;
             }
-  //      }
-  /*
-        else {
-            farray[i_f].reserve(points);
-            //val::DoubleFunction f(val::doublefunction(std::bind(std::cref(F[i]),std::placeholders::_1)));
-            int k=isderived(F[i]);
-
-            //for (j=0;j<k;++j) f=f.derive();
-
-            for (x=x1,j=0;j<points;++j,x+=delta) {
-                //y=farray[i][j]=f(x);
-                y=farray[i][j] = derive(F[i],x,k);
-                ymax=val::Max(ymax,y);
-                ymin=val::Min(ymin,y);
-            }
-            ++i_f;
-            //++i_rf;
-        }
-        */
     }
-
-    //wxMessageBox("Fine!");
-
 
     if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event.Clone() );
 }
@@ -1004,7 +913,6 @@ void computetable(const myfunction& g, double x1,double x2, double dx)
      Glist<double> Zeros;
      double y0=g(x1),y1,x0=x1,eps=1e-4;
      int k=4, digits, ydigits; //m=isderived(g);
-
 
      while (dx<eps) {
         eps/=10;
@@ -1138,8 +1046,6 @@ void computeevaluation(const myfunction& f, double par)
     double x, y, limit = 1e50;
     int precision = val::MaxPrec, yprecision = val::MaxPrec;
 
-    //F.setparameter(par);
-
     tablestring = "f(x) = " + f.getinfixnotation() + "\n";
 
     for (auto & w : wlist) {
@@ -1215,7 +1121,6 @@ void computerotation(const val::d_array<myfunction*> F,std::string input)
     double x0=0,y0=0,alpha=0;
 
     val::d_array<char> separ({';',' '});
-    //val::Glist<double>
     auto values = getdoublevaluesfromstring(input,separ);
 
     n = values.length();
@@ -1223,7 +1128,6 @@ void computerotation(const val::d_array<myfunction*> F,std::string input)
     if (n > 0) alpha = values[0];
     if (n > 1) x0 = values[1];
     if (n > 2) y0 = values[2];
-
 
     A=val::rotationmatrix(val::PI*alpha/180.0);
 
@@ -1279,7 +1183,6 @@ void computerotation(const val::d_array<myfunction*> F,std::string input)
     }
     if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event.Clone() );
 }
-
 
 
 void computeregression(const myfunction& f,int degree)
@@ -1482,7 +1385,6 @@ void analyze_triangle(const myfunction &f, std::string input)
 void computetangent(std::string sf,const myfunction &f,double x1,double x2,int tangent)
 {
     if (sf=="") return;
-    //std::string svalue;
     int n=sf.length(),i,isingraph=0,isfunction=0;
     double x=0.0,y=0.0,m,b;
 
@@ -1509,7 +1411,6 @@ void computetangent(std::string sf,const myfunction &f,double x1,double x2,int t
                 diffbar = 1;
             }
             else {
-                //n=isderived(f);
                 m= derive(f,x);  //F.derive(x);
             }
             if (val::isNaN(m)) return;
@@ -1544,7 +1445,6 @@ void computetangent(std::string sf,const myfunction &f,double x1,double x2,int t
             h1 = val::valfunction("x - " + val::ToString(x));
             if (tangent) h = F - val::valfunction(val::ToString(y)) - h1*F1;
             else h = F1 * (F - val::valfunction(val::ToString(y))) + h1;
-            //fstring+=";\n" + h.getinfixnotation();
             Roots = h.double_roots(x1,x2,1000);
             for (const auto& z : Roots) {
                 m=F1(z);
@@ -1668,25 +1568,17 @@ void computetangent(std::string sf,const myfunction &f,double x1,double x2,int t
                 return;
             }
 
-
-
             for (const auto& P : candlist) {
                 m=(P.y - y)/(P.x - x);
                 if (val::isNaN(m)) continue;
                 if (isInf(m)) {
-                    //if (tangent) {
                     fstring+=";\nline " + val::ToString(P.x) + " -inf " + val::ToString(P.x) + " inf";
-                    //}
-                    //else fstring+=";\n" + val::ToString(P.y);
                     continue;
                 }
                 if (val::abs(m)<1e-9) {
-                    //if (tangent)
                     fstring+=";\n" + val::ToString(P.y);
-                    //else fstring+=";\nline " + val::ToString(P.x) + " -inf " + val::ToString(P.x) + " inf";
                     continue;
                 }
-                //if (!tangent) m = -1.0/m;
                 b= P.y - m*P.x;
                 fstring+=";\n" + val::ToString(m) + "*x";
                 if (val::abs(b)>1e-9) {
@@ -1733,7 +1625,6 @@ int isinteger(const double &a,const double &epsilon=1e-9)
     if (r.denominator().iszero()) return 0;
     int h=int (val::integer(r));
     double d_h=double(h);
-    //std::cout<<"\n d_h , a "<<d_h<<" , "<<a<<std::endl;
     if (val::abs(d_h-a)<epsilon) return 1;
     else return 0;
 }
@@ -1953,7 +1844,6 @@ val::rationalfunction myfunction::getrationalfuncion() const
     GlistIterator<myfunction::token> iT;
     Glist<rationalfunction> G;
 
-
     for (iT=Gdat;iT;iT++) {
         G.resetactual();
         if (iT().type==0) {
@@ -2015,10 +1905,6 @@ const myfunction& myfunction::infix_to_postfix(const std::string &s)
     s_stack::data_type tp;
     int prec;
 
-    //
-
-    //
-
     if (!Gdat.isempty()) Gdat.dellist();
     s_infix="";
 
@@ -2030,32 +1916,26 @@ const myfunction& myfunction::infix_to_postfix(const std::string &s)
     s_infix.resize(i);
     i=0;
     // Setze G in infix -Notation;
-
     while (i<n) {
         failed=0;
-        //syntax=1;
         if (s[i]=='+') {
             t = s_stack("+",s_stack::OPERATOR,2);//G.inserttoend(s_stack("+",s_stack::OPERATOR,2));
-            //nG++;
             i++;
         }
         else if (s[i]=='-') {
             if (G.isempty()) t = s_stack("m",s_stack::OPERATOR,2);//G.inserttoend(s_stack("m",s_stack::OPERATOR,2));
             else if (G[nG-1].data==")" || G[nG-1].type==0 || G[nG-1].type==1) t = s_stack("-",s_stack::OPERATOR,2);//G.inserttoend(s_stack("-",s_stack::OPERATOR,2));
             else t = s_stack("m",s_stack::OPERATOR,4);//G.inserttoend(s_stack("m",s_stack::OPERATOR,4));
-            //nG++;
             i++;
         }
         else if (s[i]=='*' || s[i]=='/') {
             out="";
             out+=s[i];
             t = s_stack(out,s_stack::OPERATOR,3);//G.inserttoend(s_stack(out,s_stack::OPERATOR,3));
-            //nG++;
             i++;
         }
         else if (s[i]=='^') {
             t = s_stack("^",s_stack::OPERATOR,5,0);//G.inserttoend(s_stack("^",s_stack::OPERATOR,5,0));
-            //nG++;
             i++;
             int j=i;
             std::string out=findnumber(s,j);
@@ -2067,43 +1947,38 @@ const myfunction& myfunction::infix_to_postfix(const std::string &s)
         }
         else if (s[i]=='(') {
             t = s_stack("(",s_stack::LBRACKET);//G.inserttoend(s_stack("(",s_stack::LBRACKET));
-            //nG++;
             i++;
         }
         else if (s[i]==')') {
             t = s_stack(")",s_stack::RBRACKET);//G.inserttoend(s_stack(")",s_stack::RBRACKET));
-            //nG++;
             i++;
         }
         else if (s[i]>='0' && s[i] <='9') {
             t = s_stack(findnumber(s,i),s_stack::NUMBER);//G.inserttoend(s_stack(findnumber(s,i),s_stack::NUMBER));
-            //nG++;
         }
         else if (s[i]=='x') {
             t = s_stack("x",s_stack::VARIABLE);//G.inserttoend(s_stack("x",s_stack::VARIABLE));
             i++;
-            //nG++;
         }
         else if (s[i]=='y') {
             t = s_stack("y",s_stack::VARIABLE);//G.inserttoend(s_stack("y",s_stack::VARIABLE));
             ++i;
-            //nG++;
             nvar=2;
         }
 
 
         else if (s[i] == 't' && (i == n-1 || ( i < n-1 && s[i+1] != 'a' && s[i+1] != 'e' && s[i+1] != 'r'))) {
-			t = s_stack("t",s_stack::NUMBER);
+            t = s_stack("t",s_stack::NUMBER);
             withpar=1;
-			++i;
-		}
+            ++i;
+        }
         else if ((sf = getstringfunction(s,i)) != "") {
-			isrational = 0;
-			if (sf == "PI") {
+            isrational = 0;
+            if (sf == "PI") {
                 t = s_stack(val::ToString(val::PI,20),s_stack::NUMBER);
                 i += sf.length();
-			}
-			else {
+            }
+            else {
                 tp = s_stack::OPERATOR;
                 prec = 5;
                 if (sf == "line") {
@@ -2186,8 +2061,6 @@ const myfunction& myfunction::infix_to_postfix(const std::string &s)
     // Nun hunting-yard-algorithmus:
 
     G.resetactual();
-    //i=0;
-    //if (foundpattern(s_infix,"line",i)) isline=1;
     if (isline || istext || mode==CIRCLE || mode==RECTANGLE || mode==TRIANGLE || mode==FILL || mode==POLYGON || mode==POINTS) {
         if (istext) settextdata();
         std::string s="",op;
@@ -2581,7 +2454,6 @@ void myfunction::settextdata()
     textdata = getstringfrombrackets(s_infix, '{', '}');
 
     for (int i = 0; i < greek_literals.length(); ++i) {
-        //if (textdata.Find(greek_literals[i]) != wxNOT_FOUND) textdata.Replace(greek_literals[i], greek_letters[i]);
         textdata.Replace(greek_literals[i], greek_letters[i]);
     }
     TextWords = getdrawingwords(textdata);
