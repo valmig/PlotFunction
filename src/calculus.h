@@ -10,13 +10,13 @@ int partialfraction(const val::valfunction& f, val::rational &cont, val::pol<val
 
 void analize_rationalfunction(val::valfunction& f,const double& eps=1e-9,int decimal=4);
 
-void analyzefunction(const myfunction &f,std::string input);
+void analyzefunction(const plotobject &f,std::string input);
 
-void intersection(const myfunction &f, const myfunction &g, std::string input);
+void intersection(const plotobject &f, const plotobject &g, std::string input);
 
 val::valfunction integral(const val::valfunction &f, int k = 1);
 
-void computeintegral(const myfunction& f,std::string x1,std::string x2,double delta,int n,int dez,int arclength=0);
+void computeintegral(const plotobject& f,std::string x1,std::string x2,double delta,int n,int dez,int arclength=0);
 
 
 

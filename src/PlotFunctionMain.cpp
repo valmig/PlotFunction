@@ -39,10 +39,10 @@
 #include <wx/string.h>
 #include <wx/clipbrd.h>
 #include <wx/rawbmp.h>
-//
 
 
 
+//*IdInit(PlotFunctionFrame)
 const long PlotFunctionFrame::ID_PANEL1 = 30001;//wxNewId();
 const long PlotFunctionFrame::idMenuQuit = 30002;//wxNewId();
 const long PlotFunctionFrame::ID_MENUITEM4 = 30003;//wxNewId();
@@ -181,6 +181,7 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     int __wxStatusBarWidths_1[2] = { -3,-1 };
     StatusBar1->SetFieldsCount(2,__wxStatusBarWidths_1);
     SetStatusBar(StatusBar1);
+
     SideText->Hide();
 
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnQuit,this,idMenuQuit);
@@ -318,6 +319,7 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnFileMenu,this,103);          // Save File
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnFileMenu,this,104);          // Save File as
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuRecent,this,601);        // Clear History
+    //
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuResetColours,this,4);    // Reset Colors
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuParameter,this,7000);    // Parameter Values
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuTools,this,7001);      // Tangent
@@ -440,6 +442,7 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     Accel.push_back(wxAcceleratorEntry(wxACCEL_NORMAL,WXK_F9,7011));
     Accel.push_back(wxAcceleratorEntry(wxACCEL_SHIFT|wxACCEL_CTRL,(int) 'x',6));
     Accel.push_back(wxAcceleratorEntry(wxACCEL_ALT,(int) 'l',5021));
+    Accel.push_back(wxAcceleratorEntry(wxACCEL_SHIFT|wxACCEL_CTRL,WXK_DELETE,3004));
 
     SetAccelerators(Accel);
 
@@ -556,12 +559,14 @@ PlotFunctionFrame::~PlotFunctionFrame()
     }
     if (SideText->IsShown()) SideText->Hide();
     if (notebook->IsShown()) notebook->Hide();
+
+    //(*Destroy(PlotFunctionFrame)
+    //*)
 }
 
 
 void PlotFunctionFrame::OnQuit(wxCommandEvent& event)
 {
-    //std::cout << "\n Quit Application!" << std::endl;
     Destroy();
     //Close();
 }
@@ -590,7 +595,7 @@ void PlotFunctionFrame::OnFileMenu(wxCommandEvent& event)
 #else
     wxString filetype = _("all files (*)|*");
 #endif // _WIN32
-       //
+
     if (dpanelinsertmode) changedpanelinsertmode(insert_type::NORMAL_I);
 
     if (id==101) {   //new
@@ -716,7 +721,6 @@ void PlotFunctionFrame::GetSizeSettings()
     if (widthSideText < 100) widthSideText = 100;
 
     //
-    //wxMessageBox(val::ToString(SideText_isshown));
     std::fstream file1(RecentFilesPath,std::ios::in);
     while (file1) {
         getline(file1,line);
@@ -775,17 +779,17 @@ void PlotFunctionFrame::GetSettings()
     }
     ispainted=0;
     F.dellist();
-    x_range.dellist();
-    critpoints.del();
-    critx.del();
-    islinear.del();
+    //x_range.dellist();
+    //critpoints.del();
+    //critx.del();
+    //islinear.del();
 
     int n,i,j,nmenu=0, oldN = N;
     val::rational par;
     val::d_array<int> ischecked;
     std::string s="",f_s,t="",menuitemstring,helpstring;
-    val::GPair<double> xr;
-    myfunction f;
+    //val::GPair<double> xr;
+    plotobject f;
 
     N = 0;
 
@@ -851,15 +855,15 @@ void PlotFunctionFrame::GetSettings()
 
     svalues = getwordsfromstring(fstring,separators,0,ignore);
     for (auto& v : svalues) {
-        cindex = getfunctionfromstring(v,f_s,xr.x,xr.y);
-        f = myfunction(f_s);
-        if (f.numberofvariables() > 1) {
+        cindex = getfunctionfromstring(v,f);
+        //f = plotobject(f_s);
+        if (f.f.numberofvariables()> 1) {
             val::valfunction g(f.getinfixnotation());
-            f = myfunction(g.getinfixnotation());
+            f = plotobject(g.getinfixnotation());
         }
-        if (!f.iszero()) {
+        if (!f.is_empty()) {
             F.push_back(std::move(f));
-            x_range.push_back(xr);
+            //x_range.push_back(xr);
             colorindezes.push_back(cindex);
             N++;
         }
@@ -902,21 +906,22 @@ void PlotFunctionFrame::GetSettings()
 
     }
     n=Parameter.length();
-    islinear.reserve(N);
+    //islinear.reserve(N);
     for (i=0;i<N;++i) {
         // mit menuItems:
         s="";
-        islinear[i] = 0;
-        if (F[i].getmode() == myfunction::FUNCTION) {
+        /*islinear[i] = 0;
+        if (F[i].objectype == plotobject::FUNCTION) {
             if (islinearfunction(F[i])) islinear[i] = 1;
         }
+        */
         if (F[i].iswithparameter()) {
             if (n) {
                 j=val::Min(i,n-1);
                 par=Parameter[j];
             }
             else par=val::rational(0);
-            F[i].setparameter(double(par));
+            F[i].f.setparameter(double(par));
             s= "  [" + val::ToString(par) + "]";
         }
         if (i<=8) t="\tAlt-" + val::ToString(i+1);
@@ -952,12 +957,13 @@ void PlotFunctionFrame::GetSettings()
     for (i=0;i<N;++i) {
         fstring+=F[i].getinfixnotation();
         if (i >= oldN && !multicolormenu->IsChecked()) Color[i] = defaultpaintcolor;
-        if (x_range[i].x == x_range[i].y) {
+        if (F[i].x_range.x == F[i].x_range.y) {
             fstring+=";\n";
             continue;
         }
-        if (x_range[i].y <= x_range[i].x) {x_range[i].x=x1; x_range[i].y=x2;}
-        if (x_range[i].x!=x1 || x_range[i].y!=x2) fstring+= "  [ "+ val::ToString(x_range[i].x) +" , " + val::ToString(x_range[i].y) + " ];\n";
+        if (F[i].x_range.y <= F[i].x_range.x) {F[i].x_range.x=x1; F[i].x_range.y=x2;}
+        //fstring+=F[i].getinfixnotation();
+        if (F[i].x_range.x!=x1 || F[i].x_range.y!=x2) fstring+= "  [ "+ val::ToString(F[i].x_range.x) +" , " + val::ToString(F[i].x_range.y) + " ];\n";
         else fstring+=";\n";
     }
     setfunctionsmenu();
@@ -995,6 +1001,7 @@ void PlotFunctionFrame::valFloodFill(wxMemoryDC& dc, int x, int y, const wxColou
         s = S.getelement(); S.skiphead();
         x = x1 = s.x1; x2 = s.x2; y = s.y; dy = s.dy;
         p.MoveTo(data,x,y); pcolor = wxColour(p.Red(),p.Green(),p.Blue());
+
         if (x <= xmax && x>=xmin && y <= ymax && y >= ymin && pcolor == bgc) {
             while (x-1 >= xmin) {
                 p.MoveTo(data,x-1,y); pcolor = wxColour(p.Red(),p.Green(),p.Blue());
@@ -1027,8 +1034,6 @@ void PlotFunctionFrame::valFloodFill(wxMemoryDC& dc, int x, int y, const wxColou
     }
     dc.SelectObject(*cpaper);
 }
-
-
 
 
 void PlotFunctionFrame::plotvertices(wxDC& dc)
@@ -1136,8 +1141,8 @@ void PlotFunctionFrame::plotvertices(wxDC& dc)
             dc.SetFont(normalfont);
             int cw = dc.GetCharWidth(), ch = dc.GetCharHeight()/2;
             int iy,xzero=abst+1+ int(double(sizex-1)*((-x1)/(x2-x1)));
-            int f=int(y1/y_scale);
 
+            int f=int(y1/y_scale);
             for (double y= double(f)*y_scale;y <= y2;y+=y_scale,++f) {
                 if (y<y1) continue;
                 if (val::abs(y) < 1e-16) y = 0.0;
@@ -1169,16 +1174,16 @@ void PlotFunctionFrame::plotvertices(wxDC& dc)
 }
 
 
-
-void PlotFunctionFrame::plotfunction(wxDC& dc,const val::d_array<double> &f,int colour)
+void PlotFunctionFrame::plotfunction(wxDC& dc,int colour)
 {
+    const val::d_array<double> &f = F[colour].farray;
     int ix0,ix1,iy0,iy1,index,ylimit=abst+sizey-1,aw=0,ew=sizex, ready = 0, i, k;
-    double faktor_x,faktor_y,xr1=x_range[colour].x,xr2=x_range[colour].y, yvalue = 0, yold = val::Inf, dyzero(yzero);
+    double faktor_x,faktor_y,xr1=F[colour].x_range.x, xr2=F[colour].x_range.y, yvalue = 0, yold = val::Inf, dyzero(yzero);
 
     if (active_function == colour) dc.SetPen(wxPen(Color[colour],pen[colour]+3));
     else dc.SetPen(wxPen(Color[colour],pen[colour]));
 
-    if (x_range[colour].x == x_range[colour].y) {
+    if (xr1 == xr2) {
         aw=0;
         ew=sizex;
     }
@@ -1194,7 +1199,7 @@ void PlotFunctionFrame::plotfunction(wxDC& dc,const val::d_array<double> &f,int 
     faktor_x=double(points-1)/double(sizex-1);
     faktor_y=double(sizey-1)/(y2-y1);
 
-    if (islinear[colour]) {
+    if (F[colour].islinear) {
         i = aw;
         do {
             index = int (val::round(double(i)*faktor_x,0));
@@ -1229,7 +1234,6 @@ void PlotFunctionFrame::plotfunction(wxDC& dc,const val::d_array<double> &f,int 
             index = int (val::round(double(i)*faktor_x,0));
             if (index<0 || index >= points) return;
             yvalue = f[index];
-            //iy0=yzero-int(val::round(faktor_y * yvalue,0));
             iy0 = int(val::round(dyzero - faktor_y*yvalue,0));//yzero-int(val::round(faktor_y * yvalue,0));
             ++i;
             if (i >= ew) return;
@@ -1238,7 +1242,6 @@ void PlotFunctionFrame::plotfunction(wxDC& dc,const val::d_array<double> &f,int 
 
         if ((k > 1) && !isInf(yold) && !val::isNaN(yold)) {
             --i; --ix0;
-            //iy0 = yzero - int(val::round(faktor_y * yold ,0));
             iy0 = int(val::round(dyzero - faktor_y*yold,0));//yzero - int(val::round(faktor_y * yold ,0));
             if (iy0 > ylimit) iy0 = ylimit;
             if (iy0 < abst) iy0 = abst;
@@ -1269,10 +1272,11 @@ void PlotFunctionFrame::plotfunction(wxDC& dc,const val::d_array<double> &f,int 
 }
 
 
-void PlotFunctionFrame::plotline(wxDC& dc,const val::d_array<double> &f,int colour)
+void PlotFunctionFrame::plotline(wxDC& dc,int colour)
 {
     if (!yset) return;
 
+    const val::d_array<double> &f = F[colour].farray;
     int ix0,iy0,ix1,iy1;
     double arrow;
 
@@ -1320,16 +1324,16 @@ void PlotFunctionFrame::plotline(wxDC& dc,const val::d_array<double> &f,int colo
 }
 
 
-void PlotFunctionFrame::plotcircle(wxDC& dc,const val::d_array<double> &f,int colour)
+void PlotFunctionFrame::plotcircle(wxDC& dc ,int colour)
 {
     if (!yset || sizex <= 10 || sizey <=10 ) return;
+    const val::d_array<double> &f = F[colour].farray;
 
     int ix0,iy0,ix1,iy1;
     double x,y,r,a1,a2,lx,ly;
     int slice;
-    F[colour].getCirclePoints(x,y,r,a1,a2,slice);
 
-    if (r <= 0) return;
+    x = f[0]; y = f[1]; r = f[2]; a1 = f[3]; a2 = f[4]; slice = f[5];
 
     if (active_function == colour) dc.SetPen(wxPen(Color[colour],pen[colour]+3));
     else dc.SetPen(wxPen(Color[colour],pen[colour]));
@@ -1339,7 +1343,6 @@ void PlotFunctionFrame::plotcircle(wxDC& dc,const val::d_array<double> &f,int co
         int r;
         ix0=abst+int(double(sizex-1)*((x-x1)/(x2-x1)));
         iy0=yzero -int((double(sizey-1)/double(y2-y1)) * y);
-        //if (polygonline) {
         brush.SetStyle(wxBrushStyle::wxBRUSHSTYLE_TRANSPARENT);
         dc.SetBrush(brush);
         dc.SetPen(wxPen(Color[colour], 1));
@@ -1357,17 +1360,21 @@ void PlotFunctionFrame::plotcircle(wxDC& dc,const val::d_array<double> &f,int co
         return;
     }
 
-    ix0=abst+int(double(sizex-1)*((f[0]-x1)/(x2-x1)));
-    iy0=yzero -int((double(sizey-1)/double(y2-y1)) * f[1]);
-    ix1=abst+int(double(sizex-1)*((f[2]-x1)/(x2-x1)));
-    iy1=yzero -int((double(sizey-1)/double(y2-y1)) * f[3]);
+    if (r <= 0) return;
+    double cx1, cy1, cx2, cy2;
+    cx1 = x-r; cy1 = y+r; cx2 = x+r; cy2 = y-r;
+
+    ix0=abst+int(double(sizex-1)*((cx1-x1)/(x2-x1)));
+    iy0=yzero -int((double(sizey-1)/double(y2-y1)) * cy1);
+    ix1=abst+int(double(sizex-1)*((cx2-x1)/(x2-x1)));
+    iy1=yzero -int((double(sizey-1)/double(y2-y1)) * cy2);
     ix1-=ix0;
     iy1-=iy0;
 
     if (slice < 2) brush.SetStyle(wxBrushStyle::wxBRUSHSTYLE_TRANSPARENT);
     dc.SetBrush(brush);
 
-    dc.DrawEllipticArc(ix0,iy0,ix1,iy1,f[4],f[5]);
+    dc.DrawEllipticArc(ix0,iy0,ix1,iy1,a1,a2);
 
     if (slice == 1) {
         ix0=abst+int(double(sizex-1)*((x-x1)/(x2-x1)));
@@ -1384,7 +1391,6 @@ void PlotFunctionFrame::plotcircle(wxDC& dc,const val::d_array<double> &f,int co
         dc.DrawLine(ix0,iy0,ix1,iy1);
     }
 
-
     if (active_function == colour || slice == -1) {
         ix0=abst+int(double(sizex-1)*((x-x1)/(x2-x1)));
         iy0=yzero -int((double(sizey-1)/double(y2-y1)) * y);
@@ -1396,10 +1402,11 @@ void PlotFunctionFrame::plotcircle(wxDC& dc,const val::d_array<double> &f,int co
 }
 
 
-void PlotFunctionFrame::plotrectangle(wxDC& dc,const val::d_array<double> &f,int colour)
+void PlotFunctionFrame::plotrectangle(wxDC& dc, int colour)
 {
     if (!yset) return;
 
+    const val::d_array<double> &f = F[colour].farray;
     int ix0,iy0,ix1,iy1;
 
     if (active_function == colour) dc.SetPen(wxPen(Color[colour],pen[colour]+3));
@@ -1431,9 +1438,10 @@ void PlotFunctionFrame::plotrectangle(wxDC& dc,const val::d_array<double> &f,int
 }
 
 
-void PlotFunctionFrame::plottriangle(wxDC& dc,const val::d_array<double> &f,int colour)
+void PlotFunctionFrame::plottriangle(wxDC& dc,int colour)
 {
     if (!yset) return;
+    const val::d_array<double> &f = F[colour].farray;
     if (f[0]<x1 || f[0]>x2 || f[1]<y1 || f[1]>y2 || f[2]<x1 || f[2]>x2 || f[3]<y1 || f[3]>y2 || f[4]<x1 || f[4]>x2
             || f[5]<y1 || f[5]>y2) return;
 
@@ -1468,12 +1476,14 @@ void PlotFunctionFrame::plottriangle(wxDC& dc,const val::d_array<double> &f,int 
 }
 
 
-void PlotFunctionFrame::plotfill(wxMemoryDC& dc,const val::d_array<double> &f,int colour)
+void PlotFunctionFrame::plotfill(wxMemoryDC& dc,int colour)
 {
     if (!yset || bitmapbackground) return;
 #ifdef __APPLE__
     if (DrawPanel->HasCapture()) return;
 #endif // __APPLE__
+
+    const val::d_array<double> &f = F[colour].farray;
 
     if (f[0]<x1 || f[0]>x2 || f[1]<y1 || f[1]>y2) return;
 
@@ -1503,9 +1513,10 @@ void PlotFunctionFrame::plotfill(wxMemoryDC& dc,const val::d_array<double> &f,in
 }
 
 
-void PlotFunctionFrame::plotpolygon(wxDC& dc,const val::d_array<double> &f,int colour)
+void PlotFunctionFrame::plotpolygon(wxDC& dc,int colour)
 {
     if (!yset) return;
+    const val::d_array<double> &f = F[colour].farray;
     int i,n=f.length();
 
     for (i=0;i<n;i+=2) {
@@ -1540,9 +1551,10 @@ void PlotFunctionFrame::plotpolygon(wxDC& dc,const val::d_array<double> &f,int c
 }
 
 
-void PlotFunctionFrame::plotpoints(wxDC& dc,const val::d_array<double> &f,int colour)
+void PlotFunctionFrame::plotpoints(wxDC& dc,int colour)
 {
     if (!yset) return;
+    const val::d_array<double> &f = F[colour].farray;
     int i,n=f.length();
     if (n<2) return;
 
@@ -1569,15 +1581,16 @@ void PlotFunctionFrame::plotpoints(wxDC& dc,const val::d_array<double> &f,int co
 
 
 
-void PlotFunctionFrame::plottext(wxDC& dc,const val::d_array<double> &f,int colour)
+void PlotFunctionFrame::plottext(wxDC& dc,int colour)
 {
     if (!yset) return;
+    const val::d_array<double> &f = F[colour].farray;
     if (f[0]<x1 || f[0]>x2 || f[1]<y1 || f[1]>y2) return;
 
     wxFont or_font(dc.GetFont()), font(Font[colour]);
     int f_size = 10;
     wxSize tsize;
-    const val::Glist<drawingword> &TextWords = F[colour].getTextWords();
+    const val::Glist<drawingword> &TextWords = F[colour].TextWords;
 
     if (font.IsNull()) {
         font = or_font;
@@ -1620,7 +1633,7 @@ void PlotFunctionFrame::plottext(wxDC& dc,const val::d_array<double> &f,int colo
         wxBrush brush;
         font.SetPointSize(f_size);
         dc.SetFont(font);
-        tsize = dc.GetMultiLineTextExtent(F[colour].getTextData());
+        tsize = dc.GetMultiLineTextExtent(F[colour].textdata);
         brush.SetStyle(wxBrushStyle::wxBRUSHSTYLE_TRANSPARENT);
         dc.SetBrush(brush);
         dc.SetPen(wxPen(Color[colour],2));
@@ -1631,9 +1644,11 @@ void PlotFunctionFrame::plottext(wxDC& dc,const val::d_array<double> &f,int colo
 }
 
 
-void PlotFunctionFrame::plotcurve(wxDC& dc,const val::d_array<val::d_array<double> > &f,const val::Glist<val::GPair<double>>& cpoints,
-                                  const val::d_array<double>& cx,int colour)
+void PlotFunctionFrame::plotcurve(wxDC& dc,int colour)
 {
+    const val::d_array<val::d_array<double>> &f = F[colour].curvearray;
+    const val::d_array<double> &cx = F[colour].critx;
+    const val::Glist<val::GPair<double>> &cpoints = F[colour].critpoints;
     int ix,x,y,ylimit=abst+sizey,index,n_critx=cx.length(),i_cx,i_cx0,j,m,k,oldx=abst;
     double xval=x1,dx=(x2-x1)/double(points-1);
     val::d_array<int> oldy,critindex;
@@ -1644,7 +1659,7 @@ void PlotFunctionFrame::plotcurve(wxDC& dc,const val::d_array<val::d_array<doubl
     else dc.SetPen(wxPen(Color[colour],pen[colour]));
 
 
-    if (islinear[colour]) {
+    if (F[colour].islinear) {
         int i = 0, ew = sizex, ix0, ix1, iy0, iy1;
         double faktor_x = double(points-1)/double(sizex-1) , faktor_y = double(sizey-1)/(y2-y1);
 
@@ -1655,7 +1670,6 @@ void PlotFunctionFrame::plotcurve(wxDC& dc,const val::d_array<val::d_array<doubl
             if (i>=ew) return;
         }
         while (iy0 < abst || iy0 > ylimit);
-
         if (i > ew) return;
         ix0 = i-1 + abst;
 
@@ -1767,43 +1781,83 @@ void PlotFunctionFrame::plotcurve(wxDC& dc,const val::d_array<val::d_array<doubl
     }
 }
 
+void PlotFunctionFrame::plotparcurve(wxDC& dc,int colour)
+{
+    const val::d_array<double> &f = F[colour].farray;
+    int ix0,iy0,ix1,iy1, i = 0, n = f.length(), xlimit = abst + sizex, ylimit = abst + sizey;
+
+    if (active_function == colour) dc.SetPen(wxPen(Color[colour],pen[colour]+3));
+    else dc.SetPen(wxPen(Color[colour],pen[colour]));
+
+    do {
+        if (i>=n-1) break;
+        ix0=abst+int(double(sizex-1)*((f[i]-x1)/(x2-x1)));
+        iy0=yzero -int((double(sizey-1)/double(y2-y1)) * f[i+1]);
+        i += 2;
+    }
+    while (ix0 < abst || ix0 > xlimit || iy0 < abst || iy0 > ylimit);
+    if ( i >= n-1 ) return;
+    //std::cout << f[0] << " " << f[1] << std::endl;
+    //std::cout << i << " " << ix0 << " " << iy0 << std::endl;
+
+    if (F[colour].islinear) {
+        for (i= n-1; i >= 1; i-=2) {
+            ix1=abst+int(double(sizex-1)*((f[i-1]-x1)/(x2-x1)));
+            iy1=yzero -int((double(sizey-1)/double(y2-y1)) * f[i]);
+            if (ix1 >= abst && ix1 <= xlimit && iy1 >= abst && iy1 <= ylimit) {
+                dc.DrawLine(ix0,iy0,ix1,iy1);
+                return;
+            }
+        }
+    }
+
+    for (; i < n-1; i +=2) {
+        ix1=abst+int(double(sizex-1)*((f[i]-x1)/(x2-x1)));
+        iy1=yzero -int((double(sizey-1)/double(y2-y1)) * f[i+1]);
+        if (ix0 == ix1 && iy0 == iy1) continue;
+        if (ix1 >= abst && ix1 <= xlimit && iy1 >= abst && iy1 <= ylimit) {
+            if (ix0 >= abst && ix0 <= xlimit && iy0 >= abst && iy0 <= ylimit) dc.DrawLine(ix0,iy0,ix1,iy1);
+        }
+        //std::cout << ix0 << " " << iy0 << " " << ix1 << " " << iy1 << std::endl;
+        ix0 = ix1; iy0 = iy1;
+    }
+}
+
+
 
 void PlotFunctionFrame::plotallfunctions(wxMemoryDC& dc)
 {
-    int i_f=0,i_c=0;
     for (int i=0;i<N;++i) {
-        if (F[i].numberofvariables()==1) {
+        if (F[i].f.numberofvariables() <= 1) {
             if (f_menu[i]->IsChecked()) {
                 switch (F[i].getmode()) {
-                    case myfunction::LINE :
-                        plotline(dc,farray[i_f],i); break;
-                    case myfunction::CIRCLE :
-                        plotcircle(dc,farray[i_f],i); break;
-                    case myfunction::TEXT :
-                        plottext(dc,farray[i_f],i);break;
-                    case myfunction::RECTANGLE :
-                        plotrectangle(dc,farray[i_f],i);break;
-                    case myfunction::TRIANGLE :
-                        plottriangle(dc,farray[i_f],i);break;
-                    case myfunction::POLYGON :
-                        plotpolygon(dc,farray[i_f],i);break;
-                    case myfunction::POINTS :
-                        plotpoints(dc,farray[i_f],i);break;
-                    case myfunction::FILL :
-                        if (fillfunctions) {plotfill(dc,farray[i_f],i);} break;
+                    case plotobject::LINE :
+                        plotline(dc,i); break;
+                    case plotobject::CIRCLE :
+                        plotcircle(dc,i); break;
+                    case plotobject::TEXT :
+                        plottext(dc,i);break;
+                    case plotobject::RECTANGLE :
+                        plotrectangle(dc,i);break;
+                    case plotobject::TRIANGLE :
+                        plottriangle(dc,i);break;
+                    case plotobject::POLYGON :
+                        plotpolygon(dc,i);break;
+                    case plotobject::POINTS :
+                        plotpoints(dc,i);break;
+                    case plotobject::FILL :
+                        if (fillfunctions) {plotfill(dc,i);} break;
+                    case plotobject::PARCURVE:
+                        plotparcurve(dc, i); break;
                     default:
                         {
-                            plotfunction(dc,farray[i_f],i);
+                            plotfunction(dc,i);
                         } break;
                 }
-
             }
-            ++i_f;
-
         }
         else { // alg. Kurve.
-            if (f_menu[i]->IsChecked()) plotcurve(dc,curvearray[i_c],critpoints[i_c],critx[i_c],i);
-            ++i_c;
+            if (f_menu[i]->IsChecked()) plotcurve(dc,i);
         }
     }
 }
@@ -1873,6 +1927,7 @@ void PlotFunctionFrame::plottomemoryDc(wxMemoryDC &memDC)
 
 void PlotFunctionFrame::OnDrawPanelPaint(wxPaintEvent &event)
 {
+    //event.Skip();
     if (!ispainted || iscomputing) return;
 #ifndef _WIN32
     iscomputing=1;
@@ -1883,6 +1938,7 @@ void PlotFunctionFrame::OnDrawPanelPaint(wxPaintEvent &event)
 
 void PlotFunctionFrame::OnDrawPanelResize(wxSizeEvent &event)
 {
+    //event.Skip();
     if (!ispainted || iscomputing) return;
 #ifdef _WIN32
     iscomputing=1;
@@ -1894,8 +1950,7 @@ void PlotFunctionFrame::OnDrawPanelResize(wxSizeEvent &event)
 void PlotFunctionFrame::Compute(int i, int comppoints)
 {
     iscomputing=1;
-    std::thread t(computepoints,std::cref(F),std::ref(farray),std::ref(curvearray),points,std::cref(x1),
-                  std::cref(x2),std::ref(ymax),std::ref(ymin),i,comppoints);
+    std::thread t(computepoints,std::ref(F),points,std::cref(x1),std::cref(x2),std::ref(ymax),std::ref(ymin),i,comppoints);
     t.detach();
 }
 
@@ -2052,7 +2107,6 @@ void PlotFunctionFrame::OnMenunewfunction(wxCommandEvent &event)
 #endif // __APPLE__
         if (dialog.ShowModal()==wxID_CANCEL) return;
         closebrackets = dialog.GetCloseBrackets();
-        // sonst OK:
         output=dialog.GetValue();
         if (input==output) return;
         fstring=output;
@@ -2112,8 +2166,8 @@ void PlotFunctionFrame::OnMenunewfunction(wxCommandEvent &event)
             fstring="";
             for (int i=0;i<N-1;++i) {
                 fstring+=F[i].getinfixnotation();
-                if (x_range[i].x==x_range[i].y) fstring+=";\n";
-                else if (x_range[i].x!=x1 || x_range[i].y!=x2) fstring+= "  [ "+ val::ToString(x_range[i].x) +" , " + val::ToString(x_range[i].y) + " ];\n";
+                if (F[i].x_range.x==F[i].x_range.y) fstring+=";\n";
+                else if (F[i].x_range.x!=x1 || F[i].x_range.y!=x2) fstring+= "  [ "+ val::ToString(F[i].x_range.x) +" , " + val::ToString(F[i].x_range.y) + " ];\n";
                 else fstring+=";\n";
             }
         }
@@ -2270,8 +2324,8 @@ void PlotFunctionFrame::OnMenuParameter(wxCommandEvent &event)
     n=pars.size();
     fstring="";
     hs="";
-    if (x_range[0].x==x_range[0].y) xrs="";
-    else if (x_range[0].x!=x1 || x_range[0].y!=x2) xrs=" [ " + val::ToString(x_range[0].x) + " , " + val::ToString(x_range[0].y) + " ] ";
+    if (F[0].x_range.x==F[0].x_range.y) xrs="";
+    else if (F[0].x_range.x!=x1 || F[0].x_range.y!=x2) xrs=" [ " + val::ToString(F[0].x_range.x) + " , " + val::ToString(F[0].x_range.y) + " ] ";
     for (i=0;i<n;++i) {
         if (pars[i]==';') {
             anz++;
@@ -2327,8 +2381,8 @@ void PlotFunctionFrame::OnMenuTools(wxCommandEvent &event)
         std::string s;
 
         for (i=0;i<f_menu.length();++i) {
-            if (f_menu[i]->IsChecked() && F[i].numberofvariables()<=1 && (F[i].getmode()==myfunction::TRIANGLE || F[i].getmode()==myfunction::LINE
-                        || F[i].getmode()==myfunction::POLYGON || F[i].getmode()==myfunction::POINTS)) {
+            if (f_menu[i]->IsChecked() && F[i].f.numberofvariables()<=1 && (F[i].getmode()==plotobject::TRIANGLE || F[i].getmode()==plotobject::LINE
+                        || F[i].getmode()==plotobject::POLYGON || F[i].getmode()==plotobject::POINTS || F[i].getmode() == plotobject::PARCURVE)) {
                 j=i; ++naktiv;
                 s = F[i].getinfixnotation();
                 if (s.length() >= 50) s.resize(47);
@@ -2357,7 +2411,7 @@ void PlotFunctionFrame::OnMenuTools(wxCommandEvent &event)
 #endif // __APPLE__
         if (dialog.ShowModal()==wxID_CANCEL) return;
 
-        val::d_array<myfunction*> H;
+        val::d_array<plotobject*> H;
         for (int i : ind) H.push_back(&F[i]);
         std::thread t(computerotation,H,dialog.GetSettingsText());
         t.detach();
@@ -2396,11 +2450,11 @@ void PlotFunctionFrame::OnMenuTools(wxCommandEvent &event)
     std::string s;
 
     for (i=0;i<f_menu.length();++i) {
-        if (f_menu[i]->IsChecked() && F[i].getmode()==myfunction::FUNCTION) {
-            if (id!=7001 && id!= 7007 && F[i].numberofvariables()>1) continue;
+        if (f_menu[i]->IsChecked() && F[i].getmode()==plotobject::FUNCTION) {
+            if (id!=7001 && id!= 7007 && F[i].f.numberofvariables()>1) continue;
             j=i; ++naktiv; List.push_back(F[i].getinfixnotation());indezes.push_back(i);
         }
-        if (f_menu[i]->IsChecked() && id == 7011 && (F[i].getmode() == myfunction::POINTS || F[i].getmode() == myfunction::POLYGON || F[i].getmode() == myfunction::TRIANGLE )) {
+        if (f_menu[i]->IsChecked() && id == 7011 && (F[i].getmode() == plotobject::POINTS || F[i].getmode() == plotobject::POLYGON || F[i].getmode() == plotobject::TRIANGLE )) {
             s = F[i].getinfixnotation();
             if (s.length() >= 50) {
                 s.resize(47);
@@ -2505,7 +2559,7 @@ void PlotFunctionFrame::OnMenuTools(wxCommandEvent &event)
         return;
     }
     else if (id==7004 || id==7005 || id==7008)    { // Integral + Iteration:
-        if (id==7005 && isderived(F[j])) return;
+        //if (id==7005 && isderived(F[j])) return;
 
         std::string title,param;
         wxPoint Point  = this->GetPosition();
@@ -2602,6 +2656,7 @@ void PlotFunctionFrame::OnRangeMenu(wxCommandEvent &event)
 }
 
 
+
 void PlotFunctionFrame::OnScaleMenu(wxCommandEvent &event)
 {
     std::string svalue = val::ToString(x_scale) +";\n" + val::ToString(y_scale) + ";\n" + val::ToString(abst) +
@@ -2650,6 +2705,7 @@ void PlotFunctionFrame::OnInputDialog(wxCommandEvent&)
     point.y -= 30;
 #endif // __APPLE__
 
+
     if (SideText_isshown) {
         size.x -= (widthSideText + 10);
         point.x += widthSideText +10;
@@ -2687,6 +2743,7 @@ void PlotFunctionFrame::OnInputDialog(wxCommandEvent&)
         if (l >= 100) recentcommands.skiphead();
     }
 
+
     command = val::getfirstwordofstring(svalue,separators);
 
     int command_number = -1, id = 1;
@@ -2712,7 +2769,6 @@ void PlotFunctionFrame::OnInputDialog(wxCommandEvent&)
     if (command_number == AXIS_RANGE) id = 6;
     else if (command_number == PANEL_SIZE) id = 22;
     if (command_number != -1) {
-        //wxMessageBox(val::ToString(command_number));
         ChangeSettings(command_number,svalue,id);
         return;
     }
@@ -2728,13 +2784,11 @@ void PlotFunctionFrame::OnInputDialog(wxCommandEvent&)
     }
 
     if (command_number != -1) {
-        //wxMessageBox(val::ToString(f_nr));
         ExecuteCommand(command_number,f_nr,svalue,id);
         return;
     }
 
 }
-
 
 
 void PlotFunctionFrame::ChangeSettings(int command, const std::string &svalue, int id)
@@ -3082,32 +3136,33 @@ void PlotFunctionFrame::ChangeSettings(int command, const std::string &svalue, i
         }
         break;
     case val_settings::MOVEINC:
-        {
-            val::d_array<char> separators({';'});
-            val::Glist<std::string> values = getwordsfromstring(svalue, separators);
-            int n = values.length(), l;
+    	{
+      		val::d_array<char> separators({';'});
+      		val::Glist<std::string> values = getwordsfromstring(svalue, separators);
+      		int n = values.length(), l;
+
 
             moveinpointsx = moveinpointsy = 0;
 
             if (n > 0) {
-                l = values[0].length();
-                if (values[0][l - 1] == 'p') {
-                    moveinpointsx = 1;
-                    values[0].resize(l - 1);
-                }
-                movedx = val::FromString<double>(values[0]);
-                moveinpointsy = moveinpointsx;
-                movedy = movedx;
-            }
-            if (n > 1) {
-                l = values[1].length();
+        		l = values[0].length();
+        		if (values[0][l - 1] == 'p') {
+          			moveinpointsx = 1;
+          			values[0].resize(l - 1);
+        		}
+        		movedx = val::FromString<double>(values[0]);
+        		moveinpointsy = moveinpointsx;
+       	 	movedy = movedx;
+      		}
+      		if (n > 1) {
+        		l = values[1].length();
                 if (values[1][l - 1] == 'p') {
-                    moveinpointsy = 1;
-                    values[1].resize(l - 1);
-                }
+          			moveinpointsy = 1;
+          			values[1].resize(l - 1);
+        		}
                 else moveinpointsy = 0;
-                movedy = val::FromString<double>(values[1]);
-            }
+        		movedy = val::FromString<double>(values[1]);
+      		}
             if (movedx <= 0) movedx = 0.1;
             if (movedy <= 0) movedy = 0.1;
             Text_Editrefresh();
@@ -3132,8 +3187,8 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
 
             if (fstring[n]!=';') fstring+=';';
             if (sf[m]=='\'') fstring += sf + "\'";
-            else if (F[f_nr].numberofvariables()==1) {
-                if (F[f_nr].isdifferentiable()) {
+            else if (F[f_nr].f.numberofvariables()==1) {
+                if (F[f_nr].f.isdifferentiable()) {
                     val::valfunction f(F[f_nr].getinfixnotation()), g = f.derive();
                     g.simplify(1);
                     fstring += g.getinfixnotation();
@@ -3141,21 +3196,21 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
                 else return;
             }
             if (F[f_nr].iswithparameter()) {
-                Parameter.inserttoend(val::rational(F[f_nr].getparameter()));
+                Parameter.inserttoend(val::rational(F[f_nr].f.getparameter()));
             }
-            if (x_range[f_nr].x==x_range[f_nr].y) fstring+=";";
-            else if (x_range[f_nr].x!=x1 || x_range[f_nr].y!=x2)
-                fstring+="  [ "+val::ToString(x_range[f_nr].x) + " , " + val::ToString(x_range[f_nr].y) + " ]";
+            if (F[f_nr].x_range.x == F[f_nr].x_range.y) fstring+=";";
+            else if (F[f_nr].x_range.x!=x1 || F[f_nr].x_range.y!=x2)
+                fstring+="  [ "+val::ToString(F[f_nr].x_range.x) + " , " + val::ToString(F[f_nr].x_range.y) + " ]";
             refreshfunctionstring();
         }
         break;
     case val_commands::ANALYZE: case val_commands::INTERSECTION:
         {
-            if (F[f_nr].getmode() != myfunction::FUNCTION) {
-                if (F[f_nr].getmode() != myfunction::POINTS && F[f_nr].getmode() != myfunction::POLYGON && F[f_nr].getmode() != myfunction::TRIANGLE) return;
+            if (F[f_nr].getmode() != plotobject::FUNCTION) {
+                if (F[f_nr].getmode() != plotobject::POINTS && F[f_nr].getmode() != plotobject::POLYGON && F[f_nr].getmode() != plotobject::TRIANGLE) return;
                 else if (command != ANALYZE) return;
             }
-            else if (F[f_nr].numberofvariables() > 1) return;
+            else if (F[f_nr].f.numberofvariables() > 1) return;
             val::d_array<char> separators{' ', ';', '\n'};
             val::Glist<std::string> s_values = getwordsfromstring(svalue,separators);
             int n = s_values.length(), nr2 = 1;
@@ -3169,7 +3224,7 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
                     nr2 = val::FromString<int>(nvalue) - 1;
                 }
                 if (nr2 == f_nr || nr2 < 0 || nr2 >= N) return;
-                if (F[nr2].getmode() != myfunction::FUNCTION || F[nr2].numberofvariables() > 1) return;
+                if (F[nr2].getmode() != plotobject::FUNCTION || F[nr2].f.numberofvariables() > 1) return;
                 n = s_values.length();
                 nvalue = "";
             }
@@ -3185,11 +3240,11 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
             else nvalue += "\n" + s_values[4];
 
             if (command == ANALYZE) {
-                if (F[f_nr].getmode() == myfunction::POINTS || F[f_nr].getmode() == myfunction::POLYGON) {
+                if (F[f_nr].getmode() == plotobject::POINTS || F[f_nr].getmode() == plotobject::POLYGON) {
                     std::thread t(computepointstatistics,std::cref(F[f_nr]),nvalue);
                     t.detach();
                 }
-                else if (F[f_nr].getmode() == myfunction::TRIANGLE) {
+                else if (F[f_nr].getmode() == plotobject::TRIANGLE) {
                     std::thread t(analyze_triangle,std::cref(F[f_nr]),nvalue);
                     t.detach();
                 }
@@ -3220,7 +3275,7 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
             std::string nvalue = svalue;
             if (svalue == "") {
                 if (f_nr >=0 && f_nr < N && (F[f_nr].IsPoints() || F[f_nr].IsPolygon()) ) {
-                    val::d_array<double> Points = F[f_nr].getPolygonPoints();
+                    val::d_array<double> Points = F[f_nr].farray;
                     for (const auto &v : Points) nvalue += val::ToString(v) + " ";
                 }
                 else return;
@@ -3245,8 +3300,9 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
             }
             else s = svalue;
 
+
             if (s != "") {
-                global_function = myfunction("points " + s);
+                global_function = plotobject("points " + s);
                 std::thread t(computeregression,std::cref(global_function),deg);
                 t.detach();
                 return;
@@ -3281,7 +3337,7 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
             if (x_1>x_2) return;
             if (d_x<=val::rational(0)) return;
 
-            if (!F[f_nr].israt() || !rat || isderived(F[f_nr])) {
+            if (!F[f_nr].f.isrationalfunction() || !rat) {
                 std::thread t(computetable,std::cref(F[f_nr]),double(x_1),double(x_2),double(d_x));
                 t.detach();
                 return;
@@ -3291,11 +3347,12 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
                 t.detach();
                 return;
             }
+
         }
         break;
     case val_commands::EVALUATE:
         {
-            if ((F[f_nr].getmode() != myfunction::FUNCTION) || F[f_nr].numberofvariables() > 1 || isderived(F[f_nr])) return;
+            if ((F[f_nr].getmode() != plotobject::FUNCTION) || F[f_nr].f.numberofvariables() > 1) return;
             tablestring = svalue;
             double par = 1.0;
 
@@ -3320,7 +3377,7 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
             int arclength = 0;
 
             if (id == 7005 || command == ARCLENGTH) {
-                if (isderived(F[f_nr])) return;
+                //if (isderived(F[f_nr])) return;
                 arclength = 1;
             }
             if (id == 7004 || id == 7005) command = INTEGRAL;
@@ -3379,8 +3436,8 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
             fstring = "";
             int i = 0;
             for (const auto & v : F) {
-                if (x_range[i].x == x_range[i].y) fstring += v.getinfixnotation() + ";\n";
-                else fstring += v.getinfixnotation() + "[" + val::ToString(x_range[i].x) + " , " + val::ToString(x_range[i].y) + "];\n";
+                if (F[i].x_range.x == F[i].x_range.y) fstring += v.getinfixnotation() + ";\n";
+                else fstring += v.getinfixnotation() + "[" + val::ToString(F[i].x_range.x) + " , " + val::ToString(F[i].x_range.y) + "];\n";
                 ++i;
             }
             refreshfunctionstring();
@@ -3604,8 +3661,8 @@ void PlotFunctionFrame::OnMenuFill(wxCommandEvent &event)
         wxMemoryDC memDC;
         // Tell memDC to write on “paper”.
         memDC.SelectObject( *paper );
-        plottomemoryDc(memDC);
 
+        plottomemoryDc(memDC);
         // Tell memDC to write on a fake bitmap;
         // this frees up "paper" so that it can write itself to a file.
         memDC.SelectObject( wxNullBitmap );
@@ -3616,6 +3673,7 @@ void PlotFunctionFrame::OnMenuFill(wxCommandEvent &event)
         }
 
         delete paper;
+
         return;
     }
 
@@ -3687,7 +3745,6 @@ void PlotFunctionFrame::OnMenuFill(wxCommandEvent &event)
         dialog.Centre();
 #endif // __APPLE__
         if (dialog.ShowModal()==wxID_OK) {
-            //ColorData=dialog.GetColourData();
             Color[N] = dialog.GetColourData().GetColour();
         }
         else return;
@@ -3758,7 +3815,6 @@ void PlotFunctionFrame::OnMouseWheel(wxMouseEvent &event)
 }
 
 
-
 void PlotFunctionFrame::refreshfunctionstring()
 {
     if (a_fstring == 29) {
@@ -3797,7 +3853,6 @@ void PlotFunctionFrame::savefile(const std::string &dirname,const std::string &f
         file<<axis_pen<<' '<<axis_color.GetRGB()<<std::endl;
         // Grid:
         file<<gx_scale<<' '<<gy_scale<<' '<<g_pi_factor_x<<' '<<g_pi_factor_y<<' '<<grid_pen<<' '<<grid_color.GetRGB()<<std::endl;
-        //file<<grid_pen<<' '<<grid_color.GetRGB()<<std::endl;
         file<<sgx_scale<<std::endl<<sgy_scale<<std::endl;
         // Range:
         file<<xstring<<std::endl<<ystring<<std::endl;
@@ -3847,6 +3902,7 @@ void PlotFunctionFrame::openfile(const std::string &dirname,const std::string &f
     std::string name = dirname + filesep + filename,line;
 
     if (dpanelinsertmode) changedpanelinsertmode(insert_type::NORMAL_I);
+
     std::ifstream file(name,std::ios::in);
 
     if (!file) {
@@ -3906,7 +3962,6 @@ void PlotFunctionFrame::openfile(const std::string &dirname,const std::string &f
     if (bm == 1) {
         name += ".png";
         if (BackgroundImage.LoadFile(name,wxBITMAP_TYPE_PNG)) {
-            //wxMessageBox("loaded: " + name);
             actualPanelsize = DrawPanel->GetSize();
             wxImage image = BackgroundImage.Scale(actualPanelsize.x,actualPanelsize.y);
             actualBitmapBackground = wxBitmap(image);
@@ -3925,12 +3980,14 @@ void PlotFunctionFrame::openfile(const std::string &dirname,const std::string &f
         if (Parameter.isempty()) Parameter.push_back(1);
     }
 
+
     file.close();
     xsize +=  20; ysize += 20;
     if (xsize < 50) xsize = 50;
     if (ysize < 50) ysize = 50;
     if (SideText_isshown) xsize += widthSideText + 10;
     if (notebook_isshown) xsize += widthNoteBookPanel + plusw;
+
 
 #ifdef _WIN32
     DrawPanel->Unbind(wxEVT_SIZE,&PlotFunctionFrame::OnDrawPanelResize,this);
@@ -3950,105 +4007,95 @@ void PlotFunctionFrame::openfile(const std::string &dirname,const std::string &f
 
 int PlotFunctionFrame::findactivefunction(int x, int y)
 {
-    int i, i_f=0, i_c=0, ix, endx, iy, index;
+    int i, ix, endx, iy, index;
     double faktor_y = double(sizey) / double(y2-y1), faktor_x=double(points)/double(sizex), fy;
 
     endx = val::Min(sizex+abst,x+10);
 
     for (i=0; i<N; ++i) {
         if (!f_menu[i]->IsChecked()) {
-            if (F[i].numberofvariables() > 1) i_c++;
-            else i_f++;
             continue;
         }
         switch (F[i].getmode())
         {
-        case myfunction::FUNCTION :
+        case plotobject::FUNCTION :
             {
-                if (F[i].numberofvariables()>1) {
+                if (F[i].f.numberofvariables()>1) {
                     for (ix = val::Max(abst,x); ix < endx; ++ix) {
                         index = int (val::round(double(ix-abst)*faktor_x,0));
-                        for (const auto & cy : curvearray[i_c][index]) {
+                        for (const auto & cy : F[i].curvearray[index]) {
                             iy = yzero - int(val::round(faktor_y*cy,0));
                             if (val::abs(y-iy) < 10) {
-                                critpoints[i_c].dellist();
-                                critx[i_c].del();
+                                F[i].critpoints.dellist();
+                                F[i].critx.del();
                                 return i;
                             }
                         }
                     }
-                    i_c++;
                     break;
                 }
                 for (ix = val::Max(abst,x); ix < endx; ++ix) {
                     index = int (val::round(double(ix-abst)*faktor_x,0));
-                    fy = farray[i_f][index];
+                    fy = F[i].farray[index];
                     iy = yzero - int(val::round(faktor_y*fy,0));
                     if (val::abs(y-iy) <10) {
+                        //undef_intervals[i_rf].dellist();
                         return i;
                     }
                 }
-                ++i_f;
             }
             break;
-        case myfunction::TEXT :
+        case plotobject::TEXT :
             {
-                int ix0=abst+int(double(sizex)*((farray[i_f][0]-x1)/(x2-x1))), sx, sy, l = F[i].getTextData().length(), p = Font[i].GetPointSize(), dx, dy;
+                int ix0=abst+int(double(sizex)*((F[i].farray[0]-x1)/(x2-x1))), sx, sy, l = F[i].textdata.length(), p = Font[i].GetPointSize(), dx, dy;
 
                 sy = p + 10; sx = (l*p*2)/3;
-                iy=yzero -int((double(sizey)/double(y2-y1)) * farray[i_f][1]);
+                iy=yzero -int((double(sizey)/double(y2-y1)) * F[i].farray[1]);
                 dx = x -ix0; dy = y - iy;
 
                 if (dx >= 0 && dx <= sx && dy >= 0 && dy <= sy) return i;
-                ++i_f;
             }
             break;
-        case myfunction::CIRCLE :
+        case plotobject::CIRCLE :
             {
                 double mx,my,r,a1,a2,angle,px,py;
                 val::GPair<double> D;
-                int dx, dy,slice;
+                int dx, dy;
 
                 px = (x2-x1)*double(x-abst)/double(sizex -1) + x1;
                 py = double(yzero-y)*(y2-y1)/double(sizey-1);
-                F[i].getCirclePoints(mx,my,r,a1,a2,slice);
+                mx = F[i].farray[0]; my = F[i].farray[1]; r = F[i].farray[2]; a1 = F[i].farray[3]; a2 = F[i].farray[4];
                 angle = degree_angle(px-mx,py-my);
-                if (angle < a1 -3 || angle >a2 +3) {++i_f; break;}
+                if (angle < a1 -3 || angle >a2 +3) break;
                 D = coordinatesdistance(mx,my,px,py,r,angle);
                 dx = int(val::round(double(sizex) * D.x / (x2-x1), 0));
                 dy = int(val::round(double(sizey) * D.y / (y2-y1), 0));
                 if (dx < 10 && dy < 10) return i;
-                ++i_f;
             }
             break;
-        case myfunction::FILL :
+        case plotobject::POINTS: case plotobject::PARCURVE:
             {
-                ++i_f;
-            }
-            break;
-        case myfunction::POINTS :
-            {
-                int ix0 = 0, n = farray[i_f].length(), j;
+                int ix0 = 0, n = F[i].farray.length(), j;
                 for (j = 0; j < n; ++j) {
                     if (j%2 == 0) {
-                        ix0 = abst + int(double(sizex)*((farray[i_f][j]-x1)/(x2-x1)));
+                        ix0 = abst + int(double(sizex)*((F[i].farray[j]-x1)/(x2-x1)));
                     }
                     else {
-                        iy = yzero -int((double(sizey)/double(y2-y1)) * farray[i_f][j]);
+                        iy = yzero -int((double(sizey)/double(y2-y1)) * F[i].farray[j]);
                         if (val::abs(ix0-x) < 10 && val::abs(y-iy) < 10) {
                             pointactive = j-1;
                             return i;
                         }
                     }
                 }
-                ++i_f;
             }
             break;
-        case myfunction::RECTANGLE :
+        case plotobject::FILL: break;
+        case plotobject::RECTANGLE :
             {
                 int ix0,iy0,ix1,iy1;
                 wxPoint l1,l2,p(x,y);
-                const val::d_array<double> &g = farray[i_f];
+                const val::d_array<double> &g = F[i].farray;
 
                 ix0 = abst+int(double(sizex)*((g[0]-x1)/(x2-x1)));
                 iy0 = yzero -int((double(sizey)/double(y2-y1)) * g[1]);
@@ -4063,15 +4110,13 @@ int PlotFunctionFrame::findactivefunction(int x, int y)
                 if (squaredistance(l1,l2,p)<100) return i;
                 l1.x = ix0; l1.y = iy0;
                 if (squaredistance(l1,l2,p)<100) return i;
-
-                ++i_f;
             }
             break;
-        default:  //myfunction::LINE , myfunction::TRIANGLE, myfunction::POLYGON
+        default:  //plotobject::LINE , plotobject::TRIANGLE, plotobject::POLYGON
             {
                 int ix0,j;
                 double inf(val::Inf);
-                val::d_array<double> g(farray[i_f]);
+                val::d_array<double> g  = F[i].farray;
                 wxPoint l0,l1,l2,p(x,y);
 
                 for (j = 0; j < g.length(); ++j) {
@@ -4098,8 +4143,7 @@ int PlotFunctionFrame::findactivefunction(int x, int y)
                         l1 = l2;
                     }
                 }
-                if (F[i].getmode() == myfunction::TRIANGLE && squaredistance(l0,l2,p)<100) return i;
-                 ++i_f;
+                if (F[i].getmode() == plotobject::TRIANGLE && squaredistance(l0,l2,p)<100) return i;
             }
             break;
         }
@@ -4156,6 +4200,7 @@ void PlotFunctionFrame::OnMouseCaptured(wxMouseEvent &event)
             fstring.resize(n);
         }
         if (dpanelinsertmode == CIRCLE_I && n_points) {
+        //if (drawcircle && n_circlepoints) {
             double dx = x - mx1, dy = y -my1, r = val::sqrt(dx*dx + dy*dy);
             fstring += "  " + val::ToString(r);
         }
@@ -4193,10 +4238,10 @@ void PlotFunctionFrame::OnMouseCaptured(wxMouseEvent &event)
         Paint();
     }
 
-    if (mouse_x1<abst) return;
-    if (mouse_x1>sizex + abst) return;
-    if (mouse_y1<abst) return;
-    if (mouse_y1 > sizey + abst) return;
+    if (mouse_x1<abst) return;//mouse_x1=abst;
+    if (mouse_x1>sizex + abst) return;//mouse_x1 = sizex + abst;
+    if (mouse_y1<abst) return;//mouse_y1=abst;
+    if (mouse_y1 > sizey + abst) return;//mouse_y1 = sizey + abst;
 
     mx1=x1;mx2=x2;my1=y1;my2=y2;
     DrawPanel->Bind(wxEVT_MOTION,&PlotFunctionFrame::OnMouseMoved,this);
@@ -4241,7 +4286,6 @@ void PlotFunctionFrame::OnMouseMoved(wxMouseEvent &event)
 
     dx1 = (x2-x1)*double(dx)/double(sizex);
     dy1 = (y2-y1)*double(dy)/double(sizey);
-
     if (active_function != -1) {
         displacefunction(active_function,dx1,-dy1);
         mouse_x1=mousex;
@@ -4277,8 +4321,8 @@ void PlotFunctionFrame::OnMouseReleased(wxMouseEvent &event)
         fstring = "";
         int i = 0;
         for (const auto & v : F) {
-            if (x_range[i].x == x_range[i].y) fstring += v.getinfixnotation() + ";\n";
-            else fstring += v.getinfixnotation() + "[" + val::ToString(x_range[i].x) + " , " + val::ToString(x_range[i].y) + "];\n";
+            if (F[i].x_range.x == F[i].x_range.y) fstring += v.getinfixnotation() + ";\n";
+            else fstring += v.getinfixnotation() + "[" + val::ToString(F[i].x_range.x) + " , " + val::ToString(F[i].x_range.y) + "];\n";
             ++i;
         }
         refreshfunctionstring();
@@ -4307,6 +4351,7 @@ void PlotFunctionFrame::OnMouseDouble(wxMouseEvent &event)
     else if (dpanelinsertmode == insert_type::POINTS_I) {
         n_points = 0;
     }
+    else if (dpanelinsertmode) return;
     else {
         mouse_x1=event.GetX(); mouse_y1=event.GetY();
         active_function = findactivefunction(mouse_x1,mouse_y1);
@@ -4333,12 +4378,13 @@ void PlotFunctionFrame::displacefunction(int i,const double &dx1,const double &d
 
     switch (F[i].getmode())
     {
-        case myfunction::FUNCTION :
+        case plotobject::FUNCTION :
             {
-                if (F[i].numberofvariables() == 1) {
+                if (F[i].f.numberofvariables() == 1) {
                     val::valfunction f(F[i].getinfixnotation()), g("x"),h(val::ToString(dx)), d = g - h, y(val::ToString(dy));
+                    std::string interval = " [" + val::ToString(F[i].x_range.x) + " , " + val::ToString(F[i].x_range.y) + " ]";
                     f = f(d) + y;
-                    F[i].infix_to_postfix(f.getinfixnotation());
+                    F[i] = plotobject(f.getinfixnotation() + interval);
                 }
                 else {
                     std::string sf = F[i].getinfixnotation() , sx, sy, nf = "";
@@ -4353,99 +4399,110 @@ void PlotFunctionFrame::displacefunction(int i,const double &dx1,const double &d
                         else nf +=sf[j];
                     }
                     val::valfunction f(nf);
-                    F[i].infix_to_postfix(f.getinfixnotation());
+                    F[i] = plotobject(f.getinfixnotation());
                 }
 
             }
             break;
-        case myfunction::TEXT :
+        case plotobject::TEXT :
             {
                 int j,k=0;
                 std::string nf="text {" + getstringfrombrackets(F[i].getinfixnotation(), '{', '}') + "}";
                 for (j = 0; j < i; ++j ) {
-                    if (F[j].numberofvariables() == 1) k++;
+                    if (F[j].f.numberofvariables() == 1) k++;
                 }
-                nf += " " + val::ToString(farray[k][0] + dx) + " " + val::ToString(farray[k][1] + dy);
-                F[i].infix_to_postfix(nf);
+                nf += " " + val::ToString(F[k].farray[0] + dx) + " " + val::ToString(F[k].farray[1] + dy);
+                F[i] = plotobject(nf);
             }
             break;
-        case myfunction::CIRCLE :
+        case plotobject::CIRCLE :
             {
                 double x,y,r,a1,a2;
                 int slice;
                 std::string nf = "circle ";
 
-                F[i].getCirclePoints(x,y,r,a1,a2,slice);
+                x = F[i].farray[0]; y = F[i].farray[1]; r = F[i].farray[2]; a1 = F[i].farray[3]; a2 = F[i].farray[4]; slice = F[i].farray[5];
                 nf += val::ToString(x+dx) + " " + val::ToString(y+dy) + " " + val::ToString(r) + " " + val::ToString(a1) + " " + val::ToString(a2) + " " + val::ToString(slice);
-                F[i].infix_to_postfix(nf);
+                F[i] = plotobject(nf);
             }
             break;
-        case myfunction::POINTS :
+        case plotobject::PARCURVE:
+            {
+                int n = F[i].farray.length();
+                F[i].f += val::valfunction(val::ToString(dx)); F[i].g += val::valfunction(val::ToString(dy));
+                F[i].s_infix = "( " + F[i].f.getinfixnotation() + " , " + F[i].g.getinfixnotation() + " )";
+                for (int j = 0; j < n-1; j+=2) {
+                    F[i].farray[j] += dx;
+                    F[i].farray[j+1] += dy;
+                }
+            }
+            break;
+        case plotobject::POINTS :
             {
                 int j,k=0;
                 std::string nf = "points";
 
                 for (j=0;j<i;++j) {
-                    if (F[j].numberofvariables() == 1) ++k;
+                    if (F[j].f.numberofvariables() == 1) ++k;
                 }
-                for (j = 0; j < farray[k].length(); ++j) {
+                for (j = 0; j < F[k].farray.length(); ++j) {
                     if (j == pointactive) {
-                        nf += " " + val::ToString(farray[k][j] + dx) + " " + val::ToString(farray[k][j+1] + dy);
+                        nf += " " + val::ToString(F[k].farray[j] + dx) + " " + val::ToString(F[k].farray[j+1] + dy);
                         ++j;
                     }
-                    else nf += " " + val::ToString(farray[k][j]);
+                    else nf += " " + val::ToString(F[k].farray[j]);
                 }
-                F[i].infix_to_postfix(nf);
+                F[i] = plotobject(nf);
             }
             break;
-        case myfunction::FILL :
+        case plotobject::FILL :
             {
             }
             break;
-        case myfunction::RECTANGLE : case myfunction::LINE :
+        case plotobject::RECTANGLE : case plotobject::LINE :
             {
                 int j, k = 0;
                 std::string nf;
-                if (F[i].getmode() == myfunction::LINE) nf = "line";
+                if (F[i].getmode() == plotobject::LINE) nf = "line";
                 else nf = "rectangle";
 
                 for (j=0;j<i;++j) {
-                    if (F[j].numberofvariables() == 1) ++k;
+                    if (F[j].f.numberofvariables() == 1) ++k;
                 }
                 for (j = 0; j < 4; ++j) {
-                    if (j%2 == 0) nf += " " + val::ToString(farray[k][j] + dx);
-                    else nf += " " + val::ToString(farray[k][j] + dy);
+                    if (j%2 == 0) nf += " " + val::ToString(F[k].farray[j] + dx);
+                    else nf += " " + val::ToString(F[k].farray[j] + dy);
                 }
-                if (F[i].getmode() == myfunction::LINE && farray[k][4] != 0) nf += " " + val::ToString(farray[k][4]);
+                if (F[i].getmode() == plotobject::LINE && F[k].farray[4] != 0) nf += " " + val::ToString(F[k].farray[4]);
 
-                F[i].infix_to_postfix(nf);
+                F[i] = plotobject(nf);
             }
             break;
-        default:  //myfunction::TRIANGLE, myfunction::POLYGON
+        default:  //plotobject::TRIANGLE, plotobject::POLYGON
             {
                 std::string nf = "";
                 int k = 0, j;
                 switch (F[i].getmode())
                 {
-                case myfunction::TRIANGLE :
+                case plotobject::TRIANGLE :
                     nf = "triangle";
                     break;
-                case myfunction::POLYGON :
+                case plotobject::POLYGON :
                     nf = "polygon";
                     break;
                 default:
                     break;
                 }
                 for (j = 0; j < i; ++j ) {
-                    if (F[j].numberofvariables() == 1) k++;
+                    if (F[j].f.numberofvariables() == 1) k++;
                 }
-                for (j = 0; j < farray[k].length(); ++j) {
+                for (j = 0; j < F[k].farray.length(); ++j) {
                     if (j%2 == 0) {
-                        nf += " " + val::ToString(farray[k][j] + dx);
+                        nf += " " + val::ToString(F[k].farray[j] + dx);
                     }
-                    else nf += " " + val::ToString(farray[k][j] + dy);
+                    else nf += " " + val::ToString(F[k].farray[j] + dy);
                 }
-                F[i].infix_to_postfix(nf);
+                F[i] = plotobject(nf);
             }
             break;
     }
@@ -4488,7 +4545,6 @@ void PlotFunctionFrame::changedpanelinsertmode(int mode)
         n_points = 0;
     }
 }
-
 
 void PlotFunctionFrame::SendNotification(const std::string& s)
 {
@@ -4546,7 +4602,6 @@ void PlotFunctionFrame::OnZoom(wxCommandEvent &event)
     if (id == 20001) zoom*=0.96;
     else zoom*=1.04;
     if (!iscomputing) {
-        //iscomputing=1;
         x1*=zoom;x2*=zoom;y1*=zoom;y2*=zoom;
         zoom=1.0;
         xstring=val::ToString(x1) + ";" + val::ToString(x2);
@@ -4554,7 +4609,6 @@ void PlotFunctionFrame::OnZoom(wxCommandEvent &event)
         Compute();
     }
 }
-
 
 void PlotFunctionFrame::OnMove(wxCommandEvent &event)
 {
@@ -4614,6 +4668,7 @@ void PlotFunctionFrame::OnMove(wxCommandEvent &event)
         movex=movey=0;
         Compute();
     }
+
 }
 
 
@@ -4628,9 +4683,10 @@ void PlotFunctionFrame::OnSelectActiveFunction(wxCommandEvent &event)
         if (j != -1 && F[j].IsPoints()) {
             int i_f = 0;
             for (i = 0; i < j; ++i) {
-                if (F[i].numberofvariables() == 1) ++i_f;
+                if (F[i].f.numberofvariables() == 1) ++i_f;
             }
-            n = farray[i_f].length();
+            n = F[i_f].farray.length();
+            //wxMessageBox(val::ToString(n));
             if (id == 20007) pointactive += 2;
             else pointactive -= 2;
             if (pointactive < n && pointactive >= 0) {
@@ -4697,6 +4753,9 @@ void PlotFunctionFrame::setfunctionsmenu()
 #endif // _WIN32
 
 
+
+
+
 void PlotFunctionFrame::OnMenuRecent(wxCommandEvent& event)
 {
     if (event.GetId()==601) {
@@ -4713,6 +4772,7 @@ void PlotFunctionFrame::OnMenuRecent(wxCommandEvent& event)
 
     int m=event.GetId()-6000,isvalid=1;
     std::string f,dirname,filename;
+
 
     f=recentfiles[m];
     if (!val::FileExists(f)) {
@@ -4853,7 +4913,6 @@ void PlotFunctionFrame::CompareSideTextInput()
     fstring = "";
     for (const auto &v : words) {
         first_word = val::getfirstwordofstring(v,numsep);
-        //wxMessageBox(first_word);
         if ( ((m = first_word.length()) > 0) && first_word[0] == '#') {
             s_func = val::tailofstring(v,v.length()-m-2);
         }
@@ -4881,7 +4940,6 @@ void PlotFunctionFrame::OnLostFocus(wxFocusEvent &event)
     CompareSideTextInput();
     event.Skip();
 }
-
 
 void PlotFunctionFrame::OnSideBarCheck(wxCommandEvent &event)
 {
@@ -4947,12 +5005,12 @@ void PlotFunctionFrame::CreateNoteBook()
         *panel3 = new wxPanel(notebook,8003,wxDefaultPosition,wxSize(widthNoteBookPanel,100));
     int i, n_view = 5,viewf_size = 12, viewdy = viewf_size + 30, y, rows = 4, columns = 3, n_tools = rows*columns, b_xsize = 50;
 
+
     panel1->SetBackgroundColour(panel1->GetBackgroundColour());
     notebook->AddPage(panel1, "View");
     notebook->AddPage(panel2, "Tools");
     notebook->AddPage(panel3, "Settings");
 
-    // Add items to View-Panel;
     val::d_array<std::string> view_names{"Show Grid:", "Show x-Axis:", "Show y-Axis:", "Show x-Scale:", "Show y-Scale:"};
     val::d_array<std::string> view_tips{"Alt-G", "Alt-X", "Alt-Y", "Shift-Alt-X", "Shift-Alt-Y"};
     val::d_array<wxStaticText*> ViewText{nullptr,n_view};

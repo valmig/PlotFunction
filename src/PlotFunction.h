@@ -21,7 +21,8 @@
 
 
 class MyThreadEvent;
-class myfunction;
+//class myfunction;
+struct plotobject;
 
 
 extern wxFrame *MyFrame;
@@ -30,9 +31,9 @@ extern std::string fstring,xstring,ystring,filesep,filedir,sizestring,settingsfi
                    openfiledir,handcursor,RecentFilesPath,alticonpath, RecentCommandsPath, errorfile, ansexpr;
 
 extern std::mutex compute_mutex;
-extern myfunction global_function;
-extern val::d_array<val::Glist<val::GPair<double>>> critpoints;//,undef_intervals;
-extern val::d_array<val::d_array<double>> critx;
+extern plotobject global_function;
+//extern val::d_array<val::Glist<val::GPair<double>>> critpoints;//,undef_intervals;
+//extern val::d_array<val::d_array<double>> critx;
 extern val::d_array<wxString> analyze_output;
 extern val::d_array<val::d_array<val::GPair<double>>> Points;
 extern const val::d_array<wxString> greek_literals;
@@ -44,14 +45,9 @@ extern const val::d_array<std::string> SettingsList;
 extern const val::d_array<std::string> SettingsParList;
 extern const val::d_array<std::string> CommandsParList;
 extern val::Glist<std::string> recentcommands;
-//extern const val::d_array<std::string> CommandsManList;
-
 extern const val::d_array<std::string> WordList;
 extern const val::trie_type<std::string> WordTree;
 extern const val::trie_type<std::string> InputDialogTree;
-
-
-//static std::mutex computemutex;
 
 
 enum val_colors{BLUE,RED,GREEN,LBLUE,ORANGE,VIOLET,GREY,WHITE,BlACK,LGREY,YELLOW,DGREEN,BEIGE,BROWN,DBLUE,PINK,SKYBLUE,LGREEN};
@@ -109,28 +105,28 @@ int getpiscale(const std::string& s,val::rational &factor,double &scale,int pos 
 
 int isInf(const double& a);
 
-int isderived(const std::string &s);
+//int isderived(const std::string &s);
 
-int isderived(const myfunction &f);
+//int isderived(const myfunction &f);
 
-int islinearfunction(const myfunction &F);
+//int islinearfunction(const myfunction &F);
 
 int isinarray(const val::rational& value,const val::d_array<val::rational> & x);
 
-double derive(const myfunction &f,const double& x);
+double derive(const plotobject &f,const double& x);
 
 val::rationalfunction derive(const val::rationalfunction &f);
 
 val::rational eval(const val::rationalfunction &F,const val::rational &x);
 
-void gettangentvalues(const myfunction &f,const double &x,double &m,double &b,int tangent=1);
+void gettangentvalues(const plotobject &f,const double &x,double &m,double &b,int tangent=1);
 
 std::string extractstringfrombrackets(std::string &sf,const char lb, const char rb);
 
 std::string getstringfrombrackets(const std::string &sf,const char lb, const char rb);
 
 // Returns color index if specified, -1 else.
-int getfunctionfromstring(std::string &fstring,std::string& f_s,double &x1,double &x2);
+int getfunctionfromstring(std::string &fstring, plotobject &f);
 
 val::Glist<double> getdoublevaluesfromstring(const std::string &sf,const val::d_array<char>& separators, int emptystring = 0);
 
@@ -143,36 +139,37 @@ val::pol<val::rational> interpolation(const std::string &s);
 
 std::string delcharfromstring(const std::string& s,const char z=' ');
 
-void computepoints(const val::Glist<myfunction> &F,val::d_array<val::d_array<double>> &farray,val::d_array<val::d_array<val::d_array<double> > > &carray,
-                   int points,const double &x1,const double &x2,double &ymax,double &ymin,int activef,int comppoints);
+void computepoints(val::Glist<plotobject> &F, int points,const double &x1,const double &x2,double &ymax,double &ymin,int activef,int comppoints);
 
-void computetable(const myfunction& f,double x1,double x2,double dx);
+void computetable(const plotobject& f,double x1,double x2,double dx);
 
-void computetable_rat(const myfunction& f,val::rational x1,val::rational x2,val::rational dx);
+void computetable_rat(const plotobject& f,val::rational x1,val::rational x2,val::rational dx);
 
-void computeevaluation(const myfunction& f, double par);
+void computeevaluation(const plotobject& f, double par);
 
 void calculate(std::string s);
 
 void computeinterpolation(std::string input,std::string &Fstring);
 
-void computezeroiteration(const myfunction& f,double x1,double x2,double eps,int n,int dez);
+void computezeroiteration(const plotobject& f,double x1,double x2,double eps,int n,int dez);
 
-void computerotation(const val::d_array<myfunction*> F,std::string input);
+void computerotation(const val::d_array<plotobject*> F,std::string input);
 
-void computeregression(const myfunction& f,int degree=1);
+void computeregression(const plotobject& f,int degree=1);
 
-void computepointstatistics(const myfunction& f, std::string input);
+void computepointstatistics(const plotobject& f, std::string input);
 
-void analyze_triangle(const myfunction &f, std::string input);
+void analyze_triangle(const plotobject &f, std::string input);
 
-void computetangent(std::string sf,const myfunction& f,double x1,double x2,int tangent=1);
+void computetangent(std::string sf,const plotobject& f,double x1,double x2,int tangent=1);
 
 template <class T>
 double kepler_simpson_sum(const T& f,const double& a,const double& b,int n);
 
+
 template <class T>
 double integral(const T& f,const double &a,const double &b,int iter = 50, const double& delta=1e-8);
+
 
 // Iterationsverfahren zur Bestimmung einer Nullstelle nach der Sekanten-Methode:
 // Rückgabe: -2 Iterationsgrenze wird nicht erreicht, Methode fehlgeschlagen.
@@ -190,7 +187,7 @@ struct drawingword
 
 //-----------------------------   class myfunction ----------------------------------------------------------------------------------------
 
-
+/*
 class myfunction
 {
 public:
@@ -232,7 +229,6 @@ public:
     int IsPoints() const {return mode==POINTS;}
     enum modetype {FUNCTION,LINE,TEXT,CIRCLE,RECTANGLE,TRIANGLE,FILL,POLYGON,POINTS};
     modetype getmode() const {return mode;}
-    //void print() const;
 private:
     struct token {
         std::string data="";
@@ -272,7 +268,6 @@ T myfunction::operator() (const T& x) const
 
     GlistIterator<myfunction::token> iT;
     Glist<T> G;
-
 
     for (iT=Gdat;iT;iT++) {
         G.resetactual();
@@ -380,7 +375,6 @@ val::pol<T> myfunction::getpol(const T& a,const char var) const
                 if (!G.isempty()) {
                     value=G.actualvalue();
                     G.skiphead();
-                    //value=val::power(value,int(val::integer(val::rational(v2))));
                     value=val::power(value,exponent);
                 }
                 G.inserttohead(std::move(value));
@@ -392,7 +386,7 @@ val::pol<T> myfunction::getpol(const T& a,const char var) const
     if (!G.isempty()) value=std::move(G.actualvalue());
     return value;
 }
-
+*/
 
 // ------------------------------------------------------------------------------------------------------------------------------------
 
@@ -439,5 +433,49 @@ double integral(const T& f,const double &a,const double &b,int iter, const doubl
 
     return wert2;
 }
+
+// ---------------------------------------------------------------------------------------------------------------------------------------------------
+
+struct plotobject
+{
+    enum modetype {LINE,TEXT,CIRCLE,RECTANGLE,TRIANGLE,FILL,POLYGON,POINTS,PARCURVE,FUNCTION};
+    //
+    val::valfunction f,g;
+    val::d_array<double> farray, critx;
+    val::d_array<val::d_array<double> > curvearray;
+    val::Glist<val::GPair<double>> critpoints;//,undef_intervals;
+	val::Glist<drawingword> TextWords;
+    wxString textdata;
+    std::string s_infix;
+    val::GPair<double> x_range{0.0,0.0};
+    int objectype = FUNCTION, islinear = 0;
+    //
+    static const val::d_array<std::string> s_object_type;
+    static const val::d_array<int> defnpoints;
+    //
+    // Constructors:
+    plotobject() = default;
+    explicit plotobject(const std::string &);
+    //
+    const std::string& getinfixnotation() const {return s_infix;}
+    int is_empty() const {return s_infix == "";}
+    int getmode() const {return objectype;}
+    int iswithparameter() const;
+    int IsLine() const {return (objectype==LINE);}
+    int IsText() const {return (objectype==TEXT);}
+    int IsCircle() const {return (objectype==CIRCLE);}
+    int IsRectangle() const {return (objectype==RECTANGLE);}
+    int IsTriangle() const {return (objectype==TRIANGLE);}
+    int IsFill() const {return (objectype==FILL);}
+    int IsPolygon() const {return objectype==POLYGON;}
+    int IsPoints() const {return objectype==POINTS;}
+    int IsParcurve() const {return objectype==PARCURVE;}
+    //
+    val::pol<double> getpol(const double& x) const;
+    //
+    void setdrawingwords(const wxString &s);    // replace std::string with wxString
+};
+
+
 
 #endif // PLOTFUNCTION_H_INCLUDED

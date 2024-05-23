@@ -30,8 +30,8 @@
 
 class MyThreadEvent;
 class ParentEvent;
-class myfunction;
-
+//class myfunction;
+class plotobject;
 
 
 enum viewnum{VGRID, VXAXIS, VYAXIS, VSCALEX, VSCALEY};
@@ -88,6 +88,7 @@ class PlotFunctionFrame: public wxFrame
         wxMenuItem* Menu_yAxis;
         wxPanel* DrawPanel;
         wxStatusBar* StatusBar1;
+        //*)
         wxBoxSizer *BoxSizer1, *BoxSizer2;
         val::CompleteTextCtrl *SideText = nullptr;
 
@@ -132,9 +133,9 @@ class PlotFunctionFrame: public wxFrame
                     *addpointsmenu, *polygonpointsmenu, *linepointsmenu, *rectanglemenu , *circlemenu, *multicolormenu, *trianglemenu;
         int ispainted=0,N=0,points=1000,abst=10,sizex,sizey,yzero,yset=1,defaultsize=1,fontsize=10,nchildwindows=0;
         int settings=0,Posx=0,Posy=0,clientsize_x=0,clientsize_y=0,iter=50,dez=4,mouse_x1,mouse_y1,fillfunctions=0,pi_scale_x=0,pi_scale_y=0;//mouse_x2,mouse_y2;
-        int n_fstring=1,a_fstring=0,axis_pen=2,grid_pen=1,iscomputing=0,MaxRecent=10,addingpoints=0,drawpoints=0, doubleclicked = 0;
+        int n_fstring=1,a_fstring=0,axis_pen=2,grid_pen=1,iscomputing=0,MaxRecent=10, doubleclicked = 0;
         int regressiondegree=1,rounddrawingpoints=-2,nanalyzewindows=0,active_function=-1,pointactive=0,decimalx=0,decimaly=0;
-        int moveinpointsx = 0, moveinpointsy = 0;// drawpolygon = 0, n_polygonpoints=0, drawline = 0, n_linepoints = 0, drawrectangle = 0, n_rectanglepoints = 0, drawcircle = 0, n_circlepoints = 0;
+        int moveinpointsx = 0, moveinpointsy = 0;
         int bitmapbackground = 0, axis_fontsize = 10, SideText_isshown = 0, widthSideText = 200;
         int notebook_isshown = 0, widthNoteBookPanel = 200, plusw = 12, dpanelinsertmode = NORMAL_I, n_points = 0, wraptext = 0;
         long InfoStyle = wxRESIZE_BORDER;
@@ -152,16 +153,16 @@ class PlotFunctionFrame: public wxFrame
         wxBitmap actualBitmapBackground, *cpaper = nullptr;
         wxImage BackgroundImage;
         wxColour axis_color ,grid_color, defaultpaintcolor;
-        val::d_array<val::d_array<double> > farray;
-        val::d_array<val::d_array<val::d_array<double> > > curvearray;
+        //val::d_array<val::d_array<double> > farray;
+        //val::d_array<val::d_array<val::d_array<double> > > curvearray;
         wxColour BackgroundColor = wxColour(255,255,255);
         val::d_array<wxColor> Color;
         val::d_array<wxFont> Font;
         val::d_array<wxMenuItem*> f_menu,c_menu;
-        val::d_array<int> pen,islinear;
-        val::Glist<myfunction> F;
+        val::d_array<int> pen;//islinear;
+        val::Glist<plotobject> F;
         val::Glist<val::rational> Parameter{val::rational(1)};
-        val::Glist<val::GPair<double> > x_range;
+        //val::Glist<val::GPair<double> > x_range;
         val::d_array<std::string> functionstring{30};
         val::d_array<std::string> dpanelnotification{"Points", "Polygon", "Line", "Rectangle", "Circle", "Triangle"};
         //
@@ -182,6 +183,7 @@ class PlotFunctionFrame: public wxFrame
 
         void valFloodFill(wxMemoryDC& dc, int x, int y, const wxColour &fgc);
         void plotvertices(wxDC& dc);
+        /*
         void plotfunction(wxDC& dc,const val::d_array<double> &f,int colour=0);
         void plotline(wxDC& dc,const val::d_array<double> &f,int colour=0);
         void plotcircle(wxDC& dc,const val::d_array<double> &f,int colour=0);
@@ -193,6 +195,18 @@ class PlotFunctionFrame: public wxFrame
         void plottext(wxDC& dc,const val::d_array<double> &f,int colour=0);
         void plotcurve(wxDC& dc,const val::d_array<val::d_array<double> > &c,const val::Glist<val::GPair<double>>& critpoints
                        ,const val::d_array<double> &critx,int colour=0);
+        */
+        void plotfunction(wxDC& dc,int colour);
+        void plotline(wxDC& dc,int colour);
+        void plotcircle(wxDC& dc,int colour);
+        void plotrectangle(wxDC& dc,int colour);
+        void plottriangle(wxDC& dc,int colour);
+        void plotfill(wxMemoryDC& dc,int colour);
+        void plotpolygon(wxDC& dc,int colour);
+        void plotpoints(wxDC& dc,int colour);
+        void plottext(wxDC& dc,int colour);
+        void plotcurve(wxDC& dc,int colour);
+        void plotparcurve(wxDC& dc,int colour);
         void plotallfunctions(wxMemoryDC& dc);
         void plottomemoryDc(wxMemoryDC &memDC);
         void refreshfunctionstring();
@@ -210,7 +224,6 @@ class PlotFunctionFrame: public wxFrame
         void OnSideBarCheck(wxCommandEvent&);
         void OnSideBarEvaluate(wxCommandEvent&);
         void ChangeSideTextStyle(wxCommandEvent&);
-        //
         void CreateNoteBook();
         void OnNoteBookSwitch(wxCommandEvent &event);
         void OnNoteBookButtons(wxCommandEvent &event);
@@ -219,6 +232,8 @@ class PlotFunctionFrame: public wxFrame
         void ProcessText_Edit(int id);
         void switchrefresh();
         void Text_Editrefresh();
+
+        //DECLARE_EVENT_TABLE()
 };
 
 #endif // PLOTFUNCTIONMAIN_H
