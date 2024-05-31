@@ -69,17 +69,18 @@ const val::d_array<wxString> greek_letters{L"\u03B1", L"\u03B2", L"\u03B3", L"\u
 
 const val::d_array<std::string> WordList{"PI", "exp", "log", "line", "sinh", "sqrt", "cosh", "circle", "tanh", "text", "triangle", "polygon", "points",
                                    "inf", "fill", "abs", "arcsin", "arccos", "arctan", "rectangle", "sin", "cos", "tan",
-                                   "arsinh", "arcosh", "artanh" };
+                                   "arsinh", "arcosh", "artanh", "bitmap"};
 
-
+/*
 val::d_array<std::string> sfunctionlist({"sqrt", "exp", "log", "abs", "sinh", "cosh", "tanh", "arsinh", "arcosh", "artanh",
 										"sin", "cos", "tan", "arcsin", "arccos", "arctan", "inf", "PI", "line", });
-
+*/
+/*
 val::d_array<val::GPair<std::string,val::d_function*>>
 functionpairs ({ {"sqrt",val::sqrt}, {"abs",val::abs}, {"exp", val::exp}, {"log", val::log}, {"sin", val::sin}, {"cos", val::cos},
             {"tan", val::tan}, {"arcsin", val::arcsin}, {"arccos", val::arccos}, {"arctan", val::arctan}, {"sinh", val::sinh},
             {"cosh", val::cosh}, {"tanh", val::tanh}, {"arsinh", val::arsinh}, {"arcosh", val::arcosh}, {"artanh", val::artanh}});
-
+*/
 
 const val::d_array<wxColour> defaultcolors{wxColour(0,0,255), wxColour(255,0,0), wxColour(0,255,0), wxColour(173,216,230),
                                       wxColour(255,116,0), wxColour(238,0,255), wxColour(125,125,125), wxColour(255,255,255),
@@ -168,7 +169,7 @@ int operator <(const val::GPair<double>& p,const val::GPair<double>& q)
 
 
 // -------------------------------------------------------------------------------------------------------------------------------
-
+/*
 std::string getstringfunction(const std::string &s, int j)
 {
 	int n = s.length() - j, m, found, i;
@@ -203,7 +204,7 @@ int getindexoffunction(const std::string &sf)
 
 	return -1;
 }
-
+*/
 
 // -----------------------------------------------------------------------------
 
@@ -1102,7 +1103,7 @@ void computerotation(const val::d_array<plotobject*> F,std::string input)
     std::string sf,sval;
     val::d_array<double> d_f;
     int i,n;
-    double x0=0,y0=0,alpha=0;
+    double x0=0,y0=0,alpha=0, x1= 0, x2 = 0;
 
     val::d_array<char> separ({';',' '});
     //val::Glist<double>
@@ -1113,6 +1114,8 @@ void computerotation(const val::d_array<plotobject*> F,std::string input)
     if (n > 0) alpha = values[0];
     if (n > 1) x0 = values[1];
     if (n > 2) y0 = values[2];
+    if (n > 3) x1 = values[3];
+    if (n > 4) x2 = values[4];
 
 
     A=val::rotationmatrix(val::PI*alpha/180.0);
@@ -1146,17 +1149,27 @@ void computerotation(const val::d_array<plotobject*> F,std::string input)
                 d_f = f->farray;
                 break;
             }
-            case plotobject::PARCURVE: {
+            case plotobject::PARCURVE: case plotobject::FUNCTION: {
+                val::valfunction f1,f2;
+                if (fmode == plotobject::FUNCTION) {
+                    if (f->f.numberofvariables() > 1) return;
+                    f1 = val::valfunction("x");
+                    f2 = f->f;
+                }
+                else {
+                    f1 = f->f; f2 = f->g;
+                    x1 = f->x_range.x; x2 = f->x_range.y;
+                }
                 val::valfunction A00(val::ToString(A(0,0))), A01(val::ToString(A(0,1))), A10(val::ToString(A(1,0))), A11(val::ToString(A(1,1)));
-                val::valfunction m0(val::ToString(m(0))), m1(val::ToString(m(1))), f1, g1;
-                f1 = A00*(f->f-m0) + A01*(f->g -m1) + m0;
-                g1 = A10*(f->f-m0) + A11*(f->g -m1) + m1;
-                sf += "( " + f1.getinfixnotation() + " , " + g1.getinfixnotation() + " )  [ " + val::ToString(f->x_range.x) + " , " + val::ToString(f->x_range.y) + " ]";
+                val::valfunction m0(val::ToString(m(0))), m1(val::ToString(m(1))), g1, g2;
+                g1 = A00*(f1-m0) + A01*(f2 -m1) + m0;
+                g2 = A10*(f1-m0) + A11*(f2 -m1) + m1;
+                sf += "( " + g1.getinfixnotation() + " , " + g2.getinfixnotation() + " )  [ " + val::ToString(x1) + " , " + val::ToString(x2) + " ]";
             }
 
             default: break;
         }
-        if (fmode != plotobject::PARCURVE) {
+        if (fmode != plotobject::PARCURVE && fmode != plotobject::FUNCTION) {
             n = d_f.length();
             for (i =0;i<n;++i) {
                 x(i%2) = d_f[i];
@@ -1392,10 +1405,59 @@ void computetangent(std::string sf,const plotobject &f,double x1,double x2,int t
 
     if (f.f.numberofvariables()<=1) isfunction=1;
 
-    val::valfunction F(f.getinfixnotation());
+    val::valfunction F(f.f.getinfixnotation());
     F.setparameter(f.f.getparameter());
 
-    if (isfunction) {
+    if (f.getmode() == plotobject::PARCURVE) {
+        val::valfunction G = f.g, f1 = f.f.derive(), g1 = f.g.derive(), h;
+
+        if (isingraph) h = F - val::valfunction(val::ToString(x,15));
+        else {
+            val::valfunction h1, h2 = G - val::valfunction(val::ToString(y,15));
+            if (tangent) {
+                h1 = val::valfunction(val::ToString(x,15)) - F;
+                h = h1*g1 + h2*f1;
+            }
+            else {
+                h1 = F - val::valfunction(val::ToString(x,15));
+                h = h1*f1 + h2*g1;
+            }
+        }
+        //F -= val::valfunction(val::ToString(x));
+
+        auto t_values = h.double_roots(f.x_range.x, f.x_range.y, 1000);
+        if (t_values.isempty()) return;
+        double x1, y1, b;
+        std::string s_p = ";\npoints ";
+        n = 0;
+        for (const auto& t : t_values) {
+            x1 = f1(t); y1 = g1(t);
+            if (val::abs(x1) < 1e-9 && val::abs(y1) < 1e-9) continue;
+            ++n;
+            m = y1/x1;
+            //std::cout <<"\nf1 = " << f1.getinfixnotation() << " ;t = " << t << "; x1 = "<< x1 << "; m = " << m << std::endl;
+            if (tangent) {
+                if (val::abs(x1) < 1e-9) m = val::Inf;
+            }
+            else {
+                if (val::abs(m) < 1e-9) m = val::Inf;
+                else m = -1/m;
+            }
+            if (isInf(m)) {
+                fstring += ";\nline " + val::ToString(x) + " -inf " + val::ToString(x) + " inf";
+            }
+            else {
+                if (val::abs(m) < 1e-9) m = 0.0;
+                if (isingraph) b = f.g(t) - m*x;
+                else b = y - m*x;
+                h = val::valfunction(val::ToString(m) + "*x") + val::valfunction(val::ToString(b));
+                fstring += ";\n" + h.getinfixnotation();
+            }
+            s_p += val::ToString(F(t)) + " " + val::ToString(G(t)) + " ";
+        }
+        if (n) fstring += s_p;
+    }
+    else if (isfunction) {
         int diffbar = 0;
         if (isingraph) {
             if (F.isdifferentiable()) {
@@ -2487,7 +2549,8 @@ void myfunction::settextdata()
 // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 const val::d_array<std::string> plotobject::s_object_type{"line", "text", "circle", "rectangle", "triangle", "fill", "polygon", "points"};
-const val::d_array<int> plotobject::defnpoints{5,2,6,4,6,3,2,2};
+const val::d_array<int> plotobject::defnpoints{5,2,6,4,6,3,2,2,4};
+val::Glist<wxImage> plotobject::image;
 
 //replace std::tring with wxString
 void plotobject::setdrawingwords(const wxString &s)
@@ -2574,6 +2637,38 @@ plotobject::plotobject(const std::string &sf)
         if (!getpiscale(values[1],factor,x_range.y,0)) x_range.y = val::FromString<double>(values[1]);
     }
 
+    // Check if object is a bitmap
+    if (fw.find("bitmap") != std::string::npos) {
+        if (image.isempty()) return;
+        int pos = 1, l = fw.length(), m, sx, sy = 0;
+        std::string s_pos;
+        for (int i = 7; i < l; ++i) s_pos += fw[i];
+        //std::cout << "\n s_pos = " << s_pos << std::endl;
+        if (s_pos != "") pos = val::FromString<int>(s_pos);
+        if (pos < 1 || pos > image.length()) return;
+        //
+        objectype = BITMAP;
+        farray = val::d_array<double>(0.0,defnpoints[BITMAP]);
+        values.dellist();
+        values = getwordsfromstring(s_f, val::d_array<char>({' '}));
+        values.skiphead();
+        m = val::Min(farray.length(),values.length());
+        for (int i = 0; i < m; ++i) farray[i] = val::FromString<double>(values[i]);
+        // assign bitmap to bitmap;
+        sx = int(farray[2]); sy = int(farray[3]);
+        if (sy == 0) sy = sx;
+        if (sx < 0) sx = image[pos-1].GetWidth();
+        if (sy < 0) sy = image[pos-1].GetHeight();
+        farray[2] = double(sx); farray[3] = double(sy);
+        wxImage s_image = image[pos-1].Scale(sx,sy);
+        bitmap = wxBitmap(s_image);
+        //
+        s_infix = "bitmap_" + val::ToString(pos);
+        for (const auto &v: farray) s_infix += " " + val::ToString(v);
+        return;
+    }
+
+    // Check for other object types:
     for (i = 0; i < s_object_type.length(); ++i) {
         if (fw == s_object_type[i]) {
             objectype = i;

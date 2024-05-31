@@ -1433,7 +1433,7 @@ void analize_rationalfunction(val::valfunction& F,const double& eps,int dec)
     int N=0,N_r=0,rat=1,klammer=0, digits;
 
     //val::rationalfunction::setreduced(0);
-    val::vector<double> zeros;
+    val::vector<double> zeros, undefval;
     val::d_array<val::rational> r_zeros;
     val::valfunction FF;
     val::rationalfunction F_r = F.getrationalfunction(0), FF_r=F_r;
@@ -1494,6 +1494,7 @@ void analize_rationalfunction(val::valfunction& F,const double& eps,int dec)
     N=zeros.dimension();
     if (N) {
         zeros.sort();
+        undefval = zeros;
         analyze_output[0]+="Number of gaps of definition: " + val::ToString(N) + "\n";
         for (int i=0;i<N;++i) {
             if (zeros[i]==0) zeros[i] = 0.0;
@@ -1567,6 +1568,7 @@ void analize_rationalfunction(val::valfunction& F,const double& eps,int dec)
     // Extrema:
     val::d_array<int> vzw;
     int pm=0,mp=0;
+    double gap = 1.0, h;
 
     F_r=derive(F_r);
     F = val::valfunction(PolfractionToString(F_r));
@@ -1587,15 +1589,25 @@ void analize_rationalfunction(val::valfunction& F,const double& eps,int dec)
         int ydigits;
         vzw.resize(N);
         zeros.sort();
+        for ( const auto &xd : undefval) {
+            for (const auto &z : zeros) {
+                h = val::abs(z - xd);
+                if (h < gap) gap = h;
+            }
+        }
+        for (int i = 1; i < N; ++i) {
+            h = val::abs(zeros[i]-zeros[i-1]);
+            if (h < gap) gap = h;
+        }
         for (int i=0;i<N;++i) {
             vzw[i]=0;
             if (zeros[i]==0) zeros[i] = 0;
             //os+=val::ToString(zeros[i]) + " : "+val::ToString(F(zeros[i]-eps)) + " , " + val::ToString(F(zeros[i]+eps)) + " ; ";
-            if (F(zeros[i]-2*eps) >0 && F(zeros[i]+2*eps)<0) {
+            if (F(zeros[i]-gap) >0 && F(zeros[i]+gap)<0) {
                 vzw[i]=1;
                 pm++;
             }
-            if (F(zeros[i]-2*eps)<0 && F(zeros[i]+2*eps)>0) {
+            if (F(zeros[i]-gap)<0 && F(zeros[i]+gap)>0) {
                 vzw[i]=-1;
                 mp++;
             }
@@ -1613,8 +1625,8 @@ void analize_rationalfunction(val::valfunction& F,const double& eps,int dec)
                 analyze_output[2]+="\nNumber of maxima: " + val::ToString(pm) + "\n";
                 for (int i=0;i<N;++i) {
                     if (vzw[i]==1) {
-            			digits = intdigits(zeros[i]) + dec;
-            			digits = val::Min(digits,val::MaxPrec);
+                        digits = intdigits(zeros[i]) + dec;
+                        digits = val::Min(digits,val::MaxPrec);
                         y = FF(zeros[i]);
                         ydigits = intdigits(y) + dec;
                         ydigits = val::Min(ydigits,val::MaxPrec);
@@ -1633,8 +1645,8 @@ void analize_rationalfunction(val::valfunction& F,const double& eps,int dec)
                 analyze_output[2]+="\nNumber of minima: " + val::ToString(mp) + "\n";
                 for (int i=0;i<N;++i) {
                     if (vzw[i]==-1) {
-            			digits = intdigits(zeros[i]) + dec;
-            			digits = val::Min(digits,val::MaxPrec);
+                        digits = intdigits(zeros[i]) + dec;
+                        digits = val::Min(digits,val::MaxPrec);
                         y = FF(zeros[i]);
                         ydigits = intdigits(y) + dec;
                         ydigits = val::Min(ydigits,val::MaxPrec);
@@ -1651,6 +1663,7 @@ void analize_rationalfunction(val::valfunction& F,const double& eps,int dec)
             }
 
         }
+        else analyze_output[2] += "No extrema.";
     }
     else analyze_output[2]+="No extrema.";
     analyze_output[2]+="\n";
@@ -1679,6 +1692,17 @@ void analize_rationalfunction(val::valfunction& F,const double& eps,int dec)
         int ydigits;
         vzw.resize(N);
         zeros.sort();
+        gap = 1.0;
+        for ( const auto &xd : undefval) {
+            for (const auto &z : zeros) {
+                h = val::abs(z - xd);
+                if (h < gap) gap = h;
+            }
+        }
+        for (int i = 1; i < N; ++i) {
+            h = val::abs(zeros[i]-zeros[i-1]);
+            if (h < gap) gap = h;
+        }
         for (int i=0;i<N;++i) {
             vzw[i]=0;
             if (zeros[i]==0) zeros[i] = 0;
@@ -1705,8 +1729,8 @@ void analize_rationalfunction(val::valfunction& F,const double& eps,int dec)
                 analyze_output[3]+="\nNumber of  LR-IP: " + val::ToString(pm) + "\n";
                 for (int i=0;i<N;++i) {
                     if (vzw[i]==1) {
-            			digits = intdigits(zeros[i]) + dec;
-            			digits = val::Min(digits,val::MaxPrec);
+                        digits = intdigits(zeros[i]) + dec;
+                        digits = val::Min(digits,val::MaxPrec);
                         y = FF(zeros[i]);
                         ydigits = intdigits(y) + dec;
                         ydigits = val::Min(ydigits,val::MaxPrec);
@@ -1725,8 +1749,8 @@ void analize_rationalfunction(val::valfunction& F,const double& eps,int dec)
                 analyze_output[3]+="\nNumber of RL-IP: " + val::ToString(mp) + "\n";
                 for (int i=0;i<N;++i) {
                     if (vzw[i]==-1) {
-            			digits = intdigits(zeros[i]) + dec;
-            			digits = val::Min(digits,val::MaxPrec);
+                        digits = intdigits(zeros[i]) + dec;
+                        digits = val::Min(digits,val::MaxPrec);
                         y = FF(zeros[i]);
                         ydigits = intdigits(y) + dec;
                         ydigits = val::Min(ydigits,val::MaxPrec);
@@ -1743,6 +1767,7 @@ void analize_rationalfunction(val::valfunction& F,const double& eps,int dec)
             }
 
         }
+        else analyze_output[3] += "No inflection points.";
     }
     else analyze_output[3]+="No inflection points.";
     analyze_output[3]+="\n";
@@ -1819,6 +1844,7 @@ void analyze_exprationalfunction(const val::valfunction &f,const double &eps=1e-
     //
 
     //Extrema:
+    double gap = 1.0, h;
     r_zeros.del();
     F=f.derive();
     F_r = hintegral::getrationalfrom_oprat(F,"exp").getrationalfunction();
@@ -1842,15 +1868,19 @@ void analyze_exprationalfunction(const val::valfunction &f,const double &eps=1e-
     val::realRoots(f_d,zeros,eps);
     N = zeros.dimension();
     zeros.sort();
+    for (int i = 1; i < N; ++i) {
+        h = val::abs(zeros[i]-zeros[i-1]);
+        if (h < gap) gap = h;
+    }
     vzw.resize(N);
     for (i=0;i<N;++i) {
         vzw[i]=0;
         if (zeros[i]==0) zeros[i] = 0;
-        if (F(zeros[i]-2*eps) >0 && F(zeros[i]+2*eps)<0) {
+        if (F(zeros[i]-gap) >0 && F(zeros[i]+gap)<0) {
             vzw[i]=1;
             pm++;
         }
-        if (F(zeros[i]-2*eps)<0 && F(zeros[i]+2*eps)>0) {
+        if (F(zeros[i]-gap)<0 && F(zeros[i]+gap)>0) {
             vzw[i]=-1;
             mp++;
         }
@@ -1863,8 +1893,8 @@ void analyze_exprationalfunction(const val::valfunction &f,const double &eps=1e-
             analyze_output[2]+="\nNumber of maxima: " + val::ToString(pm) + "\n";
             for (i=0;i<N;++i) {
                 if (vzw[i]==1) {
-            		digits = intdigits(zeros[i]) + dec;
-            		digits = val::Min(digits,val::MaxPrec);
+                    digits = intdigits(zeros[i]) + dec;
+                    digits = val::Min(digits,val::MaxPrec);
                     y = f(zeros[i]);
                     ydigits = intdigits(y) + dec;
                     ydigits = val::Min(ydigits,val::MaxPrec);
@@ -1886,8 +1916,8 @@ void analyze_exprationalfunction(const val::valfunction &f,const double &eps=1e-
             analyze_output[2]+="\nNumber of minima: " + val::ToString(mp) + "\n";
             for (int i=0;i<N;++i) {
                 if (vzw[i]==-1) {
-            		digits = intdigits(zeros[i]) + dec;
-            		digits = val::Min(digits,val::MaxPrec);
+                    digits = intdigits(zeros[i]) + dec;
+                    digits = val::Min(digits,val::MaxPrec);
                     y = f(zeros[i]);
                     ydigits = intdigits(y) + dec;
                     ydigits = val::Min(ydigits,val::MaxPrec);
@@ -1934,17 +1964,21 @@ void analyze_exprationalfunction(const val::valfunction &f,const double &eps=1e-
     f_d = val::ToDoublePolynom(f_r);
     val::realRoots(f_d,zeros,eps);
     N = zeros.dimension();
-    N = zeros.dimension();
     zeros.sort();
+    gap = 1.0;
+    for (int i = 1; i < N; ++i) {
+        h = val::abs(zeros[i]-zeros[i-1]);
+        if (h < gap) gap = h;
+    }
     vzw.resize(N);
     for (i=0;i<N;++i) {
         vzw[i]=0;
         if (zeros[i]==0) zeros[i] = 0;
-        if (F(zeros[i]-2*eps) >0 && F(zeros[i]+2*eps)<0) {
+        if (F(zeros[i]-gap) >0 && F(zeros[i]+gap)<0) {
             vzw[i]=1;
             pm++;
         }
-        if (F(zeros[i]-2*eps)<0 && F(zeros[i]+2*eps)>0) {
+        if (F(zeros[i]-gap)<0 && F(zeros[i]+gap)>0) {
             vzw[i]=-1;
             mp++;
         }
@@ -1957,8 +1991,8 @@ void analyze_exprationalfunction(const val::valfunction &f,const double &eps=1e-
             analyze_output[3]+="\nNumber of LR-IP: " + val::ToString(pm) + "\n";
             for (i=0;i<N;++i) {
                 if (vzw[i]==1) {
-            		digits = intdigits(zeros[i]) + dec;
-            		digits = val::Min(digits,val::MaxPrec);
+                    digits = intdigits(zeros[i]) + dec;
+                    digits = val::Min(digits,val::MaxPrec);
                     y = f(zeros[i]);
                     ydigits = intdigits(y) + dec;
                     ydigits = val::Min(ydigits,val::MaxPrec);
@@ -1980,8 +2014,8 @@ void analyze_exprationalfunction(const val::valfunction &f,const double &eps=1e-
             analyze_output[3]+="\nNumber of RL-IP: " + val::ToString(mp) + "\n";
             for (int i=0;i<N;++i) {
                 if (vzw[i]==-1) {
-            		digits = intdigits(zeros[i]) + dec;
-            		digits = val::Min(digits,val::MaxPrec);
+                    digits = intdigits(zeros[i]) + dec;
+                    digits = val::Min(digits,val::MaxPrec);
                     y = f(zeros[i]);
                     ydigits = intdigits(y) + dec;
                     ydigits = val::Min(ydigits,val::MaxPrec);

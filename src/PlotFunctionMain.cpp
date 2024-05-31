@@ -308,7 +308,8 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     rightclickmenu->Append(trianglemenu);
     rightclickmenu->AppendSeparator();
     rightclickmenu->Append(1105,_T("Copy Image\tShift-Ctrl-C"));
-    rightclickmenu->Append(1106,_T("Paste Image to Background\tShift-Ctrl-V"));
+    rightclickmenu->Append(1108,_T("Paste Image to Draw Panel\tShift-Ctrl-V"));
+    rightclickmenu->Append(1106,_T("Paste Image to Background\tAlt-Ctrl-V"));
     rightclickmenu->Append(1107,_T("Change Background Color \tShift-Ctrl-B"));
     //
     rightclickfunctionsmenu = new wxMenu();
@@ -370,7 +371,8 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1103);         // circle
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1104);         // text
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1105);         // Copy to Clipboard
-    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1106);         // Paste from Clipboard
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1106);         // Paste from Clipboard to Background
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1108);      // Paste from Clipboard to DrawPanel
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuColours,this,1107);      // Background Color
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,7101);         // Change Settings for marked function
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnInputDialog,this,5011);      // Opens InputDialog
@@ -427,8 +429,10 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     Accel.push_back(wxAcceleratorEntry(wxACCEL_SHIFT|wxACCEL_CTRL,(int) 'L',1003));
     Accel.push_back(wxAcceleratorEntry(wxACCEL_SHIFT|wxACCEL_CTRL,(int) 'C',1105));
     Accel.push_back(wxAcceleratorEntry(wxACCEL_CTRL,WXK_INSERT,1105));
-    Accel.push_back(wxAcceleratorEntry(wxACCEL_SHIFT|wxACCEL_CTRL,(int) 'V',1106));
-    Accel.push_back(wxAcceleratorEntry(wxACCEL_SHIFT,WXK_INSERT,1106));
+    Accel.push_back(wxAcceleratorEntry(wxACCEL_ALT|wxACCEL_CTRL,(int) 'V',1106));
+    Accel.push_back(wxAcceleratorEntry(wxACCEL_SHIFT|wxACCEL_CTRL,(int) 'V',1108));
+    Accel.push_back(wxAcceleratorEntry(wxACCEL_ALT,WXK_INSERT,1106));
+    Accel.push_back(wxAcceleratorEntry(wxACCEL_SHIFT,WXK_INSERT,1108));
     Accel.push_back(wxAcceleratorEntry(wxACCEL_ALT,WXK_RIGHT,20009));
     Accel.push_back(wxAcceleratorEntry(wxACCEL_ALT,WXK_LEFT,20010));
     Accel.push_back(wxAcceleratorEntry(wxACCEL_CTRL,WXK_PAGEUP,20011));
@@ -963,7 +967,7 @@ void PlotFunctionFrame::GetSettings()
         }
         if (F[i].x_range.y <= F[i].x_range.x) {F[i].x_range.x=x1; F[i].x_range.y=x2;}
         //fstring+=F[i].getinfixnotation();
-        if (F[i].x_range.x!=x1 || F[i].x_range.y!=x2) fstring+= "  [ "+ val::ToString(F[i].x_range.x) +" , " + val::ToString(F[i].x_range.y) + " ];\n";
+        if (F[i].x_range.x!=x1 || F[i].x_range.y!=x2 || F[i].getmode() == plotobject::PARCURVE) fstring+= "  [ "+ val::ToString(F[i].x_range.x) +" , " + val::ToString(F[i].x_range.y) + " ];\n";
         else fstring+=";\n";
     }
     setfunctionsmenu();
@@ -1164,7 +1168,7 @@ void PlotFunctionFrame::plotvertices(wxDC& dc)
                 }
                 else {
                     if (y==y1) continue;
-                    dc.DrawText(swert,0,iy-ch);
+                    dc.DrawText(swert,5,iy-ch);
                 }
             }
             normalfont.SetPointSize(normalsize);
@@ -1643,6 +1647,24 @@ void PlotFunctionFrame::plottext(wxDC& dc,int colour)
     dc.SetFont(or_font);
 }
 
+void::PlotFunctionFrame::plotbitmap(wxDC& dc,int colour)
+{
+    if (!yset) return;
+    const val::d_array<double> &f = F[colour].farray;
+    if (f[0]<x1 || f[0]>x2 || f[1]<y1 || f[1]>y2) return;
+    int ix0=abst+int(double(sizex-1)*((f[0]-x1)/(x2-x1))), iy0=yzero -int((double(sizey-1)/double(y2-y1)) * f[1]);
+    //std::cout << "\n" << ix0 << " " << iy0 << std::endl;
+    dc.DrawBitmap(F[colour].bitmap,ix0,iy0);
+
+    if (active_function == colour) {
+        wxBrush brush;
+        brush.SetStyle(wxBrushStyle::wxBRUSHSTYLE_TRANSPARENT);
+        dc.SetBrush(brush);
+        dc.SetPen(wxPen(Color[colour],2));
+        dc.DrawRectangle(ix0-2,iy0-2,int(f[2])+2,int(f[3])+2);
+    }
+}
+
 
 void PlotFunctionFrame::plotcurve(wxDC& dc,int colour)
 {
@@ -1849,6 +1871,8 @@ void PlotFunctionFrame::plotallfunctions(wxMemoryDC& dc)
                         if (fillfunctions) {plotfill(dc,i);} break;
                     case plotobject::PARCURVE:
                         plotparcurve(dc, i); break;
+                    case plotobject::BITMAP:
+                        plotbitmap(dc, i); break;
                     default:
                         {
                             plotfunction(dc,i);
@@ -2167,7 +2191,7 @@ void PlotFunctionFrame::OnMenunewfunction(wxCommandEvent &event)
             for (int i=0;i<N-1;++i) {
                 fstring+=F[i].getinfixnotation();
                 if (F[i].x_range.x==F[i].x_range.y) fstring+=";\n";
-                else if (F[i].x_range.x!=x1 || F[i].x_range.y!=x2) fstring+= "  [ "+ val::ToString(F[i].x_range.x) +" , " + val::ToString(F[i].x_range.y) + " ];\n";
+                else if (F[i].x_range.x!=x1 || F[i].x_range.y!=x2 || F[i].getmode() == plotobject::PARCURVE) fstring+= "  [ "+ val::ToString(F[i].x_range.x) +" , " + val::ToString(F[i].x_range.y) + " ];\n";
                 else fstring+=";\n";
             }
         }
@@ -2382,7 +2406,7 @@ void PlotFunctionFrame::OnMenuTools(wxCommandEvent &event)
 
         for (i=0;i<f_menu.length();++i) {
             if (f_menu[i]->IsChecked() && F[i].f.numberofvariables()<=1 && (F[i].getmode()==plotobject::TRIANGLE || F[i].getmode()==plotobject::LINE
-                        || F[i].getmode()==plotobject::POLYGON || F[i].getmode()==plotobject::POINTS || F[i].getmode() == plotobject::PARCURVE)) {
+                        || F[i].getmode()==plotobject::POLYGON || F[i].getmode()==plotobject::POINTS || F[i].getmode() == plotobject::PARCURVE || F(i).getmode() == plotobject::FUNCTION )) {
                 j=i; ++naktiv;
                 s = F[i].getinfixnotation();
                 if (s.length() >= 50) s.resize(47);
@@ -2413,7 +2437,8 @@ void PlotFunctionFrame::OnMenuTools(wxCommandEvent &event)
 
         val::d_array<plotobject*> H;
         for (int i : ind) H.push_back(&F[i]);
-        std::thread t(computerotation,H,dialog.GetSettingsText());
+        std::string input = dialog.GetSettingsText() + " " + val::ToString(x1) + " " + val::ToString(x2);
+        std::thread t(computerotation,H,input);
         t.detach();
         return;
     }
@@ -2450,6 +2475,9 @@ void PlotFunctionFrame::OnMenuTools(wxCommandEvent &event)
     std::string s;
 
     for (i=0;i<f_menu.length();++i) {
+        if (f_menu[i]->IsChecked() && (id == 7001 || id == 7007) && F[i].getmode() == plotobject::PARCURVE) {
+            j=i; ++naktiv; List.push_back(F[i].getinfixnotation());indezes.push_back(i);
+        }
         if (f_menu[i]->IsChecked() && F[i].getmode()==plotobject::FUNCTION) {
             if (id!=7001 && id!= 7007 && F[i].f.numberofvariables()>1) continue;
             j=i; ++naktiv; List.push_back(F[i].getinfixnotation());indezes.push_back(i);
@@ -3637,18 +3665,31 @@ void PlotFunctionFrame::OnMenuFill(wxCommandEvent &event)
     int n=fstring.length()-1;
     double x,y;
 
-    if (id == 1106) {
+    if (id == 1106 || id == 1108) {
         if (wxTheClipboard->Open()) {
             if (wxTheClipboard->IsSupported( wxDF_BITMAP )) {
                 actualPanelsize = DrawPanel->GetSize();
                 wxBitmapDataObject data;
                 wxTheClipboard->GetData( data );
                 actualBitmapBackground = data.GetBitmap();
-                BackgroundImage = actualBitmapBackground.ConvertToImage();
-                wxImage image = BackgroundImage.Scale(actualPanelsize.x,actualPanelsize.y);
-                actualBitmapBackground = wxBitmap(image);
-                bitmapbackground = 1;
-                Paint();
+                if (id == 1106) { // Put bitmap as background
+                    BackgroundImage = actualBitmapBackground.ConvertToImage();
+                    wxImage image = BackgroundImage.Scale(actualPanelsize.x,actualPanelsize.y);
+                    actualBitmapBackground = wxBitmap(image);
+                    bitmapbackground = 1;
+                    Paint();
+                }
+                else {
+                    plotobject::image.push_back(actualBitmapBackground.ConvertToImage());
+                    int pos = plotobject::image.length() ,sx = actualBitmapBackground.GetWidth(), sy = actualBitmapBackground.GetHeight();
+                    x=(x2-x1)*double(mouse_x1-abst) / double (sizex -1) + x1;
+                    y=double(yzero-mouse_y1)*(y2-y1)/double(sizey -1);
+                    fstring += ";\nbitmap_" + val::ToString(pos) + " " + val::ToString(x) + " " + val::ToString(y) + " " + val::ToString(sx) + " " + val::ToString(sy);
+                    refreshfunctionstring();
+                    GetSettings();
+                    Compute();
+                    Paint();
+                }
             }
             wxTheClipboard->Close();
         }
@@ -4056,6 +4097,15 @@ int PlotFunctionFrame::findactivefunction(int x, int y)
                 if (dx >= 0 && dx <= sx && dy >= 0 && dy <= sy) return i;
             }
             break;
+        case plotobject::BITMAP :
+            {
+                int ix0=abst+int(double(sizex)*((F[i].farray[0]-x1)/(x2-x1))), sx = int(F[i].farray[2]), sy = int(F[i].farray[2]), dx, dy;
+                iy=yzero -int((double(sizey)/double(y2-y1)) * F[i].farray[1]);
+                dx = x -ix0; dy = y - iy;
+
+                if (dx >= 0 && dx <= sx && dy >= 0 && dy <= sy) return i;
+            }
+            break;
         case plotobject::CIRCLE :
             {
                 double mx,my,r,a1,a2,angle,px,py;
@@ -4406,13 +4456,22 @@ void PlotFunctionFrame::displacefunction(int i,const double &dx1,const double &d
             break;
         case plotobject::TEXT :
             {
-                int j,k=0;
                 std::string nf="text {" + getstringfrombrackets(F[i].getinfixnotation(), '{', '}') + "}";
+                /*
                 for (j = 0; j < i; ++j ) {
                     if (F[j].f.numberofvariables() == 1) k++;
                 }
-                nf += " " + val::ToString(F[k].farray[0] + dx) + " " + val::ToString(F[k].farray[1] + dy);
+                */
+                nf += " " + val::ToString(F[i].farray[0] + dx) + " " + val::ToString(F[i].farray[1] + dy);
                 F[i] = plotobject(nf);
+            }
+            break;
+        case plotobject::BITMAP :
+            {
+                plotobject &G = F[i];
+                std::string nf = val::getfirstwordofstring(G.getinfixnotation(),val::d_array<char>({' '}));
+                nf+= " " + val::ToString(G.farray[0] + dx) + " " + val::ToString(G.farray[1] + dy) + " " + val::ToString(G.farray[2]) + " " + val::ToString(G.farray[3]);
+                G = plotobject(nf);
             }
             break;
         case plotobject::CIRCLE :

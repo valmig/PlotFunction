@@ -438,9 +438,10 @@ double integral(const T& f,const double &a,const double &b,int iter, const doubl
 
 struct plotobject
 {
-    enum modetype {LINE,TEXT,CIRCLE,RECTANGLE,TRIANGLE,FILL,POLYGON,POINTS,PARCURVE,FUNCTION};
+    enum modetype {LINE,TEXT,CIRCLE,RECTANGLE,TRIANGLE,FILL,POLYGON,POINTS,BITMAP,PARCURVE,FUNCTION};
     //
     val::valfunction f,g;
+    wxBitmap bitmap;
     val::d_array<double> farray, critx;
     val::d_array<val::d_array<double> > curvearray;
     val::Glist<val::GPair<double>> critpoints;//,undef_intervals;
@@ -451,7 +452,8 @@ struct plotobject
     int objectype = FUNCTION, islinear = 0;
     //
     static const val::d_array<std::string> s_object_type;
-    static const val::d_array<int> defnpoints;
+    static const val::d_array<int> defnpoints;               // default number number of points for each objectype
+    static val::Glist<wxImage> image;           // replace myimage with wxImage
     //
     // Constructors:
     plotobject() = default;

@@ -205,6 +205,7 @@ class PlotFunctionFrame: public wxFrame
         void plotpolygon(wxDC& dc,int colour);
         void plotpoints(wxDC& dc,int colour);
         void plottext(wxDC& dc,int colour);
+        void plotbitmap(wxDC& dc,int colour);
         void plotcurve(wxDC& dc,int colour);
         void plotparcurve(wxDC& dc,int colour);
         void plotallfunctions(wxMemoryDC& dc);
