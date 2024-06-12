@@ -212,10 +212,10 @@ private:
 class DLL_PUBLIC CompleteTextCtrl : public wxTextCtrl
 {
 public:
-    CompleteTextCtrl(wxWindow *parent,wxWindowID id,const val::d_array<std::string> &list,const wxString &value = "",const wxSize &size = wxDefaultSize,
+    CompleteTextCtrl(wxWindow *parent,wxWindowID id,const val::d_array<wxString> &list,const wxString &value = "",const wxSize &size = wxDefaultSize,
                     const wxPoint &pos = wxDefaultPosition,long style = 0);
 
-    CompleteTextCtrl(wxWindow *parent,wxWindowID id,const val::trie_type<std::string> &list,const wxString &value = "",const wxSize &size = wxDefaultSize,
+    CompleteTextCtrl(wxWindow *parent,wxWindowID id,const val::trie_type<wxString> &list,const wxString &value = "",const wxSize &size = wxDefaultSize,
                     const wxPoint &pos = wxDefaultPosition,long style = 0);
     ~CompleteTextCtrl();
     bool SetFont(const wxFont& font);
@@ -228,12 +228,12 @@ private:
     wxWindowID identity;
     TopListbox *listbox = nullptr;
     wxMemoryDC dc;
-    val::d_array<std::string> CandList;
-    val::trie_type<std::string> WordList;
+    val::d_array<wxString> CandList;
+    val::trie_type<wxString> WordList;
     const val::d_array<wxChar> o_brackets{'(', '{', '[', '"'}, c_brackets{')', '}', ']', '"'};
     char beg = 65, end = 122;
-    const val::trie_type<std::string> *WordListPointer = nullptr;
-    std::string actualword;
+    const val::trie_type<wxString> *WordListPointer = nullptr;
+    wxString actualword;
     wxString s_text;
     long from = 0, to = 0;
     int selection = 0, isactiv=0, n_candidates = 0, fontsize, actuallength = 0, formerlength=0, textisselected = 0;
@@ -241,8 +241,8 @@ private:
     wxString bracket = ")";
     wxAcceleratorTable *parenttable = nullptr, *accel = nullptr, *taccel = nullptr;
     void BuildObject();
-    int isalphabetical(char s) const;
-    std::string findword(const std::string &s, int pos) const;
+    int isalphabetical(wxChar s) const;
+    wxString findword(const wxString &s, int pos) const;
     void OnInputChanged(wxCommandEvent &event);
     void OnListBoxSelected(wxCommandEvent &event);
     void OnCompleteBrackets(wxCommandEvent &);

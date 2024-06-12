@@ -125,9 +125,9 @@ private:
 class InputFunctionDialog : public val::BaseDialog
 {
 public:
-    InputFunctionDialog(wxWindow *parent,const val::d_array<std::string> &Wlist,const wxString &value="", const wxString &s_text="", const wxString& title="",
+    InputFunctionDialog(wxWindow *parent,const val::d_array<wxString> &Wlist,const wxString &value="", const wxString &s_text="", const wxString& title="",
                         const wxSize &size = wxDefaultSize,int fonts = 10);
-    InputFunctionDialog(wxWindow *parent,const val::trie_type<std::string> &Wlist,const wxString &value="", const wxString &s_text="", const wxString& title="",
+    InputFunctionDialog(wxWindow *parent,const val::trie_type<wxString> &Wlist,const wxString &value="", const wxString &s_text="", const wxString& title="",
                         const wxSize &size = wxDefaultSize,int fonts = 10);
 
     ~InputFunctionDialog() {}
@@ -148,7 +148,7 @@ private:
 class InputDialog : public wxDialog
 {
 public:
-    InputDialog(wxWindow *parent,wxWindowID id,const val::trie_type<std::string> &list,const wxString &value = "",const wxSize &size = wxDefaultSize,
+    InputDialog(wxWindow *parent,wxWindowID id,const val::trie_type<wxString> &list,const wxString &value = "",const wxSize &size = wxDefaultSize,
                     const wxPoint &pos = wxDefaultPosition, int fonts = 10);
     ~InputDialog() {}
     void Clear() {input->Clear();}
@@ -158,9 +158,9 @@ public:
     void SetFocus() {input->SetFocus();}
     void SetTextValue(const wxString& s) {input->SetValue(s);}
     const wxString GetTextValue() const {return input->GetValue();}
-    void SetComLists(const val::d_array<std::string> &CL, const val::d_array<std::string> &CPL) {CommandsList = &CL; CommandsParList = &CPL;}
-    void SetParLists(const val::d_array<std::string> &SL, const val::d_array<std::string> &SPL) {SettingsList = &SL; SettingsParList = &SPL;}
-    void SetHistory(const val::Glist<std::string> &SH) {history = &SH; ahistory = history->length();}
+    void SetComLists(const val::d_array<wxString> &CL, const val::d_array<wxString> &CPL) {CommandsList = &CL; CommandsParList = &CPL;}
+    void SetParLists(const val::d_array<wxString> &SL, const val::d_array<wxString> &SPL) {SettingsList = &SL; SettingsParList = &SPL;}
+    void SetHistory(const val::Glist<wxString> &SH) {history = &SH; ahistory = history->length();}
 
 private:
     //wxWindow *Parent = nullptr;
@@ -169,8 +169,8 @@ private:
     wxTextCtrl *tooltip = nullptr;
     wxBoxSizer *BoxSizer = nullptr;
     int fontsize, ahistory;
-    const val::d_array<std::string> *CommandsParList = nullptr, *CommandsList = nullptr, *SettingsList = nullptr, *SettingsParList = nullptr;
-    const val::Glist<std::string> *history = nullptr;
+    const val::d_array<wxString> *CommandsParList = nullptr, *CommandsList = nullptr, *SettingsList = nullptr, *SettingsParList = nullptr;
+    const val::Glist<wxString> *history = nullptr;
     //wxTextCtrl *input = nullptr;
     void OnEnterhit(wxCommandEvent&);
     void OnHelp(wxCommandEvent&);

@@ -967,7 +967,7 @@ void PlotFunctionFrame::GetSettings()
         }
         if (F[i].x_range.y <= F[i].x_range.x) {F[i].x_range.x=x1; F[i].x_range.y=x2;}
         //fstring+=F[i].getinfixnotation();
-        if (F[i].x_range.x!=x1 || F[i].x_range.y!=x2 || F[i].getmode() == plotobject::PARCURVE) fstring+= "  [ "+ val::ToString(F[i].x_range.x) +" , " + val::ToString(F[i].x_range.y) + " ];\n";
+        if (F[i].x_range.x!=x1 || F[i].x_range.y!=x2 || F[i].getmode() == plotobject::PARCURVE) fstring+= "  [ "+ F[i].x1.getinfixnotation() +" , " + F[i].x2.getinfixnotation() + " ];\n";
         else fstring+=";\n";
     }
     setfunctionsmenu();
@@ -2191,7 +2191,7 @@ void PlotFunctionFrame::OnMenunewfunction(wxCommandEvent &event)
             for (int i=0;i<N-1;++i) {
                 fstring+=F[i].getinfixnotation();
                 if (F[i].x_range.x==F[i].x_range.y) fstring+=";\n";
-                else if (F[i].x_range.x!=x1 || F[i].x_range.y!=x2 || F[i].getmode() == plotobject::PARCURVE) fstring+= "  [ "+ val::ToString(F[i].x_range.x) +" , " + val::ToString(F[i].x_range.y) + " ];\n";
+                else if (F[i].x_range.x!=x1 || F[i].x_range.y!=x2 || F[i].getmode() == plotobject::PARCURVE) fstring+= "  [ "+ F[i].x1.getinfixnotation() +" , " + F[i].x2.getinfixnotation() + " ];\n";
                 else fstring+=";\n";
             }
         }
@@ -2349,7 +2349,7 @@ void PlotFunctionFrame::OnMenuParameter(wxCommandEvent &event)
     fstring="";
     hs="";
     if (F[0].x_range.x==F[0].x_range.y) xrs="";
-    else if (F[0].x_range.x!=x1 || F[0].x_range.y!=x2) xrs=" [ " + val::ToString(F[0].x_range.x) + " , " + val::ToString(F[0].x_range.y) + " ] ";
+    else if (F[0].x_range.x!=x1 || F[0].x_range.y!=x2 || F[0].getmode() == plotobject::PARCURVE) xrs=" [ " + F[0].x1.getinfixnotation() + " , " + F[0].x2.getinfixnotation() + " ] ";
     for (i=0;i<n;++i) {
         if (pars[i]==';') {
             anz++;
@@ -2475,7 +2475,7 @@ void PlotFunctionFrame::OnMenuTools(wxCommandEvent &event)
     std::string s;
 
     for (i=0;i<f_menu.length();++i) {
-        if (f_menu[i]->IsChecked() && (id == 7001 || id == 7007) && F[i].getmode() == plotobject::PARCURVE) {
+        if (f_menu[i]->IsChecked() && (id == 7001 || id == 7007 || id == 7005) && F[i].getmode() == plotobject::PARCURVE) {
             j=i; ++naktiv; List.push_back(F[i].getinfixnotation());indezes.push_back(i);
         }
         if (f_menu[i]->IsChecked() && F[i].getmode()==plotobject::FUNCTION) {
@@ -3228,7 +3228,7 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
             }
             if (F[f_nr].x_range.x == F[f_nr].x_range.y) fstring+=";";
             else if (F[f_nr].x_range.x!=x1 || F[f_nr].x_range.y!=x2)
-                fstring+="  [ "+val::ToString(F[f_nr].x_range.x) + " , " + val::ToString(F[f_nr].x_range.y) + " ]";
+                fstring+="  [ "+ F[f_nr].x1.getinfixnotation() + " , " + F[f_nr].x2.getinfixnotation() + " ]";
             refreshfunctionstring();
         }
         break;
@@ -3303,7 +3303,7 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
             std::string nvalue = svalue;
             if (svalue == "") {
                 if (f_nr >=0 && f_nr < N && (F[f_nr].IsPoints() || F[f_nr].IsPolygon()) ) {
-                    val::d_array<double> Points = F[f_nr].farray;
+                    const val::d_array<double> &Points = F[f_nr].farray;
                     for (const auto &v : Points) nvalue += val::ToString(v) + " ";
                 }
                 else return;
@@ -3465,7 +3465,7 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
             int i = 0;
             for (const auto & v : F) {
                 if (F[i].x_range.x == F[i].x_range.y) fstring += v.getinfixnotation() + ";\n";
-                else fstring += v.getinfixnotation() + "[" + val::ToString(F[i].x_range.x) + " , " + val::ToString(F[i].x_range.y) + "];\n";
+                else fstring += v.getinfixnotation() + "[" + F[i].x1.getinfixnotation() + " , " + F[i].x2.getinfixnotation() + "];\n";
                 ++i;
             }
             refreshfunctionstring();
@@ -3486,6 +3486,27 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
             }
 
             Compute(f_nr);
+            return;
+        }
+        break;
+    case val_commands::ROTATE:
+        {
+            val::Glist<std::string> s_values = getwordsfromstring(svalue, val::d_array<char>({' '}));
+            std::string input = svalue;
+            val::d_array<plotobject*> H;
+            int n = s_values.length();
+
+            //std::cout << "\n " << input << "  " << n << std::endl;
+
+            if (!n) return;
+            if (n < 2) input += " 0 0";
+            else if (n < 3) input += " 0";
+
+            input+= " " + val::ToString(x1) + " " + val::ToString(x2);
+            H.push_back(&F[f_nr]);
+            //ispainted = 0;
+            std::thread t(computerotation,H,input);
+            t.detach();
             return;
         }
         break;
@@ -4372,7 +4393,7 @@ void PlotFunctionFrame::OnMouseReleased(wxMouseEvent &event)
         int i = 0;
         for (const auto & v : F) {
             if (F[i].x_range.x == F[i].x_range.y) fstring += v.getinfixnotation() + ";\n";
-            else fstring += v.getinfixnotation() + "[" + val::ToString(F[i].x_range.x) + " , " + val::ToString(F[i].x_range.y) + "];\n";
+            else fstring += v.getinfixnotation() + "[" + F[i].x1.getinfixnotation() + " , " + F[i].x2.getinfixnotation() + "];\n";
             ++i;
         }
         refreshfunctionstring();
@@ -4432,7 +4453,7 @@ void PlotFunctionFrame::displacefunction(int i,const double &dx1,const double &d
             {
                 if (F[i].f.numberofvariables() == 1) {
                     val::valfunction f(F[i].getinfixnotation()), g("x"),h(val::ToString(dx)), d = g - h, y(val::ToString(dy));
-                    std::string interval = " [" + val::ToString(F[i].x_range.x) + " , " + val::ToString(F[i].x_range.y) + " ]";
+                    std::string interval = " [" + F[i].x1.getinfixnotation() + " , " + F[i].x2.getinfixnotation() + " ]";
                     f = f(d) + y;
                     F[i] = plotobject(f.getinfixnotation() + interval);
                 }

@@ -482,7 +482,7 @@ void AnalysisDialog::Paint(int i)
 
 // ------------------------------------------------------------------------------------------------------------------------
 
-InputFunctionDialog::InputFunctionDialog(wxWindow *parent,const val::d_array<std::string> &Wlist,const wxString &value,
+InputFunctionDialog::InputFunctionDialog(wxWindow *parent,const val::d_array<wxString> &Wlist,const wxString &value,
                                          const wxString &s_text, const wxString& title, const wxSize &size,int fonts)
                                             : BaseDialog(parent,0,wxDefaultPosition,title),
                                             input(new val::CompleteTextCtrl(surface,30,Wlist,value,size,wxDefaultPosition,wxTE_MULTILINE|wxVSCROLL|wxHSCROLL))
@@ -490,7 +490,7 @@ InputFunctionDialog::InputFunctionDialog(wxWindow *parent,const val::d_array<std
     Build(s_text,fonts);
 }
 
-InputFunctionDialog::InputFunctionDialog(wxWindow *parent,const val::trie_type<std::string> &Wlist,const wxString &value,
+InputFunctionDialog::InputFunctionDialog(wxWindow *parent,const val::trie_type<wxString> &Wlist,const wxString &value,
                                          const wxString &s_text, const wxString& title, const wxSize &size,int fonts)
                                             : BaseDialog(parent,0,wxDefaultPosition,title),
                                             input(new val::CompleteTextCtrl(surface,30,Wlist,value,size,wxDefaultPosition,wxTE_MULTILINE|wxVSCROLL|wxHSCROLL))
@@ -534,7 +534,7 @@ void InputFunctionDialog::Build(const wxString& s_text, int fonts)
 
 
 
-InputDialog::InputDialog(wxWindow *parent, wxWindowID id, const val::trie_type<std::string> &list, const wxString& value,
+InputDialog::InputDialog(wxWindow *parent, wxWindowID id, const val::trie_type<wxString> &list, const wxString& value,
                          const wxSize &size, const wxPoint& pos, int fonts) : wxDialog(parent,id,"",wxDefaultPosition,wxDefaultSize,wxBORDER_RAISED)
 {
     Move(pos);

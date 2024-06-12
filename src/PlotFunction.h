@@ -39,15 +39,15 @@ extern val::d_array<val::d_array<val::GPair<double>>> Points;
 extern const val::d_array<wxString> greek_literals;
 extern const val::d_array<wxString> greek_letters;
 extern const val::d_array<wxColour> defaultcolors;
-extern const val::d_array<std::string> defaultcolornames;
-extern const val::d_array<std::string> CommandsList;
-extern const val::d_array<std::string> SettingsList;
-extern const val::d_array<std::string> SettingsParList;
-extern const val::d_array<std::string> CommandsParList;
-extern val::Glist<std::string> recentcommands;
-extern const val::d_array<std::string> WordList;
-extern const val::trie_type<std::string> WordTree;
-extern const val::trie_type<std::string> InputDialogTree;
+extern const val::d_array<wxString> defaultcolornames;
+extern const val::d_array<wxString> CommandsList;
+extern const val::d_array<wxString> SettingsList;
+extern const val::d_array<wxString> SettingsParList;
+extern const val::d_array<wxString> CommandsParList;
+extern val::Glist<wxString> recentcommands;
+extern const val::d_array<wxString> WordList;
+extern const val::trie_type<wxString> WordTree;
+extern const val::trie_type<wxString> InputDialogTree;
 
 
 enum val_colors{BLUE,RED,GREEN,LBLUE,ORANGE,VIOLET,GREY,WHITE,BlACK,LGREY,YELLOW,DGREEN,BEIGE,BROWN,DBLUE,PINK,SKYBLUE,LGREEN};
@@ -56,7 +56,7 @@ enum val_settings{AXIS_SCALE,AXIS_COLOR,GRID_SCALE,GRID_COLOR,VALUES_NUMBER,AXIS
                     SHOW_Y_SCALE,RESET_COLORS,FONT_SIZE,FUNCTION_COLOR,PANEL_SIZE,AXIS_NAMES,REGRESSION_DEGREE,POINT_DECIMALS,
                     SHOW_FUNCTION,BACKGROND_COLOR,PARAMETER_VALUES,FUNCTION_SIZE,MARGIN,AXIS_FONTSIZE,FUNCTION_SETTINGS,MOVEINC};
 
-enum val_commands{DERIVE,ANALYZE,TANGENT,NORMAL,INTERPOLATION,REGRESSION,TABLE,INTEGRAL,ARCLENGTH,ZERO_ITERATION,MOVE,EVALUATE,INTERSECTION,CALCULATE};
+enum val_commands{DERIVE,ANALYZE,TANGENT,NORMAL,INTERPOLATION,REGRESSION,TABLE,INTEGRAL,ARCLENGTH,ZERO_ITERATION,MOVE,EVALUATE,INTERSECTION,CALCULATE,ROTATE};
 
 wxDECLARE_EVENT(MY_EVENT, MyThreadEvent);
 
@@ -440,7 +440,7 @@ struct plotobject
 {
     enum modetype {LINE,TEXT,CIRCLE,RECTANGLE,TRIANGLE,FILL,POLYGON,POINTS,BITMAP,PARCURVE,FUNCTION};
     //
-    val::valfunction f,g;
+    val::valfunction f,g,x1,x2;
     wxBitmap bitmap;
     val::d_array<double> farray, critx;
     val::d_array<val::d_array<double> > curvearray;

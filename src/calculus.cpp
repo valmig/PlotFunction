@@ -1304,7 +1304,13 @@ void computeintegral(const plotobject& f,std::string x1,std::string x2,double de
     std::string name="";
 
     if (arclength) {
-        if (f.f.isdifferentiable()) {
+        if (f.getmode() == plotobject::PARCURVE) {
+            if (!f.f.isdifferentiable() || !f.g.isdifferentiable()) return;
+            val::valfunction f1 = f.f.derive(), g1 = f.g.derive(), h("sqrt(x)");
+            h = h(f1*f1 + g1*g1);
+            wert = integral(h,a,b,n,delta);
+        }
+        else if (f.f.isdifferentiable()) {
             val::valfunction h("sqrt(x^2 + 1)"),g(f.getinfixnotation());
             g=g.derive(); //g=g*g; g+=val::valfunction("1");
             h=h(g);

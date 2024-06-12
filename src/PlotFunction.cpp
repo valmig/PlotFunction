@@ -56,7 +56,7 @@ plotobject global_function;
 //val::d_array<val::d_array<double>> critx;
 val::d_array<wxString> analyze_output(4);
 val::d_array<val::d_array<val::GPair<double>>> Points(3);
-val::Glist<std::string> recentcommands;
+val::Glist<wxString> recentcommands;
 
 
 const val::d_array<wxString> greek_literals{"\\alpha", "\\beta", "\\gamma", "\\delta", "\\epsilon", "\\zeta", "\\eta", "\\theta", "\\iota", "\\kappa", "\\lambda", "\\mu", "\\nu",
@@ -67,7 +67,7 @@ const val::d_array<wxString> greek_letters{L"\u03B1", L"\u03B2", L"\u03B3", L"\u
                                            L"\u03BE", L"\u03BF", L"\u03C0", L"\u03C1", L"\u03C3", L"\u03C4", L"\u03C6", L"\u03C7", L"\u03C8", L"\u03C9", L"\u0393", L"\u0394", L"\u03A0",
                                            L"\u03A3", L"\u03A6", L"\u03A8", L"\u03A9"};
 
-const val::d_array<std::string> WordList{"PI", "exp", "log", "line", "sinh", "sqrt", "cosh", "circle", "tanh", "text", "triangle", "polygon", "points",
+const val::d_array<wxString> WordList{"PI", "exp", "log", "line", "sinh", "sqrt", "cosh", "circle", "tanh", "text", "triangle", "polygon", "points",
                                    "inf", "fill", "abs", "arcsin", "arccos", "arctan", "rectangle", "sin", "cos", "tan",
                                    "arsinh", "arcosh", "artanh", "bitmap"};
 
@@ -87,15 +87,15 @@ const val::d_array<wxColour> defaultcolors{wxColour(0,0,255), wxColour(255,0,0),
                                       wxColour(0,0,0), wxColour(191,191,191), wxColour(255,255,0), wxColour(0,128,0), wxColour(245,245,220), wxColour(165,42,42),
                                       wxColour(0,0,128), wxColour(255,192,203), wxColour(135,206,235), wxColour(144,238,144)};
 
-const val::d_array<std::string> defaultcolornames{"blue", "red", "green", "lblue", "orange", "violet", "grey", "white", "black",
+const val::d_array<wxString> defaultcolornames{"blue", "red", "green", "lblue", "orange", "violet", "grey", "white", "black",
                                 "lgrey", "yellow", "dgreen", "beige", "brown", "dblue", "pink", "skyblue", "lgreen" };
 
-const val::d_array<std::string> SettingsList({"axis-scale", "axis-color", "grid-scale", "grid-color", "values-number", "axis-range", "show-x-axis",
+const val::d_array<wxString> SettingsList({"axis-scale", "axis-color", "grid-scale", "grid-color", "values-number", "axis-range", "show-x-axis",
                                 "show-y-axis", "show-grid" , "show-x-scale", "show-y-scale" , "reset-colors", "font-size", "function-color", "panel-size", "axis-names", "regression-degree",
                                 "point-decimals", "show-function", "background-color", "parameter-values", "function-size", "margin",
                                 "axis-fontsize", "function-settings", "move-increment" });
 
-const val::d_array<std::string> SettingsParList({"axis-scale sx [sy]	<Shift-Alt-S>",
+const val::d_array<wxString> SettingsParList({"axis-scale sx [sy]	<Shift-Alt-S>",
                                               "axis-color def. color / Red Green Blue	<Shift-Ctrl-A>",
                                               "grid-scale sx [sy]	<Ctrl-G>",
                                               "grid-color def. color / Red Green Blue	<Shift-Ctrl-G>",
@@ -123,10 +123,10 @@ const val::d_array<std::string> SettingsParList({"axis-scale sx [sy]	<Shift-Alt-
                                               "move-increment dx [dy=dx] (p for pixels)    <Ctrl-M>"
                                              });
 
-const val::d_array<std::string> CommandsList({"derive", "analyze", "tangent", "normal", "interpolation", "regression", "table", "integral",
-                                             "arclength", "zero-iteration", "move", "evaluate", "intersection", "calculate" });
+const val::d_array<wxString> CommandsList({"derive", "analyze", "tangent", "normal", "interpolation", "regression", "table", "integral",
+                                             "arclength", "zero-iteration", "move", "evaluate", "intersection", "calculate", "rotate" });
 
-const val::d_array<std::string> CommandsParList({"derive [#nr = 1]",
+const val::d_array<wxString> CommandsParList({"derive [#nr = 1]",
                                                  "analyze [#nr = 1] [x1 x2] [prec = 1e-09] [iterations] [decimals]    <Ctrl-A>",
                                                  "tangent [#nr = 1] x / x y    <Alt-T>",
                                                  "normal [#nr = 1] x / x y    <Shit-Alt-N>",
@@ -139,17 +139,18 @@ const val::d_array<std::string> CommandsParList({"derive [#nr = 1]",
                                                  "move [#nr = 1] x y",
                                                  "evaluate [#nr = 1] expressions [ddecimals[ = 4 ]]",
                                                  "intersection [#nr1 = 1] #nr2 [x1 x2] [prec] [iterations] [decimals]",
-                                                 "calculate arithmetic expression"
+                                                 "calculate arithmetic expression",
+                                                 "rotate [#nr = 1] angle (in degrees ) x y (center)"
                                                  });
 
 
 
 //const val::d_array<std::string> InputDialogList(SettingsList);
 
-const val::trie_type<std::string> WordTree(WordList + defaultcolornames, 58, int('A'));
+const val::trie_type<wxString> WordTree(WordList + defaultcolornames, 58, int('A'));
 
 
-const val::trie_type<std::string> InputDialogTree(SettingsList + CommandsList + defaultcolornames, 78, int('-'));
+const val::trie_type<wxString> InputDialogTree(SettingsList + CommandsList + defaultcolornames, 78, int('-'));
 
 
 wxDEFINE_EVENT(MY_EVENT,MyThreadEvent);
@@ -167,44 +168,6 @@ int operator <(const val::GPair<double>& p,const val::GPair<double>& q)
 }
 }
 
-
-// -------------------------------------------------------------------------------------------------------------------------------
-/*
-std::string getstringfunction(const std::string &s, int j)
-{
-	int n = s.length() - j, m, found, i;
-
-	for (const auto& sf : WordList) {
-		m = sf.length();
-		found = 0;
-		if (n >= m) {
-			found = 1;
-			for (i = 0; i < m; ++i) {
-				if (sf[i] != s[i+j]) {
-					found = 0;
-					break;
-				}
-			}
-		}
-		if (found) return sf;
-	}
-
-	return "";
-}
-
-int getindexoffunction(const std::string &sf)
-{
-	if (sf =="") return -1;
-	int i = 0;
-
-	for (const auto &f : functionpairs) {
-		if (f.x == sf) return i;
-		++i;
-	}
-
-	return -1;
-}
-*/
 
 // -----------------------------------------------------------------------------
 
@@ -1103,17 +1066,18 @@ void computerotation(const val::d_array<plotobject*> F,std::string input)
     std::string sf,sval;
     val::d_array<double> d_f;
     int i,n;
-    double x0=0,y0=0,alpha=0, x1= 0, x2 = 0;
+    double x0=0,y0=0,alpha=0;// x1= 0, x2 = 0;
+    std::string x1 ="0", x2 = "0";
 
     val::d_array<char> separ({';',' '});
     //val::Glist<double>
-    auto values = getdoublevaluesfromstring(input,separ);
+    auto values = getwordsfromstring(input,separ);
 
     n = values.length();
     if (n == 0) return;
-    if (n > 0) alpha = values[0];
-    if (n > 1) x0 = values[1];
-    if (n > 2) y0 = values[2];
+    if (n > 0) alpha = val::FromString<double>(values[0]);
+    if (n > 1) x0 = val::FromString<double>(values[1]);
+    if (n > 2) y0 = val::FromString<double>(values[2]);
     if (n > 3) x1 = values[3];
     if (n > 4) x2 = values[4];
 
@@ -1155,18 +1119,22 @@ void computerotation(const val::d_array<plotobject*> F,std::string input)
                     if (f->f.numberofvariables() > 1) return;
                     f1 = val::valfunction("x");
                     f2 = f->f;
+                    if (f->x_range.x != f->x_range.y) {
+                        x1 = f->x1.getinfixnotation();
+                        x2 = f->x2.getinfixnotation();
+                    }
                 }
                 else {
                     f1 = f->f; f2 = f->g;
-                    x1 = f->x_range.x; x2 = f->x_range.y;
+                    x1 = f->x1.getinfixnotation(); x2 = f->x2.getinfixnotation();
                 }
                 val::valfunction A00(val::ToString(A(0,0))), A01(val::ToString(A(0,1))), A10(val::ToString(A(1,0))), A11(val::ToString(A(1,1)));
                 val::valfunction m0(val::ToString(m(0))), m1(val::ToString(m(1))), g1, g2;
                 g1 = A00*(f1-m0) + A01*(f2 -m1) + m0;
                 g2 = A10*(f1-m0) + A11*(f2 -m1) + m1;
-                sf += "( " + g1.getinfixnotation() + " , " + g2.getinfixnotation() + " )  [ " + val::ToString(x1) + " , " + val::ToString(x2) + " ]";
+                sf += "( " + g1.getinfixnotation() + " , " + g2.getinfixnotation() + " )  [ " + x1 + " , " + x2 + " ]";
+                break;
             }
-
             default: break;
         }
         if (fmode != plotobject::PARCURVE && fmode != plotobject::FUNCTION) {
@@ -1323,7 +1291,7 @@ void analyze_triangle(const plotobject &f, std::string input)
 {
     if (!f.IsTriangle()) return;
     int decimals = 4;
-    double  a, b , c, a2, b2, c2, d, cr2, cr, ir2, ir, u, alpha, beta, gamma;
+    double  a, b , c, a2, b2, c2, d, cr2, cr, ir2, ir, u, alpha, beta, gamma, Area;
     val::vector<double> A(2), B(2), C(2), AB(2), AC(2), BC(2), I(2), U(2);
     Points.resize(2);
 
@@ -1339,6 +1307,7 @@ void analyze_triangle(const plotobject &f, std::string input)
     a2 = BC*BC; b2 = AC*AC; c2 = AB*AB;
     a = val::sqrt(a2); b = val::sqrt(b2); c = val::sqrt(c2);
     u = a + b + c;
+    Area = val::sqrt((a+b-c)*(a-b+c)*(b+c-a)*(a+b+c))/4.0;
 
     // compute circumcenter and circumradius:
     d = 2.0*(AB(0)*AC(1) - AB(1)*AC(0));
@@ -1377,6 +1346,7 @@ void analyze_triangle(const plotobject &f, std::string input)
     analyze_output[0] += "|AB| = " + val::ToString(c) + "; |AC| = " + val::ToString(b) + "; |BC| = " + val::ToString(a) + ".\n";
     analyze_output[0] += "\n " + greek_letters[0] + " = " + val::ToString(alpha) + _T("° , ")+ greek_letters[1] +  " = " + val::ToString(beta) + _T("° , ") +
                           greek_letters[2] + " = " + val::ToString(gamma) + _T("°.");
+    analyze_output[0] += "\n Area = " + val::ToString(Area);
 
     analyze_output[1] = "Circumcenter: (" + val::ToString(U(0)) + " , " + val::ToString(U(1)) + ")\nCircumradius: " + val::ToString(cr);
     analyze_output[2] = "Incenter: (" + val::ToString(I(0)) + " , " + val::ToString(I(1)) + ")\nInradius: " + val::ToString(ir);
@@ -1680,872 +1650,6 @@ void computeinterpolation(std::string input,std::string &Fstring)
 
 
 
-// --------------------------- Funktionen zu myfunction ----------------------------------
-
-/*
-int isinteger(const double &a,const double &epsilon=1e-9)
-{
-    val::rational r = val::rational(a);
-    if (r.denominator().iszero()) return 0;
-    int h=int (val::integer(r));
-    double d_h=double(h);
-    //std::cout<<"\n d_h , a "<<d_h<<" , "<<a<<std::endl;
-    if (val::abs(d_h-a)<epsilon) return 1;
-    else return 0;
-}
-
-
-
-int checkbrackets(const std::string& s)
-{
-    int i=0,n=s.size(), k=0;
-
-    for (i=0;i<n;++i) {
-        if (s[i] == '(') k++;
-        else if (s[i]==')') k--;
-        else continue;
-        if (k<0) return 0;
-    }
-
-    if (k!=0) return 0;
-
-    return 1;
-}
-
-
-std::string findnumber(const std::string &s, int &i)
-{
-    int n=s.size(),e_set=0,p_set=0;
-    std::string out;
-
-    for (;i<n;i++) {
-        if (s[i]>='0'  && s[i]<='9') out+=s[i];
-        else if (s[i]=='e' && i<n-1 && s[i+1]!='x') {
-            if (e_set) {i++; break;}
-            //if (i==n-1) {i++;break;}
-            if (s[i+1] == '-' || s[i+1]=='+') {
-                out+=s[i];i++;out+=s[i];e_set=1;
-            }
-            else {out+=s[i];e_set=1;}
-        }
-        else if (s[i]==',' || s[i]=='.') {
-            if (p_set) {i++;break;}
-            out+=s[i];
-            p_set=1;
-        }
-        else {break;}
-    }
-
-    return out;
-}
-
-int foundpattern(const std::string &s,const std::string &pattern, int& i)
-{
-    int is=1,n=s.size(),m=pattern.size(),j;
-
-    if (i+m>n) return 0;
-
-    for(j=0;i<n && j<m;++i,++j) {
-        if (s[i]!=pattern[j]) {return 0;}
-    }
-
-    return is;
-}
-
-
-val::Glist<drawingword> getdrawingwords(const wxString &s)
-{
-    val::Glist<drawingword> G;
-    unsigned i, n = s.length(), s_ready = 0;
-    drawingword lword;
-
-    for (i = 0; i < n; ++i) {
-        if (s[i] == '_' && i < n-1) {
-            if (s[i+1] == '{') {
-                for (i += 2; i < n; ++i ) {
-                    if (s[i] == '}') {
-                        s_ready = 1;
-                        break;
-                    }
-                    else {
-                        lword.sub_word += s[i];
-                    }
-                }
-            }
-            else {
-                ++i;
-                lword.sub_word += s[i];
-                s_ready = 1;
-            }
-            if (s_ready) continue;
-        }
-        else if (s[i] == '^' && i < n-1) {
-            if (i < n-1 && s[i+1] == '{') {
-                for (i += 2; i < n; ++i ) {
-                    if (s[i] == '}') {
-                        s_ready = 1;
-                        break;
-                    }
-                    else {
-                        lword.sup_word += s[i];
-                    }
-                }
-            }
-            else {
-                ++i;
-                lword.sup_word += s[i];
-                s_ready = 1;
-            }
-        }
-        else if (!s_ready) lword.word += s[i];
-        if (s_ready) {
-            G.push_back(lword);
-            lword.sub_word = lword.sup_word = lword.word = "";
-            s_ready = 0;
-        }
-    }
-    if (lword.word != "") G.push_back(lword);
-    return G;
-}
-
-
-
-
-//  --------------------------------------
-
-myfunction::myfunction(const myfunction& f)
-{
-    val::GlistIterator<token> it;
-    for (it=f.Gdat;it;it++) Gdat.inserttoend(it());
-    t=f.t;
-    s_infix=f.s_infix;
-    textdata=f.textdata;
-    TextWords = f.TextWords;
-    nvar=f.nvar;
-    withpar=f.withpar;
-    isrational=f.isrational;
-    isline=f.isline;
-    istext=f.istext;
-    mode=f.mode;
-}
-
-template <>
-double myfunction::operator()<> (const double& x) const
-{
-    using namespace val;
-    double value=0.0,v2;
-    if (Gdat.isempty()) return 0.0;
-
-    GlistIterator<myfunction::token> iT;
-    Glist<double> G;
-    int i;
-
-
-    for (iT=Gdat;iT;iT++) {
-        G.resetactual();
-        if (iT().type==0) {
-            if (iT().data=="PI") G.inserttohead(val::PI);
-            else if (iT().data=="t") G.inserttohead(t);
-            else G.inserttohead(val::FromString<double>(iT().data));
-        }
-        else if (iT().type==1) {G.inserttohead(x);} //std::cout<<"  variable ";}
-        else {
-            value=0.0;
-            if (iT().data=="+") {   //case "+":
-                if (!G.isempty()) {value=G.actualvalue();G.skiphead();}
-                if (!G.isempty()) {value+=G.actualvalue();G.skiphead();}
-                G.inserttohead(value);
-            }
-            else if (iT().data=="-") {  // case "-":
-                if (!G.isempty()) {v2=G.actualvalue();G.skiphead();}
-                if (!G.isempty()) {value=G.actualvalue();G.skiphead();value-=v2;}
-                G.inserttohead(value);
-            }
-            else if (iT().data=="m") {
-                if (!G.isempty()) G.actualvalue()*=-1.0;
-            }
-            else if (iT().data=="*") {  //case "*":
-                if (!G.isempty()) {value=G.actualvalue();G.skiphead();}
-                if (!G.isempty()) {value*=G.actualvalue();G.skiphead();}
-                G.inserttohead(value);
-            }
-            else if (iT().data=="/") {  //case "/":
-                if (!G.isempty()) {v2=G.actualvalue();G.skiphead();}
-                if (!G.isempty()) {value=G.actualvalue();G.skiphead();value/=v2;}
-                G.inserttohead(value);
-            }
-            else if (iT().data=="^") { //case "^":
-                if (!G.isempty()) {v2=G.actualvalue();G.skiphead();}
-                if (!G.isempty()) {
-                    value=G.actualvalue();
-                    G.skiphead();
-                    if (value<0) {
-                        if (isinteger(v2)) value=val::power(value,int(val::integer(val::rational(v2))));
-                        else value=val::exp(value,v2);
-                    }
-                    else value=val::exp(value,v2);
-                }
-                G.inserttohead(value);
-            }
-
-            else if ((i = getindexoffunction(iT().data)) != -1) {
-                if (!G.isempty()) G.actualvalue()=functionpairs[i].y(G.actualvalue());
-            }
-        }
-    }
-    G.resetactual();
-    value=0.0;
-    if (!G.isempty()) value=G.actualvalue();
-    return value;
-}
-
-
-val::rationalfunction myfunction::getrationalfuncion() const
-{
-    using namespace val;
-    rationalfunction v2,value=val::zero_element<rationalfunction>();
-    if (Gdat.isempty()) return value;
-
-    GlistIterator<myfunction::token> iT;
-    Glist<rationalfunction> G;
-
-
-    for (iT=Gdat;iT;iT++) {
-        G.resetactual();
-        if (iT().type==0) {
-            if (iT().data=="t") G.inserttohead(rationalfunction(pol<rational>(rational(t),0)));
-            else G.inserttohead(rationalfunction(pol<rational>(val::FromString<rational>(iT().data),0)));
-        }
-        else if (iT().type==1) {G.inserttohead(rationalfunction(pol<rational>(1,1)));} //std::cout<<"  variable ";}
-        else {
-            value=val::zero_element<rationalfunction>();
-            if (iT().data=="+") {   //case "+":
-                if (!G.isempty()) {value=G.actualvalue();G.skiphead();}
-                if (!G.isempty()) {value+=G.actualvalue();G.skiphead();}
-                G.inserttohead(value);
-            }
-            else if (iT().data=="-") {  // case "-":
-                if (!G.isempty()) {v2=G.actualvalue();G.skiphead();}
-                if (!G.isempty()) {value=G.actualvalue();G.skiphead();value-=v2;}
-                G.inserttohead(value);
-            }
-            else if (iT().data=="m") {
-                if (!G.isempty()) G.actualvalue()=-G.actualvalue();
-            }
-            else if (iT().data=="*") {  //case "*":
-                if (!G.isempty()) {value=G.actualvalue();G.skiphead();}
-                if (!G.isempty()) {value*=G.actualvalue();G.skiphead();}
-                G.inserttohead(value);
-            }
-            else if (iT().data=="/") {  //case "/":
-                if (!G.isempty()) {v2=G.actualvalue();G.skiphead();}
-                if (!G.isempty()) {value=G.actualvalue();G.skiphead();value/=v2;}
-                G.inserttohead(value);
-            }
-            else if (iT().data=="^") { //case "^":
-                if (!G.isempty()) {v2=G.actualvalue();G.skiphead();}
-                if (!G.isempty()) {
-                    value=G.actualvalue();
-                    G.skiphead();
-                    value=val::power(value,int(val::integer(v2.nominator().LC())));
-                }
-                G.inserttohead(value);
-            }
-        }
-    }
-    G.resetactual();
-    value=val::zero_element<rationalfunction>();
-    if (!G.isempty()) value=G.actualvalue();
-    return value;
-}
-
-
-// Anwendung des shunting - yard - Algortihmus:
-const myfunction& myfunction::infix_to_postfix(const std::string &s)
-{
-    using namespace val;
-    int i=0,n=s.size(),nG=0,j,failed=1;//syntax=0;
-    std::string out="", sf;
-    Glist<s_stack> G,OP;
-    s_stack t,*tlast;
-    s_stack::data_type tp;
-    int prec;
-
-    //
-
-    //
-
-    if (!Gdat.isempty()) Gdat.dellist();
-    s_infix="";
-
-    if (!checkbrackets(s)) return *this;//out;  //Fehler bei Klammerung;
-    s_infix=s;
-    for (i=n;i>0;--i) {
-        if (s_infix[i-1]!=' ') break;
-    }
-    s_infix.resize(i);
-    i=0;
-    // Setze G in infix -Notation;
-
-    while (i<n) {
-        failed=0;
-        //syntax=1;
-        if (s[i]=='+') {
-            t = s_stack("+",s_stack::OPERATOR,2);//G.inserttoend(s_stack("+",s_stack::OPERATOR,2));
-            //nG++;
-            i++;
-        }
-        else if (s[i]=='-') {
-            if (G.isempty()) t = s_stack("m",s_stack::OPERATOR,2);//G.inserttoend(s_stack("m",s_stack::OPERATOR,2));
-            else if (G[nG-1].data==")" || G[nG-1].type==0 || G[nG-1].type==1) t = s_stack("-",s_stack::OPERATOR,2);//G.inserttoend(s_stack("-",s_stack::OPERATOR,2));
-            else t = s_stack("m",s_stack::OPERATOR,4);//G.inserttoend(s_stack("m",s_stack::OPERATOR,4));
-            //nG++;
-            i++;
-        }
-        else if (s[i]=='*' || s[i]=='/') {
-            out="";
-            out+=s[i];
-            t = s_stack(out,s_stack::OPERATOR,3);//G.inserttoend(s_stack(out,s_stack::OPERATOR,3));
-            //nG++;
-            i++;
-        }
-        else if (s[i]=='^') {
-            t = s_stack("^",s_stack::OPERATOR,5,0);//G.inserttoend(s_stack("^",s_stack::OPERATOR,5,0));
-            //nG++;
-            i++;
-            int j=i;
-            std::string out=findnumber(s,j);
-            if (out=="") isrational=0;
-            else {
-                val::rational w=val::FromString<val::rational>(out);
-                if (val::denominator(w)!=val::integer(1)) isrational=0;
-            }
-        }
-        else if (s[i]=='(') {
-            t = s_stack("(",s_stack::LBRACKET);//G.inserttoend(s_stack("(",s_stack::LBRACKET));
-            //nG++;
-            i++;
-        }
-        else if (s[i]==')') {
-            t = s_stack(")",s_stack::RBRACKET);//G.inserttoend(s_stack(")",s_stack::RBRACKET));
-            //nG++;
-            i++;
-        }
-        else if (s[i]>='0' && s[i] <='9') {
-            t = s_stack(findnumber(s,i),s_stack::NUMBER);//G.inserttoend(s_stack(findnumber(s,i),s_stack::NUMBER));
-            //nG++;
-        }
-        else if (s[i]=='x') {
-            t = s_stack("x",s_stack::VARIABLE);//G.inserttoend(s_stack("x",s_stack::VARIABLE));
-            i++;
-            //nG++;
-        }
-        else if (s[i]=='y') {
-            t = s_stack("y",s_stack::VARIABLE);//G.inserttoend(s_stack("y",s_stack::VARIABLE));
-            ++i;
-            //nG++;
-            nvar=2;
-        }
-
-
-        else if (s[i] == 't' && (i == n-1 || ( i < n-1 && s[i+1] != 'a' && s[i+1] != 'e' && s[i+1] != 'r'))) {
-			t = s_stack("t",s_stack::NUMBER);
-            withpar=1;
-			++i;
-		}
-        else if ((sf = getstringfunction(s,i)) != "") {
-			isrational = 0;
-			if (sf == "PI") {
-                t = s_stack(val::ToString(val::PI,20),s_stack::NUMBER);
-                i += sf.length();
-			}
-			else {
-                tp = s_stack::OPERATOR;
-                prec = 5;
-                if (sf == "line") {
-                    isline=1;
-                    mode=LINE;
-                }
-                else if (sf == "inf") {
-                    tp = s_stack::NUMBER;
-                    prec = 0;
-                }
-                else if (sf == "circle") {
-                    mode = CIRCLE;
-                }
-                else if (sf == "text") {
-                    istext=1;
-                    mode=TEXT;
-                }
-                else if (sf == "triangle") {
-                    mode=TRIANGLE;
-                }
-                else if (sf == "polygon") {
-                    mode = POLYGON;
-                }
-                else if (sf == "points") mode = POINTS;
-                else if (sf == "fill") mode = FILL;
-                else if (sf == "rectangle") mode = RECTANGLE;
-
-                t = s_stack(sf,tp,prec);
-                if (sf == "text") {
-                    j = i;
-                    int nbrackets = 0;
-                    for (i=j;i<n;++i) {
-                        if (s[i] == '{') ++nbrackets;
-                        else if (s[i]=='}') {
-                            --nbrackets;
-                            if (!nbrackets) {
-                                ++i;
-                                break;
-                            }
-                        }
-                    }
-                }
-                else i+= sf.length();
-			}
-		}
-        else {i++;failed=1;}
-        if (!failed) {
-            if (!G.isempty() && mode==FUNCTION) {
-                tlast = &(G[nG-1]);
-                if (t.data=="(") {
-                    if (tlast->type==s_stack::NUMBER || tlast->data==")" || tlast->type==s_stack::VARIABLE) {
-                        G.inserttoend(s_stack("*",s_stack::OPERATOR,3));
-                        nG++;
-                    }
-                }
-                else if (t.type==s_stack::OPERATOR && t.precedence==5 && t.data!="^") {
-                    if (tlast->type==s_stack::NUMBER || tlast->data==")" || tlast->type==s_stack::VARIABLE) {
-                        G.inserttoend(s_stack("*",s_stack::OPERATOR,3));
-                        nG++;
-                    }
-                }
-                else if (t.type==s_stack::VARIABLE) {
-                    if (tlast->type==s_stack::NUMBER || tlast->data==")" || tlast->type==s_stack::VARIABLE) {
-                        G.inserttoend(s_stack("*",s_stack::OPERATOR,3));
-                        nG++;
-                    }
-                }
-                else if (t.type==s_stack::NUMBER) {
-                    if (tlast->type==s_stack::NUMBER || tlast->data==")" || tlast->type==s_stack::VARIABLE) {
-                        G.inserttoend(s_stack("*",s_stack::OPERATOR,3));
-                        nG++;
-                    }
-                }
-            }
-            G.inserttoend(t);
-            nG++;
-        }
-    }
-
-    // Nun hunting-yard-algorithmus:
-
-    G.resetactual();
-    //i=0;
-    //if (foundpattern(s_infix,"line",i)) isline=1;
-    if (isline || istext || mode==CIRCLE || mode==RECTANGLE || mode==TRIANGLE || mode==FILL || mode==POLYGON || mode==POINTS) {
-        if (istext) settextdata();
-        std::string s="",op;
-        int n;
-        double x,y;
-        while (!G.isempty()) {
-            t = G.actualvalue(); G.skiphead();G.resetactual();
-            if (t.data=="m" || t.data=="-") {s="-";continue;}
-            if (t.data=="*" || t.data=="/") {
-                n=Gdat.length();
-                if (!n) continue;
-                if (G.isempty()) break;
-                op=t.data;
-                t = G.actualvalue(); G.skiphead();G.resetactual();
-                x = FromString<double>(Gdat[n-1].data);
-                y = FromString<double>(t.data);
-                if (op=="*") x*=y;
-                else x/=y;
-                Gdat[n-1] = myfunction::token(val::ToString(x),0);
-                //Gdat.inserttoend(myfunction::token(val::ToString(x),0));
-                continue;
-            }
-            else if (t.type!=s_stack::NUMBER) continue;
-            Gdat.inserttoend(myfunction::token(s+t.data,0));
-            s="";
-        }
-
-        return *this;
-    }
-
-    // Hunting - yard algorithmus
-    while (!G.isempty()) {
-         t = G.actualvalue(); G.skiphead();G.resetactual();
-         if (t.type==s_stack::NUMBER || t.type==s_stack::VARIABLE) Gdat.inserttoend(myfunction::token(t.data,int(t.type))); //out+= t.data + " ";
-         else if (t.type==s_stack::OPERATOR) {
-            while (!OP.isempty() && OP.actualvalue().type==s_stack::OPERATOR) {
-                if (OP.actualvalue().precedence>t.precedence  || (OP.actualvalue().precedence==t.precedence && OP.actualvalue().leftassociativ)) {
-                    Gdat.inserttoend(myfunction::token(OP.actualvalue().data,2));//out+=OP.actualvalue().data + " ";
-                    OP.skiphead(); OP.resetactual();
-                }
-                else break;
-            }
-            OP.inserttohead(t); OP.resetactual();
-         }
-         else if (t.type==s_stack::LBRACKET) {OP.inserttohead(t);OP.resetactual();}
-         else if (t.type==s_stack::RBRACKET) {
-            while (!OP.isempty() && OP.actualvalue().type!=s_stack::LBRACKET) {
-                Gdat.inserttoend(myfunction::token(OP.actualvalue().data,int(OP.actualvalue().type)));//out+= OP.actualvalue().data + " ";
-                OP.skiphead();OP.resetactual();
-            }
-            if (!OP.isempty()) {OP.skiphead();OP.resetactual();}
-         }
-    }
-
-    while (!OP.isempty()) {
-        Gdat.inserttoend(myfunction::token(OP.actualvalue().data,int(OP.actualvalue().type)));//out+=OP.actualvalue().data + " ";
-        OP.skiphead();OP.resetactual();
-    }
-
-    return *this;
-}
-
-
-int myfunction::isrationalfunction() const
-{
-    int n = s_infix.length(),nklammerauf=0,nklammerzu=0;
-
-    if (n==0) return 1;
-    if (!isrational) return 0;
-
-    for (int i=0;i<n;++i) {
-        if (s_infix[i]=='a') {
-            if (foundpattern(s_infix,"abs",i)) {
-                for (;i<n;++i) {
-                    if (s_infix[i]=='(') nklammerauf++;
-                    if (s_infix[i]=='x') return 0;
-                    if (s_infix[i]==')') nklammerzu++;
-                    if (nklammerauf==nklammerzu) break;
-                }
-            }
-        }
-    }
-
-    return 1;
-}
-
-
-int myfunction::ispolynomialfunction() const
-{
-    int n = s_infix.length(),nklammerauf=0,nklammerzu=0;
-
-    if (n==0) return 1;
-    if (!isrationalfunction()) return 0;
-
-    for (int i=0;i<n;++i) {
-        if (s_infix[i]=='/') {
-            if (i==n-1) return 1;
-            ++i;
-            for (;i<n;++i) {
-                if (s_infix[i]=='(') nklammerauf++;
-                if (s_infix[i]=='x') return 0;
-                if (s_infix[i]==')') nklammerzu++;
-                if (nklammerauf==nklammerzu) break;
-            }
-        }
-    }
-    return 1;
-}
-
-
-
-
-int myfunction::isdifferentiable() const
-{
-    int n = Gdat.length();
-    for (int i = 0; i < n; ++i) {
-        if (Gdat[i].data == "abs") {
-            if (i < n-1 && Gdat[i+1].data == "log") continue;
-            else return 0;
-        }
-    }
-    return 1;
-}
-
-
-
-void myfunction::getLinePoints(double &x1,double &y1,double &x2,double &y2,double &arrow) const
-{
-    using namespace val;
-    GlistIterator<myfunction::token> iT;
-
-    iT=Gdat;
-    x1=x2=y1=y2=0;
-    arrow = 0.0;
-
-
-    while  (iT.actualvalid()) {
-        if (iT().type==0) {
-            x1=FromString<double>(iT().data);
-            iT.moveactual();
-            break;
-        }
-        iT.moveactual();
-    }
-    while  (iT.actualvalid()) {
-        if (iT().type==0) {
-            y1=FromString<double>(iT().data);
-            iT.moveactual();
-            break;
-        }
-        iT.moveactual();
-    }
-    while  (iT.actualvalid()) {
-        if (iT().type==0) {
-            x2=FromString<double>(iT().data);
-            iT.moveactual();
-            break;
-        }
-        iT.moveactual();
-    }
-
-    while  (iT.actualvalid()) {
-        if (iT().type==0) {
-            y2=FromString<double>(iT().data);
-            iT.moveactual();
-            break;
-        }
-        iT.moveactual();
-    }
-
-    while  (iT.actualvalid()) {
-        if (iT().type==0) {
-            arrow = FromString<double>(iT().data);
-            iT.moveactual();
-            break;
-        }
-        iT.moveactual();
-    }
-}
-
-void myfunction::getTrianglePoints(double &x1,double &y1,double &x2,double &y2,double &x3,double &y3) const
-{
-    using namespace val;
-    GlistIterator<myfunction::token> iT;
-
-    iT=Gdat;
-    x1=x2=y1=y2=x3=y3=0;
-    while  (iT.actualvalid()) {
-        if (iT().type==0) {
-            x1=FromString<double>(iT().data);
-            iT.moveactual();
-            break;
-        }
-        iT.moveactual();
-    }
-    while  (iT.actualvalid()) {
-        if (iT().type==0) {
-            y1=FromString<double>(iT().data);
-            iT.moveactual();
-            break;
-        }
-        iT.moveactual();
-    }
-    while  (iT.actualvalid()) {
-        if (iT().type==0) {
-            x2=FromString<double>(iT().data);
-            iT.moveactual();
-            break;
-        }
-        iT.moveactual();
-    }
-
-    while  (iT.actualvalid()) {
-        if (iT().type==0) {
-            y2=FromString<double>(iT().data);
-            iT.moveactual();
-            break;
-        }
-        iT.moveactual();
-    }
-    while  (iT.actualvalid()) {
-        if (iT().type==0) {
-            x3=FromString<double>(iT().data);
-            iT.moveactual();
-            break;
-        }
-        iT.moveactual();
-    }
-
-    while  (iT.actualvalid()) {
-        if (iT().type==0) {
-            y3=FromString<double>(iT().data);
-            iT.moveactual();
-            break;
-        }
-        iT.moveactual();
-    }
-}
-
-
-void myfunction::getCirclePoints(double& x1,double&y1,double &r,double &angle1, double &angle2, int &slice) const
-{
-    using namespace val;
-    GlistIterator<myfunction::token> iT;
-
-    iT=Gdat;
-    x1=y1=angle1=0;angle2=360;
-    r=1.0;
-    slice = 0;
-
-
-    while  (iT.actualvalid()) {
-        if (iT().type==0) {
-            x1=FromString<double>(iT().data);
-            iT.moveactual();
-            break;
-        }
-        iT.moveactual();
-    }
-    while  (iT.actualvalid()) {
-        if (iT().type==0) {
-            y1=FromString<double>(iT().data);
-            iT.moveactual();
-            break;
-        }
-        iT.moveactual();
-    }
-    while  (iT.actualvalid()) {
-        if (iT().type==0) {
-            r=FromString<double>(iT().data);
-            iT.moveactual();
-            break;
-        }
-        iT.moveactual();
-    }
-
-    while  (iT.actualvalid()) {
-        if (iT().type==0) {
-            angle1=FromString<double>(iT().data);
-            iT.moveactual();
-            break;
-        }
-        iT.moveactual();
-    }
-    while  (iT.actualvalid()) {
-        if (iT().type==0) {
-            angle2=FromString<double>(iT().data);
-            iT.moveactual();
-            break;
-        }
-        iT.moveactual();
-    }
-    while  (iT.actualvalid()) {
-        if (iT().type==0) {
-            slice = FromString<int>(iT().data);
-            iT.moveactual();
-            break;
-        }
-        iT.moveactual();
-    }
-
-}
-
-
-void myfunction::getTextPoint(double &x1,double &y1) const
-{
-    using namespace val;
-    GlistIterator<myfunction::token> iT;
-
-    iT=Gdat;
-    x1=y1=0;
-    while  (iT.actualvalid()) {
-        if (iT().type==0) {
-            x1=FromString<double>(iT().data);
-            iT.moveactual();
-            break;
-        }
-        iT.moveactual();
-    }
-    while  (iT.actualvalid()) {
-        if (iT().type==0) {
-            y1=FromString<double>(iT().data);
-            iT.moveactual();
-            break;
-        }
-        iT.moveactual();
-    }
-}
-
-
-void myfunction::getFillPoints(double& x,double& y, double& transparancy) const
-{
-    using namespace val;
-    GlistIterator<myfunction::token> iT;
-
-    iT=Gdat;
-    x=y=0;
-    transparancy=1;
-    while  (iT.actualvalid()) {
-        if (iT().type==0) {
-            x=FromString<double>(iT().data);
-            iT.moveactual();
-            break;
-        }
-        iT.moveactual();
-    }
-    while  (iT.actualvalid()) {
-        if (iT().type==0) {
-            y=FromString<double>(iT().data);
-            iT.moveactual();
-            break;
-        }
-        iT.moveactual();
-    }
-    while  (iT.actualvalid()) {
-        if (iT().type==0) {
-            transparancy=FromString<double>(iT().data);
-            iT.moveactual();
-            break;
-        }
-        iT.moveactual();
-    }
-}
-
-val::d_array<double> myfunction::getPolygonPoints() const
-{
-    using namespace val;
-    val::Glist<double> P;
-
-    for (const auto& iT : Gdat) {
-        if (iT.type==0) {
-            P.push_back(FromString<double>(iT.data));
-        }
-    }
-
-    int n=P.length(),i=0;
-    if (n%2) n--;
-    if (n<=0) return d_array<double>();
-    d_array<double> points(n);
-
-    for (const auto& x : P) {
-        points[i]=x;
-        ++i;
-        if (i==n) break;
-    }
-    return points;
-}
-
-void myfunction::settextdata()
-{
-    textdata = getstringfrombrackets(s_infix, '{', '}');
-
-    for (int i = 0; i < greek_literals.length(); ++i) {
-        //if (textdata.Find(greek_literals[i]) != wxNOT_FOUND) textdata.Replace(greek_literals[i], greek_letters[i]);
-        textdata.Replace(greek_literals[i], greek_letters[i]);
-    }
-    TextWords = getdrawingwords(textdata);
-
-    return;
-}
-*/
-
 // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 const val::d_array<std::string> plotobject::s_object_type{"line", "text", "circle", "rectangle", "triangle", "fill", "polygon", "points"};
@@ -2630,11 +1734,20 @@ plotobject::plotobject(const std::string &sf)
     n = values.length();
 
     if (n > 0) {
-        if (!getpiscale(values[0],factor,x_range.x,0))  x_range.x = val::FromString<double>(values[0]);
+        //if (!getpiscale(values[0],factor,x_range.x,0))  x_range.x = val::FromString<double>(values[0]);
+        x1 = val::valfunction(values[0]);
+        x2 = x1;
+        x_range.x = x1(0);
         x_range.y = x_range.x;
     }
     if (n > 1) {
-        if (!getpiscale(values[1],factor,x_range.y,0)) x_range.y = val::FromString<double>(values[1]);
+        //if (!getpiscale(values[1],factor,x_range.y,0)) x_range.y = val::FromString<double>(values[1]);
+        x2 = val::valfunction(values[1]);
+        x_range.y = x2(0);
+    }
+    if (x_range.x > x_range.y) {
+        x1 = x2 = val::valfunction("0");
+        x_range.x = x_range.y = 0.0;
     }
 
     // Check if object is a bitmap

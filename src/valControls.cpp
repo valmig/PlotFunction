@@ -922,14 +922,14 @@ void CompleteCtrl::UnbindAll()
 // ------------------------------------------------------------------------------------------------------------------------------------------
 
 
-CompleteTextCtrl::CompleteTextCtrl(wxWindow *parent, wxWindowID id,const val::d_array<std::string> &list,const wxString &value, const wxSize &size,
+CompleteTextCtrl::CompleteTextCtrl(wxWindow *parent, wxWindowID id,const val::d_array<wxString> &list,const wxString &value, const wxSize &size,
                                    const wxPoint &pos,long style) : wxTextCtrl(parent,id,value,pos,size,style), Parent(parent), identity(id), WordList(list,58,int('A'))
 {
 	BuildObject();
 }
 
 
-CompleteTextCtrl::CompleteTextCtrl(wxWindow *parent, wxWindowID id,const val::trie_type<std::string> &list,const wxString &value, const wxSize &size,
+CompleteTextCtrl::CompleteTextCtrl(wxWindow *parent, wxWindowID id,const val::trie_type<wxString> &list,const wxString &value, const wxSize &size,
                                    const wxPoint &pos,long style) : wxTextCtrl(parent,id,value,pos,size,style), Parent(parent), identity(id),
                                    beg(list.first_valid_char()), end(list.last_valid_char()), WordListPointer(&list)
 {
@@ -977,7 +977,7 @@ void CompleteTextCtrl::BuildObject()
 
 
 
-int CompleteTextCtrl::isalphabetical(char s) const
+int CompleteTextCtrl::isalphabetical(wxChar s) const
 {
     //if ( (s >= 65 && s<= 90 ) || (s >= 97 && s <= 122 ) ) return 1;
     //else return 0;
@@ -985,10 +985,10 @@ int CompleteTextCtrl::isalphabetical(char s) const
     else return 0;
 }
 
-std::string CompleteTextCtrl::findword(const std::string& input,int pos) const
+wxString CompleteTextCtrl::findword(const wxString& input,int pos) const
 {
     int start_position;
-    std::string word = "";
+    wxString word = "";
     for (start_position = pos; start_position >= 0; --start_position) {
         //if (input[start_position]<97 || input[start_position] > 122) break;
         if (!(isalphabetical(input[start_position]))) break;
@@ -998,22 +998,6 @@ std::string CompleteTextCtrl::findword(const std::string& input,int pos) const
     for (int i = start_position; i <=pos ; ++i) word += input[i];
     return word;
 }
-
-/*
-std::string findword(const wxString& input,int pos)
-{
-    int start_position;
-    std::string word = "";
-    for (start_position = pos; start_position >= 0; --start_position) {
-        //if (input[start_position]<97 || input[start_position] > 122) break;
-        if (!(isalphabetical(input[start_position]))) break;
-    }
-    if (start_position == pos ) return word;
-    start_position++;
-    for (int i = start_position; i <=pos ; ++i) word += input[i];
-    return word;
-}
-*/
 
 
 
@@ -1045,7 +1029,7 @@ void CompleteTextCtrl::OnInputChanged(wxCommandEvent &tevent)
     n_candidates = 0;
     isactiv = 0;
     selection = 0;
-    std::string word = std::string(GetValue());
+    wxString word = GetValue();
     int n = GetInsertionPoint();
     if (!IsSingleLine()) --n;
     //wxMessageBox(word + " , = " +val::ToString(n));
@@ -1088,6 +1072,7 @@ void CompleteTextCtrl::OnInputChanged(wxCommandEvent &tevent)
     if (enablecomplete && isalphabetical(word[n])) {
         //actualword += word[n-1];
         actualword = findword(word,n);
+        //std::cout << "\n" << actualword << std::endl;
         //CandList = getlist_of_starts_with(WordList,actualword);
         if (WordListPointer == nullptr) CandList = WordList.getmatchingprefix<d_array>(actualword);
         else CandList = WordListPointer->getmatchingprefix<d_array>(actualword);
@@ -1241,7 +1226,7 @@ void CompleteTextCtrl::OnListBoxSelected(wxCommandEvent &evt)
 
 void CompleteTextCtrl::CompleteWord()
 {
-    std::string &fullword = CandList[selection],suffix;
+    wxString &fullword = CandList[selection],suffix;
     int i,m = actualword.length(), n = fullword.length();
 
     for (i = m; i < n ; ++i) suffix += fullword[i];
