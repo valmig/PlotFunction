@@ -1032,16 +1032,19 @@ void calculate(std::string s)
     if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event.Clone() );
 }
 
-void computezeroiteration(const plotobject&f,double x1,double x2,double eps,int n,int dez)
+void computezeroiteration(const plotobject&F,double x1,double x2,double eps,int n,int dez)
 {
     using namespace val;
     MyThreadEvent event(MY_EVENT,IdIteration);
     int res, precision;
+    val::valfunction f(F.f.getinfixnotation());
+    double x = 0.5*(x1 + x2);
+
     tablestring="Zero approximation of:\n f(x) = " + f.getinfixnotation() + ".\n\n";
 
     tablestring+="Start-interval:  [ " + ToString(x1) + " ; " + ToString(x2) + " ]\nMax. number of Iterations: " + ToString(n) +
         "\nPrecision: " + ToString(eps) + "\nRound to decimal: " + ToString(dez) + "\n";
-    res = SecantMethod(f.f,x1,x2,eps,n);
+    res = SecantMethod(f,x1,x2,eps,n);
     precision = intdigits(x2) + dez;
     precision = val::Min(precision, val::MaxPrec);
     if (res>=0) {
@@ -1051,6 +1054,19 @@ void computezeroiteration(const plotobject&f,double x1,double x2,double eps,int 
         tablestring+= "\nSecant-method failed!\n x = " + ToString(val::round(x2,dez),precision);
     }
     else tablestring+="\nSecant-method failed!";
+
+    if (f.isdifferentiable()) {
+        val::valfunction f1 = f.derive();
+        res = NewtonIteration(f, f1, x,eps,n);
+        tablestring += "\n\nNewton Iteration:";
+        if (res >= 0) {
+            tablestring += "\nNewton-Iteration succesful!\nNumber of Iterations: " + val::ToString(res) + "\n x = " + ToString(val::round(x,dez),precision);
+        }
+        else if (res == -1) {
+            tablestring += "\nNewton-Teration failed!\n x = " + ToString(val::round(x,dez),precision);
+        }
+        else tablestring += "\nNewton-Iteration failed!";
+    }
 
     if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event.Clone() );
 }
@@ -1291,9 +1307,9 @@ void analyze_triangle(const plotobject &f, std::string input)
 {
     if (!f.IsTriangle()) return;
     int decimals = 4;
-    double  a, b , c, a2, b2, c2, d, cr2, cr, ir2, ir, u, alpha, beta, gamma, Area;
+    double  a, b , c, a2, b2, c2, d, cr2, cr, ir2, ir, u, alpha, beta, gamma, Area, centrox, centroy;
     val::vector<double> A(2), B(2), C(2), AB(2), AC(2), BC(2), I(2), U(2);
-    Points.resize(2);
+    Points.resize(3);
 
     //Get Parameters
     val::d_array<char> sep({';', '\n'});
@@ -1319,12 +1335,16 @@ void analyze_triangle(const plotobject &f, std::string input)
     Points[0].resize(2);
     Points[0][0].x = U(0); Points[0][0].y = U(1);
 
-    // compute incenter and inradius
+    // compute incenter, inradius and centroid
     I = ((a/u)*A + (b/u)*B + (c/u)*C);
     I(0) = val::round(I(0),decimals); I(1) = val::round(I(1),decimals);
     ir2 = ((b+c-a)*(a+c-b)*(a+b-c))/(4*u); ir = val::sqrt(ir2);
     Points[1].resize(2);
     Points[1][0].x = I(0); Points[1][0].y = I(1);
+    //
+    Points[2].resize(1);
+    centrox = Points[2][0].x = val::round((A(0)+B(0)+C(0))/3,decimals); centroy = Points[2][0].y = val::round((A(1)+B(1)+C(1))/3,decimals);
+
 
     // Compute angles:
     alpha = val::arccos((b2+c2-a2)/(2*b*c)); beta = val::arccos((a2+c2-b2)/(2*a*c));
@@ -1339,7 +1359,7 @@ void analyze_triangle(const plotobject &f, std::string input)
     Points[1][1].x = ir;
     //
 
-    analyze_output.resize(3);
+    analyze_output.resize(4);
     for (int i = 0; i < 3; ++i) analyze_output[i] = "";
     analyze_output[0] = "Points of triangle:\n A(" + val::ToString( A(0)) + "," + val::ToString(A(1)) +"); B(" +
         val::ToString(B(0)) + "," + val::ToString(B(1)) + "); C(" + val::ToString(C(0)) + "," + val::ToString(C(1)) + ").\n";
@@ -1350,6 +1370,7 @@ void analyze_triangle(const plotobject &f, std::string input)
 
     analyze_output[1] = "Circumcenter: (" + val::ToString(U(0)) + " , " + val::ToString(U(1)) + ")\nCircumradius: " + val::ToString(cr);
     analyze_output[2] = "Incenter: (" + val::ToString(I(0)) + " , " + val::ToString(I(1)) + ")\nInradius: " + val::ToString(ir);
+    analyze_output[3] = "Centroid: (" + val::ToString(centrox) + " , " + val::ToString(centroy) + ")";
 
     MyThreadEvent event(MY_EVENT,myevent_id::IdTriangle);
     if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event.Clone());

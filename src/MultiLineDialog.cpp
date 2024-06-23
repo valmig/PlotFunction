@@ -310,6 +310,7 @@ AnalysisDialog::AnalysisDialog(wxWindow *parent,int &nchild,const val::d_array<w
     else if (dialogtype == anadialog_type::triangle_type) {
         Text[0] = new wxStaticText(surface,11,_T("Circumcircle:"));
         Text[1] = new wxStaticText(surface,12,_T("Incircle:"));
+        Text[2] = new wxStaticText(surface,12,_T("Centroid:"));
     }
     if (n_point && Text[0] != nullptr) {
         wxFont font = Text[0]->GetFont();
@@ -471,8 +472,9 @@ void AnalysisDialog::Paint(int i)
         }
     }
     else if (dialogtype == anadialog_type::triangle_type) {
-        sf = "circle " + val::ToString((*Points)[i][0].x) + " " + val::ToString((*Points)[i][0].y) + " " + val::ToString((*Points)[i][1].x) + " 0 360 -1";
-        n = 2;
+        if (i <= 1) sf = "circle " + val::ToString((*Points)[i][0].x) + " " + val::ToString((*Points)[i][0].y) + " " + val::ToString((*Points)[i][1].x) + " 0 360 -1";
+        else sf = "points " + val::ToString((*Points)[i][0].x) + " " + val::ToString((*Points)[i][0].y);
+        n = 3;
     }
     if (n==0) return;
     p_event.SetPointString(sf);

@@ -170,6 +170,14 @@ double kepler_simpson_sum(const T& f,const double& a,const double& b,int n);
 template <class T>
 double integral(const T& f,const double &a,const double &b,int iter = 50, const double& delta=1e-8);
 
+// Newton-Iteration.
+// return : -2 method failed, number of iterations not reached:
+//          -1 number of iterations reached, but |f(x) > eps|; iteration failed
+//          i = number of required iterations; iteration succesful.
+// f1 = f'
+template<class T>
+int NewtonIteration(const T& f, const T &f1, double &x, const double& eps = 1e-9, int n = 15);
+
 
 // Iterationsverfahren zur Bestimmung einer Nullstelle nach der Sekanten-Methode:
 // Rückgabe: -2 Iterationsgrenze wird nicht erreicht, Methode fehlgeschlagen.
@@ -187,206 +195,6 @@ struct drawingword
 
 //-----------------------------   class myfunction ----------------------------------------------------------------------------------------
 
-/*
-class myfunction
-{
-public:
-    myfunction() = default;
-    explicit myfunction(const std::string &s) {infix_to_postfix(s);}
-    myfunction(const myfunction&);
-    myfunction(myfunction &&f) {Gdat=std::move(f.Gdat);t=std::move(f.t);s_infix=std::move(f.s_infix);textdata=std::move(f.textdata);TextWords=std::move(f.TextWords);nvar=f.nvar;withpar=f.withpar;isrational=f.isrational;isline=f.isline;istext=f.istext;mode=f.mode;}// Gdat(std::move(f.Gdat)), t(std::move(f.t)), s_infix(std::move(f.s_infix)) {nvar=f.nvar;}//{Gdat=std::move(f.Gdat);t=f.t;}
-    const myfunction& operator=(const myfunction&) = delete;
-    const myfunction& operator= (myfunction&& f) {Gdat=std::move(f.Gdat);s_infix=std::move(f.s_infix);textdata=std::move(f.textdata);TextWords=std::move(f.TextWords);nvar=f.nvar;withpar=f.withpar;isrational=f.isrational;isline=f.isline;istext=f.istext;mode=f.mode;return *this;}
-    const myfunction& infix_to_postfix(const std::string &s);
-    template <class T> T operator() (const T&) const;
-    template <class T> val::pol<T> getpol(const T& a,const char var='x') const; // Polynom p(Y) = f(a,Y);
-    val::rationalfunction getrationalfuncion() const;
-    void getLinePoints(double& x1,double &y1,double &x2,double &y2,double &arrow) const;
-    void getTrianglePoints(double &x1,double &y1,double &x2,double &y2,double &x3,double &y3) const;
-    void getTextPoint(double &x1,double &y1) const;
-    void getCirclePoints(double& x1,double&y1,double &r,double &angle1, double &angle2,int &slice) const;
-    void getFillPoints(double& x,double& y, double& transparancy) const;
-    val::d_array<double> getPolygonPoints() const;
-    const wxString& getTextData() const {return textdata;}
-    const val::Glist<drawingword>& getTextWords() const {return TextWords;}
-    void setparameter(const double &a) {t=a;}
-    const double& getparameter() const {return t;}
-    const std::string& getinfixnotation() const {return s_infix;}
-    int numberofvariables() const {return nvar;}
-    int iszero() const {return Gdat.isempty();}
-    int iswithparameter() const {return withpar;}
-    int israt() const {return isrational;}
-    int isrationalfunction() const;
-    int ispolynomialfunction() const;
-    int isdifferentiable() const;
-    int IsLine() const {return (mode==LINE);}
-    int IsText() const {return (mode==TEXT);}
-    int IsCircle() const {return (mode==CIRCLE);}
-    int IsRectangle() const {return (mode==RECTANGLE);}
-    int IsTriangle() const {return (mode==TRIANGLE);}
-    int IsFill() const {return (mode==FILL);}
-    int IsPolygon() const {return mode==POLYGON;}
-    int IsPoints() const {return mode==POINTS;}
-    enum modetype {FUNCTION,LINE,TEXT,CIRCLE,RECTANGLE,TRIANGLE,FILL,POLYGON,POINTS};
-    modetype getmode() const {return mode;}
-private:
-    struct token {
-        std::string data="";
-        int type=0;
-        token() = default;
-        token(const std::string &s,const int t) : data(s),type(t) {}
-    };
-    struct s_stack {
-        std::string data="";
-        enum data_type {NUMBER,VARIABLE,OPERATOR,LBRACKET,RBRACKET};
-        data_type type=NUMBER;
-        int precedence=0;
-        int leftassociativ=0;
-        s_stack() = default;
-        s_stack(const std::string& s,data_type t,int p=0,int l=1) : data(s), type(t), precedence(p),leftassociativ(l) {}
-    };
-    double t=0;
-    val::Glist<token> Gdat;
-    std::string s_infix="";
-    wxString textdata="";
-	val::Glist<drawingword> TextWords;
-    int nvar=1,withpar=0,isrational=1,isline=0,istext=0;
-    modetype mode=FUNCTION;
-    void settextdata();
-};
-
-template <>
-double myfunction::operator() (const double &x) const;
-
-
-template <class T>
-T myfunction::operator() (const T& x) const
-{
-    using namespace val;
-    T v2,value=val::zero_element<T>();
-    if (Gdat.isempty()) return value;
-
-    GlistIterator<myfunction::token> iT;
-    Glist<T> G;
-
-    for (iT=Gdat;iT;iT++) {
-        G.resetactual();
-        if (iT().type==0) {
-            if (iT().data=="t") G.inserttohead(T(t));
-            else G.inserttohead(val::FromString<T>(iT().data));
-        }
-        else if (iT().type==1) {G.inserttohead(x);} //std::cout<<"  variable ";}
-        else {
-            value=val::zero_element<T>();
-            if (iT().data=="+") {   //case "+":
-                if (!G.isempty()) {value=G.actualvalue();G.skiphead();}
-                if (!G.isempty()) {value+=G.actualvalue();G.skiphead();}
-                G.inserttohead(value);
-            }
-            else if (iT().data=="-") {  // case "-":
-                if (!G.isempty()) {v2=G.actualvalue();G.skiphead();}
-                if (!G.isempty()) {value=G.actualvalue();G.skiphead();value-=v2;}
-                G.inserttohead(value);
-            }
-            else if (iT().data=="m") {
-                if (!G.isempty()) G.actualvalue()=-G.actualvalue();
-            }
-            else if (iT().data=="*") {  //case "*":
-                if (!G.isempty()) {value=G.actualvalue();G.skiphead();}
-                if (!G.isempty()) {value*=G.actualvalue();G.skiphead();}
-                G.inserttohead(value);
-            }
-            else if (iT().data=="/") {  //case "/":
-                if (!G.isempty()) {v2=G.actualvalue();G.skiphead();}
-                if (!G.isempty()) {value=G.actualvalue();G.skiphead();value/=v2;}
-                G.inserttohead(value);
-            }
-            else if (iT().data=="^") { //case "^":
-                if (!G.isempty()) {v2=G.actualvalue();G.skiphead();}
-                if (!G.isempty()) {
-                    value=G.actualvalue();
-                    G.skiphead();
-                    value=val::power(value,int(val::integer(val::rational(v2))));
-                }
-                G.inserttohead(value);
-            }
-            else if (iT().data=="abs") {
-                if (!G.isempty()) G.actualvalue()=val::abs(G.actualvalue());
-            }
-        }
-    }
-    G.resetactual();
-    value=val::zero_element<T>();
-    if (!G.isempty()) value=G.actualvalue();
-    return value;
-}
-
-template <class T>
-val::pol<T> myfunction::getpol(const T& a,const char var) const
-{
-    using namespace val;
-    pol<T> Y(T(1),1),value,v2;  //
-    int exponent;
-
-    if (Gdat.isempty()) return value;
-
-    GlistIterator<myfunction::token> iT;
-    Glist<pol<T>> G;
-
-
-    for (iT=Gdat;iT;iT++) {
-        G.resetactual();
-        if (iT().type==0) {
-            if (iT().data=="t") G.inserttohead(pol<T>(T(t),0));
-            else G.inserttohead(pol<T>(val::FromString<T>(iT().data),0));
-        }
-        else if (iT().type==1) {
-            if (iT().data==var) G.inserttohead(pol<T>(a,0));
-            else G.inserttohead(Y);
-        } //std::cout<<"  variable ";
-        else {
-            value.del();  // value=0
-            if (iT().data=="+") {   //case "+":
-                if (!G.isempty()) {value=std::move(G.actualvalue());G.skiphead();}
-                if (!G.isempty()) {value+=G.actualvalue();G.skiphead();}
-                G.inserttohead(value);
-            }
-            else if (iT().data=="-") {  // case "-":
-                if (!G.isempty()) {v2=G.actualvalue();G.skiphead();}
-                if (!G.isempty()) {value=G.actualvalue();G.skiphead();value-=v2;}
-                G.inserttohead(std::move(value));
-            }
-            else if (iT().data=="m") {
-                if (!G.isempty()) G.actualvalue()*=T(-1);
-            }
-            else if (iT().data=="*") {  //case "*":
-                if (!G.isempty()) {value=std::move(G.actualvalue());G.skiphead();}
-                if (!G.isempty()) {value*=G.actualvalue();G.skiphead();}
-                G.inserttohead(std::move(value));
-            }
-            else if (iT().data=="/") {  //case "/":
-                if (!G.isempty()) {v2=std::move(G.actualvalue());G.skiphead();}
-                if (!G.isempty()) {value=G.actualvalue();G.skiphead();value/=v2;}
-                G.inserttohead(std::move(value));
-            }
-            else if (iT().data=="^") { //case "^":
-                if (!G.isempty()) {v2=std::move(G.actualvalue());G.skiphead();}
-                exponent=int(v2.leader());
-                if (!G.isempty()) {
-                    value=G.actualvalue();
-                    G.skiphead();
-                    value=val::power(value,exponent);
-                }
-                G.inserttohead(std::move(value));
-            }
-        }
-    }
-    G.resetactual();
-    value.del();
-    if (!G.isempty()) value=std::move(G.actualvalue());
-    return value;
-}
-*/
 
 // ------------------------------------------------------------------------------------------------------------------------------------
 
@@ -432,6 +240,21 @@ double integral(const T& f,const double &a,const double &b,int iter, const doubl
     } while (n<=iter);
 
     return wert2;
+}
+
+template<class T>
+int NewtonIteration(const T& f, const T &f1, double &x, const double& eps, int n)
+{
+    int i;
+    double y1, y;
+    for (i = 0; i < n+1; ++i) {
+        y = f(x);
+        if (val::abs(y) < eps) return i;
+        y1 = f1(x);
+        if (val::abs(y1) < eps) return -2;
+        x -= y/y1;
+    }
+    return -1;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------------------------------------

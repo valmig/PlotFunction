@@ -2097,7 +2097,7 @@ void PlotFunctionFrame::OnMenuSizeSelected(wxCommandEvent& event)
      }
 
 
-     val::MultiLineDialog dialog(this,hsizestring,stattext,240,2*fontsize+6,title,fontsize,1,wxTE_RIGHT);
+     val::MultiLineDialog dialog(this,hsizestring,stattext,240,-1,title,fontsize,1,wxTE_RIGHT);
 #ifdef __APPLE__
     dialog.Centre();
 #endif // __APPLE__
@@ -2318,7 +2318,7 @@ void PlotFunctionFrame::OnMenuFontSize(wxCommandEvent& event)
         cmd = AXIS_FONTSIZE;
     }
 
-    val::MultiLineDialog fontsizedialog(this,val::ToString(fs),"Entry Size",240,2*fontsize+6,title,fontsize,1,wxTE_RIGHT);
+    val::MultiLineDialog fontsizedialog(this,val::ToString(fs),"Entry Size",240,-1,title,fontsize,1,wxTE_RIGHT);
 #ifdef __APPLE__
     fontsizedialog.Centre();
 #endif // __APPLE__
@@ -2336,7 +2336,7 @@ void PlotFunctionFrame::OnMenuParameter(wxCommandEvent &event)
 
     int i,n,anz=0;
     std::string pars,hs,fs=F[0].getinfixnotation(),xrs="";
-    val::MultiLineDialog pardialog(this,"","Entry Values separated by ;",240,2*fontsize+6,"Set Parameter Values",fontsize,1);
+    val::MultiLineDialog pardialog(this,"","Entry Values separated by ;",240,-1,"Set Parameter Values",fontsize,1);
 #ifdef __APPLE__
     pardialog.Centre();
 #endif // __APPLE__
@@ -2562,7 +2562,7 @@ void PlotFunctionFrame::OnMenuTools(wxCommandEvent &event)
         else {
             type = "normal";
         }
-        MultiLineDialog tangentdialog(this,"","Entry x-value or point",240,2*fontsize+6,"Set Point for " + type,fontsize,1);
+        MultiLineDialog tangentdialog(this,"","Entry x-value or point",240,-1,"Set Point for " + type,fontsize,1);
 #ifdef __APPLE__
         tangentdialog.Centre();
 #endif // __APPLE__
@@ -2578,7 +2578,7 @@ void PlotFunctionFrame::OnMenuTools(wxCommandEvent &event)
     else if (id==7003) { // Table
         if (nchildwindows) return;
 
-        MultiLineDialog tabledialog(this,xstring + " ; 0.5" ,"Entry x1,x2,dx:",240,2*fontsize+6,"Set Values for Table",fontsize,1);
+        MultiLineDialog tabledialog(this,xstring + " ; 0.5" ,"Entry x1,x2,dx:",240,-1,"Set Values for Table",fontsize,1);
 #ifdef __APPLE__
         tabledialog.Centre();
 #endif // __APPLE__
@@ -2621,7 +2621,7 @@ void PlotFunctionFrame::OnChangeParmeterMenu(wxCommandEvent & event)
     int id=event.GetId();
 
     if (id==23) {// Set Regression Degree:
-        val::MultiLineDialog dialog(this,val::ToString(regressiondegree),"Entry Regression Degree:",240,2*fontsize+6,"Set Regression Degree",fontsize,1,wxTE_RIGHT);
+        val::MultiLineDialog dialog(this,val::ToString(regressiondegree),"Entry Regression Degree:",240,-1,"Set Regression Degree",fontsize,1,wxTE_RIGHT);
 #ifdef __APPLE__
         dialog.Centre();
 #endif // __APPLE__
@@ -2632,7 +2632,7 @@ void PlotFunctionFrame::OnChangeParmeterMenu(wxCommandEvent & event)
     }
 
     if (id==24) { // Round-decimals for points
-        val::MultiLineDialog dialog(this,val::ToString(rounddrawingpoints),"Entry round-decimals: (-1 = no rounding)",240,2*fontsize+6,"Set Round-decimals",fontsize,1,wxTE_RIGHT);
+        val::MultiLineDialog dialog(this,val::ToString(rounddrawingpoints),"Entry round-decimals: (-1 = no rounding)",240,-1,"Set Round-decimals",fontsize,1,wxTE_RIGHT);
 #ifdef __APPLE__
         dialog.Centre();
 #endif // __APPLE__
@@ -2650,7 +2650,7 @@ void PlotFunctionFrame::OnChangeParmeterMenu(wxCommandEvent & event)
         for (i=0;i<n;++i) pars+=val::ToString(Parameter[i]) + ";";
     }
 
-    val::MultiLineDialog pardialog(this,pars,"Entry Values separated by ;",240,2*fontsize+6,"Set Parameter Values",fontsize,1);
+    val::MultiLineDialog pardialog(this,pars,"Entry Values separated by ;",240,-1,"Set Parameter Values",fontsize,1);
 #ifdef __APPLE__
     pardialog.Centre();
 #endif // __APPLE__
@@ -2673,7 +2673,8 @@ void PlotFunctionFrame::OnRangeMenu(wxCommandEvent &event)
     else {
         entry=ystring;info="Entry y-Values(empty string = default";title="Set y-Range Values";
     }
-    val::MultiLineDialog rangedialog(this,entry,info,240,2*fontsize+6,title,fontsize,1,wxTE_RIGHT);
+    //val::MultiLineDialog rangedialog(this,entry,info,240,2*fontsize+6,title,fontsize,1,wxTE_RIGHT);
+    val::MultiLineDialog rangedialog(this,entry,info,240,-1,title,fontsize,1,wxTE_RIGHT);
 #ifdef __APPLE__
     rangedialog.Centre();
 #endif // __APPLE__
@@ -2726,7 +2727,7 @@ void PlotFunctionFrame::OnInputDialog(wxCommandEvent&)
     wxPoint point = GetPosition();
     point.y += 60;
     point.x += 10;
-    size.y = 30;
+    size.y = -1;//30;
     size.x -= 20;
 
 #ifdef __APPLE__
@@ -3525,7 +3526,7 @@ void PlotFunctionFrame::OnMoveMenu(wxCommandEvent &)
     if (moveinpointsx) svalue +=" p";
     svalue += " ; " + val::ToString(movedy);
     if (moveinpointsy) svalue += " p";
-    val::MultiLineDialog movedialog(this,svalue,"Entry x-increment ; y-increment [p for pixels]",240,2*fontsize+6,"Move Increments",fontsize,1);
+    val::MultiLineDialog movedialog(this,svalue,"Entry x-increment ; y-increment [p for pixels]",240,-1,"Move Increments",fontsize,1);
 #ifdef __APPLE__
     movedialog.Centre();
 #endif // __APPLE__
@@ -3780,7 +3781,7 @@ void PlotFunctionFrame::OnMenuFill(wxCommandEvent &event)
             descr = "Entry Text";
         }
 
-        val::MultiLineDialog cdialog(this,entry,descr,240,fontsize+15,title,fontsize,1);
+        val::MultiLineDialog cdialog(this,entry,descr,240,-1,title,fontsize,1);
 #ifdef __APPLE__
         cdialog.Centre();
 #endif // __APPLE__

@@ -92,7 +92,7 @@ MultiLineDialog::MultiLineDialog(wxWindow* parent,const std::string &Entry,const
 	BoxSizer1->Add(BoxSizer2, 0, wxALL|wxALIGN_LEFT, 5);
 	BoxSizer3 = new wxBoxSizer(wxHORIZONTAL);
 	if (!singleline) TextCtrl1 = new wxTextCtrl(this, ID_TEXTCTRL1,Entry, wxDefaultPosition, wxSize(sx,sy), wxTE_MULTILINE|wxVSCROLL|wxHSCROLL|Style, wxDefaultValidator, _T("ID_TEXTCTRL1"));
-	else TextCtrl1 = new wxTextCtrl(this, ID_TEXTCTRL1,Entry, wxDefaultPosition, wxSize(sx,sy),Style, wxDefaultValidator, _T("ID_TEXTCTRL1"));
+	else TextCtrl1 = new wxTextCtrl(this, ID_TEXTCTRL1,Entry, wxDefaultPosition, wxSize(sx,-1),Style, wxDefaultValidator, _T("ID_TEXTCTRL1"));
 	BoxSizer3->Add(TextCtrl1, 1, wxALL|wxEXPAND, 5);
 	BoxSizer1->Add(BoxSizer3, 1, wxALL|wxEXPAND, 5);
 	BoxSizer4 = new wxBoxSizer(wxHORIZONTAL);

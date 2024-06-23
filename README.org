@@ -12,6 +12,7 @@
   - [[#rational-interpolation][Rational interpolation]]
   - [[#regression][Regression]]
   - [[#export-graphic][Export graphic]]
+  - [[#import-graphic][Import graphic]]
   - [[#high-customization][High customization]]
 
 * Required C++ libraries
@@ -23,15 +24,17 @@ following the given instructions.
 
 * Features
 ** Plotter
-plotting functions, algebraic curves and more geometric objects like points, lines, polygons, circles, etc...
+plotting functions, algebraic curves, parametric curves and more geometric objects like points, lines, polygons, circles, etc...
 ** Calculus
-analyzes functions (definition gaps, zeros, extreme points, inflection points) and computes derivations and
-some stammfunctions.
+analyzes functions (definition gaps, zeros, extreme points, inflection points), computes derivations and
+some stammfunctions, zero approximation, intersection points of two functions, tangents, normal lines, etc.
 ** Rational interpolation
 computes the interpolation polynomial to a given set of points.
 ** Regression
 computes the regression polynomial of a given degree to a given set of points.
 ** Export graphic
 you can export your graphic as a png file, or copy/paste it directly into your documents.
+** Import graphic
+you can copy png pictures to the coordinate system.
 ** High customization
 Great variability for graph colors/width, axis colors, axis range, axis scale, etc..
