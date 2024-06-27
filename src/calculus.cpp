@@ -66,23 +66,75 @@ void set_unity_element(valfunction &f)
 } // end namespace val
 
 
-/*
-// Computes greatest nat. number  m, with m<=sqrt(n), by bisection-method in [a,b].
-val::integer sqrt(const val::integer& n)
+namespace hzeros
 {
- using namespace val;
- integer a,a1,c,d,b=n;
+val::d_array<std::string> operators({"exp","sin","cos","log","tan","sqrt","arcsin","arccos","arctan"});
 
- while ((d=(b-a))>1) {
-	 a1=a+d/integer(2);
-	 c=a1*a1;
-	 if (c>n) b=std::move(a1);
-	 else a=std::move(a1);
- }
- if ((b*b)>n) return a;
- else return b;
+
+// adds Element of H to G if element in G doesn't exist.
+void addto(val::Glist<double> &G, const val::Glist<double> &H, const double &epsilon)
+{
+    int isinG;
+    for (const auto &v : H) {
+        isinG = 0;
+        for (const auto &w : G) {
+            if (val::abs(v-w) < epsilon) {
+                isinG = 1;
+                break;
+            }
+        }
+        if (!isinG) G.sinsert(v);
+    }
 }
-*/
+
+void addto(val::Glist<val::valfunction> &G, const val::Glist<val::valfunction> &H)
+{
+    int isinG;
+    std::string sv;
+    for (const auto &v : H) {
+        isinG = 0;
+        for (const auto &w : G) {
+            if (v == w) {
+                isinG = 1;
+                break;
+            }
+        }
+        if (!isinG) G.push_back(v);
+    }
+}
+
+
+int has_parameter(const std::string& s)
+{
+    int n = s.length(), is = 0;
+    for (int i = 0; i < n-1; ++i) {
+        //if (s[i] == 'P' && s[i+1] == 'I') is = 1;
+        if (s[i] == 'r' && s[i+1] == 't') {  //  case sqrt
+            ++i;
+            continue;
+        }
+        if (s[i] == 't' && s[i+1] != 'a') is = 1;
+    }
+    if (s[n-1] == 't') is = 1;
+    return is;
+}
+
+
+int has_pi_or_parameter(const std::string& s)
+{
+    int n = s.length(), is = 0;
+    for (int i = 0; i < n-1; ++i) {
+        if (s[i] == 'P' && s[i+1] == 'I') is = 1;
+        if (s[i] == 'r' && s[i+1] == 't') {  //  case sqrt
+            ++i;
+            continue;
+        }
+        if (s[i] == 't' && s[i+1] != 'a') is = 1;
+    }
+    if (s[n-1] == 't') is = 1;
+    return is;
+}
+} // end namespace hzeros
 
 
 int sortfactors(val::d_array<val::pol<val::rational>> &factors, int &r, int &s)
@@ -1220,76 +1272,6 @@ val::valfunction integral(const val::valfunction &f, int k)
 }
 
 
-/*
-void computeintegral(const myfunction& f,val::rational x1,val::rational x2,double delta,int n,int dez,int arclength)
-{
-    using namespace val;
-    MyThreadEvent event(MY_EVENT,IdIntegral);
-    int k=isderived(f),ispol=0,exact=0;
-    double a=double(x1),b=double(x2),wert,exwert = 0;
-    val::rational r_wert;
-    //val::DoubleFunction g;
-    val::valfunction g;
-    std::string name="";
-
-    if (arclength) {
-        if (f.isdifferentiable()) {
-            val::valfunction h("sqrt(x^2 + 1)"),g(f.getinfixnotation());
-            g=g.derive(); //g=g*g; g+=val::valfunction("1");
-            h=h(g);
-            //name += h.getinfixnotation() + "\n";
-            //name = h.getinfixnotation() + "  ;";
-            wert=integral(h,a,b,n,delta);
-        }
-        else {
-            //val::DoubleFunction g1=val::DoubleFunction(val::doublefunction(std::bind(std::cref(f),std::placeholders::_1))).derive();
-            val::valfunction g1(val::valfunction(f.getinfixnotation()).derive());
-            g1 = g1*g1;
-            //g1 += val::DoubleFunction(1);
-            g1 += val::valfunction("1");
-            //g = DoubleFunction(sqrt)(g1);
-            g = val::valfunction("sqrt")(g1);
-            wert = integral(g,a,b,n,delta);
-        }
-        name+="arclength( ";
-        //g = val::DoubleFunction(sqrt) (val::DoubleFunction(val::doublefunction(std::bind(std::cref(f),std::placeholders::_1))).derive() + val::DoubleFunction(1));
-    }
-    else if (f.numberofvariables()<=1 && f.ispolynomialfunction()) {
-        ispol=1;
-        val::pol<val::rational> p=f.getpol(val::rational(0),'y');
-        r_wert=p.integrate(x1,x2);
-    }
-    if (!arclength) {
-        if (k) {
-            wert=derive(f,b,k-1) - derive(f,a,k-1);
-        }
-        else wert=integral(f,a,b,n,delta);
-        {
-            val::valfunction F= integral(val::valfunction(f.getinfixnotation()));
-            if (!F.is_zero()) {
-                name += "integral("+f.getinfixnotation()+") \n= " + F.getinfixnotation() + "\n\n";
-                exact = 1;
-                exwert = F(b) - F(a);
-            }
-
-        }
-        name+="integral( ";
-    }
-
-    int wprec = intdigits(wert) + dez, eprec = intdigits(exwert) + dez;
-    wprec = val::Min(wprec,val::MaxPrec);
-    eprec = val::Min(eprec,val::MaxPrec);
-
-    tablestring = name + f.getinfixnotation() + " ; " + ToString(x1) + " ; " + ToString(x2) + " ) =\n     ";
-    if (ispol) tablestring+= ToString(r_wert) + "\n\ndouble:   ";
-    else if (exact) tablestring += ToString(val::round(exwert,dez),eprec) + " (over stammfunction), \n\ndouble:   ";
-    tablestring+=ToString(val::round(wert,dez),wprec);
-    if (k==0) tablestring+= "\nPrecision : " + ToString(delta) + " , Round to decimal: " + ToString(dez) + "\nIterations : " + ToString(n);
-
-    if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event.Clone() );
-}
-*/
-
 
 void computeintegral(const plotobject& f,std::string x1,std::string x2,double delta,int n,int dez,int arclength)
 {
@@ -1433,6 +1415,224 @@ std::string compute_partialfraction(const val::valfunction &f)
 }
 
 
+
+void computezeros(const val::valfunction &f,const double &x1,const double &x2,const double &epsilon,int decimals,int iterations,
+                  val::Glist<double> &d_zeros, val::Glist<val::valfunction> &s_zeros)
+{
+    using namespace val;
+    if (!d_zeros.isempty()) d_zeros.dellist();
+    if (!s_zeros.isempty()) s_zeros.dellist();
+    if (f.isconst()) return;
+
+    std::string f_oper = f.getfirstoperator();
+    pol<valfunction> pF;
+
+    if (hintegral::is_polynomial(f)) pF = hintegral::getpolynomial(f);
+
+    if (pF.degree() == 1) {                     // Linear Funktion with symbols
+        valfunction m = pF.LC(), b = pF[0], z = -b/m;
+
+        z.setparameter(f.getparameter());
+
+        double dz = z(0);
+
+        if (abs(dz) < epsilon) dz = 0;
+        s_zeros.push(z);
+        d_zeros.push(dz);
+        return;
+    }
+    else if (pF.degree() == 2) {
+        pF /= pF[2];
+        if (pF[0].is_zero()) {
+            valfunction z1, z2 = -pF[1];
+            double x1, x2;
+            z1.setparameter(f.getparameter()); z2.setparameter(f.getparameter());
+            x1 = z1(0); x2 = z2(0);
+            if(abs(x1) < epsilon) x1 = 0;
+            if(abs(x2) < epsilon) x2 = 0;
+            s_zeros.push_back(z1); d_zeros.push_back(x1);
+            if (z1 != z2) s_zeros.push_back(z2);
+            if (abs(x1 - x2) > epsilon) d_zeros.push_back(x2);
+            return;
+        }
+        valfunction phalf = -pF[1]/valfunction("2"), dis = phalf*phalf - pF[0], sqrt("sqrt(x)"), d, z1, z2;
+        double x1, x2;
+        if (!hzeros::has_pi_or_parameter(dis.getinfixnotation())) {
+            if (dis.isrationalfunction()) {
+                rational r, root;
+                r = FromString<rational>(dis.getinfixnotation());
+                if (r.signum() == -1) return;
+                if (isquadratic(r, root)) d = valfunction(ToString(root));
+                else d = sqrt(dis);
+            }
+            else {
+                double value = dis(0);
+                if (value < 0.0) return;
+                d = sqrt(dis);
+            }
+        }
+        else d = sqrt(dis);
+        z1 = phalf - d;
+        z2 = phalf + d;
+        z1.setparameter(f.getparameter()); z2.setparameter(f.getparameter());
+        x1 = z1(0); x2 = z2(0);
+        if (abs(x1) < epsilon) x1 = 0.0;
+        if (abs(x2) < epsilon) x2 = 0.0;
+        s_zeros.push_back(z1);
+        d_zeros.push_back(x1);
+        if (z1 != z2) {
+            s_zeros.push_back(z2);
+        }
+        if (abs(x1 - x2) > epsilon) d_zeros.push_back(x2);
+        return;
+    }
+
+    if (f.ispolynomialfunction()) {
+        pol<rational> F = f.getpolynomial();
+        vector<double> zeros;
+        d_array<rational> r_zeros;
+        pol<double> f_d;
+        int n = F.getlastdeg();
+
+        if (n) {
+            F.getdivbypower(n);
+            Glist<double> d_zeros2;
+            Glist<valfunction> s_zeros2;
+            s_zeros2.push_back(valfunction("0"));
+            d_zeros2.push_back(0.0);
+            valfunction g(PolToString(F));
+            computezeros(g, x1, x2, epsilon, decimals, iterations, d_zeros, s_zeros);
+            hzeros::addto(d_zeros, d_zeros2, epsilon);
+            hzeros::addto(s_zeros, s_zeros2);
+            return;
+        }
+
+        F /= gcd(F,F.derive());
+        f_d = ToDoublePolynom(F);
+        realRoots(f_d, zeros,epsilon);
+        zeros.sort();
+        r_zeros = rational_roots(F);
+        r_zeros.sort();
+
+        for (const auto &v : zeros) {
+            if (abs(v) < epsilon) d_zeros.push_back(0);
+            else d_zeros.push_back(v);
+        }
+        for (const auto &v : r_zeros) {
+            s_zeros.push_back(valfunction(ToString(v)));
+        }
+        return;
+    }
+    else if (f_oper == "exp") {
+        return;
+    }
+    else if (f_oper == "sqrt" || f_oper == "/" || f_oper == "abs" || f_oper == "m") {
+        computezeros(f.getfirstargument(),x1,x2,epsilon,decimals,iterations,d_zeros,s_zeros);
+        return;
+    }
+    else if (f_oper == "log") {
+        valfunction g = f.getfirstargument() - valfunction("1");
+        g.setparameter(f.getparameter());
+        computezeros(g, x1, x2, epsilon, decimals, iterations, d_zeros, s_zeros);
+        return;
+    }
+    else if (f_oper == "*") {
+        Glist<double> d_zeros2;
+        Glist<valfunction> s_zeros2;
+        computezeros(f.getfirstargument(),x1,x2,epsilon,decimals,iterations,d_zeros,s_zeros);
+        computezeros(f.getsecondargument(),x1,x2,epsilon,decimals,iterations,d_zeros2,s_zeros2);
+        hzeros::addto(d_zeros,d_zeros2,epsilon);
+        hzeros::addto(s_zeros,s_zeros2);
+        return;
+    }
+    else if (f_oper == "-" || f_oper == "+") {
+        valfunction f_var = f, f_const, g, h;
+        do {
+            g = f_var.getfirstargument(); h = f_var.getsecondargument();
+            if (g.isconst()) {
+                f_const += g;
+                if (f_oper == "+") f_var = h;
+                else f_var = -h;
+            }
+            else if (h.isconst()) {
+                if (f_oper == "+") f_const += h;
+                else f_const -= h;
+                f_var = g;
+            }
+            else break;
+            f_oper = f_var.getfirstoperator();
+        }
+        while (f_oper == "-" || f_oper == "+");
+
+        while (f_oper == "*" || f_oper == "m") {
+            if (f_oper == "m") {
+                f_var = f_var.getfirstargument();
+                f_const = -f_const;
+            }
+            else {
+                g = f_var.getfirstargument(); h = f_var.getsecondargument();
+                if (g.isconst()) {
+                    f_const /= g;
+                    f_var = h;
+                }
+                else if (h.isconst()) {
+                    f_const /= h;
+                    f_var = g;
+                }
+                else break;
+            }
+            f_oper = f_var.getfirstoperator();
+        }
+        //std::cout << "\n f_var = " << f_var.getinfixnotation();
+        //std::cout << "\n f_const = " << f_const.getinfixnotation() << "\n f_oper = " << f_oper << std::endl;
+        g = f_var.getfirstargument();
+        f_const = -f_const;
+        if (f_oper == "exp" || f_oper == "log" || f_oper == "sqrt") {
+            rational r(1);
+            double value = 1;
+
+            if (!hzeros::has_pi_or_parameter(f_const.getinfixnotation()))  {
+                if (f_const.isrationalfunction()) r = FromString<rational>(f_const.getinfixnotation());
+                else value = f_const(0);
+            }
+
+            if (f_oper == "exp") {
+                if (r.signum() == -1 || value < 0) return;
+                h = valfunction("log(x)");
+            }
+            else if (f_oper == "log") {
+                h = valfunction("exp(x)");
+            }
+            else if (f_oper == "sqrt") {
+                if (r.signum() == -1 || value < 0) return;
+                h = valfunction("x^2");
+            }
+            g -= h(f_const);
+            //std::cout << g.getinfixnotation() << std::endl;
+            computezeros(g, x1, x2, epsilon, decimals, iterations, d_zeros, s_zeros);
+            return;
+        }
+        /*    evtl. sin, cos:
+        double r_val = f_const(0);
+        if ((f_oper == "sin"  || f_oper == "cos" ) && !has_parameter(f_const.getinfixnotation()) && !has_parameter(g.getinfixnotation()) && abs(r_val) <= 1) {
+            pol<valfunction> p_g;
+            if (is_polynomial(g) && (p_g = getpolynomial(g)).degree() <= 1) {
+                std::cout << "\nHier!" << std::endl;
+            }
+        }
+        */
+    }
+    // else :
+    d_zeros = f.double_roots(x1,x2,iterations,epsilon);
+    for (auto &v : d_zeros) {
+        if(abs(v) < epsilon) v = 0;
+    }
+    return;
+}
+
+
+
+/*
 void analize_rationalfunction(val::valfunction& F,const double& eps,int dec)
 {
 
@@ -2050,7 +2250,7 @@ void analyze_exprationalfunction(const val::valfunction &f,const double &eps=1e-
     if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event.Clone() );
     return;
 }
-
+*/
 
 void analyzefunction(const plotobject &f,std::string input)
 {
@@ -2085,51 +2285,44 @@ void analyzefunction(const plotobject &f,std::string input)
     // ------------------------------------------------------------
 
     val::valfunction F(f.getinfixnotation(),0);
-    F.setparameter(f.f.getparameter());
-
-    if (F.isrationalfunction()) {
-        analize_rationalfunction(F,epsilon,decimals);
-        return;
-    }
-    F.simplify();
-
-    if (F.isconst()) {
-        analyze_output[0] = "f(x) = " + F.getinfixnotation() + " = " + val::ToString(F(0.0));
-        MyThreadEvent event(MY_EVENT,IdAnalyze);
-        if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event.Clone() );
-        return;
-    }
-
-    if (isexprational(F)) {
-        analyze_exprationalfunction(F,epsilon,decimals);
-        return;
-    }
-
     int pm=0,mp=0,N=0, digits, ydigits;
-    double y;
-    val::Glist<double> prezeros,zeros;
+    double y, gap = 1.0;
+    val::Glist<double> prezeros, zeros, critx;
     val::d_array<int> vzw;
     val::valfunction FF;
+    val::Glist<val::valfunction> s_zeros;
 
+    F.setparameter(f.f.getparameter());
 
     analyze_output[0]= "f(x) = "+F.getinfixnotation()+".";
     analyze_output[0]+="\n\n x in [ "+ val::ToString(val::round(x1,decimals)) + " ; " + val::ToString(val::round(x2,decimals)) + " ]";
     analyze_output[0]+="\n Number of iterations: " + val::ToString(iterations);
-    {
-        val::valfunction iF = integral(F);
-        if (!iF.is_zero()) analyze_output[0] += "\n Stammfunction: \n F(x) = " + iF.getinfixnotation();
+
+    if (F.isrationalfunction()) {
+        //analize_rationalfunction(F,epsilon,decimals);
+        //return;
+        auto F_r = F.getrationalfunction();
+        analyze_output[0] += "\nFactorization of f in Q[x]:\nf(x) = " +PolfractionToString(F_r) + "\n";
+        if (F_r.denominator().degree() <= 5) { // partial fraction decomposition
+            std::string spf = compute_partialfraction(F);
+            if (spf != "") {
+                analyze_output[0] += "f in partial fractions: \n f(x) = " + spf + "\n";
+            }
+        }
     }
 
     // Definition-gaps:
     val::Glist<val::GPair<double >> intervals = F.get_undefined_intervals(x1,x2,iterations,epsilon);
     if (!intervals.isempty()) {
         val::Glist<double> undef_points;
-        analyze_output[0]+= "\n\n f not  defined at:\n";
+        analyze_output[0]+= "\n f not  defined at:\n";
         for (const auto& P : intervals) {
+            critx.push_back(P.x);
             if (val::abs(P.x-P.y)<epsilon) {
                 undef_points.push_back(P.x);
                 continue;
             }
+            critx.push_back(P.y);
             if (isInf(P.x)) analyze_output[0]+="( ";
             else if (val::isNaN(F(P.x)) || isInf(F(P.x))) analyze_output[0]+="[ ";
             else analyze_output[0]+="( ";
@@ -2153,11 +2346,35 @@ void analyzefunction(const plotobject &f,std::string input)
         }
     }
     //
+    F.simplify();
+    {
+        val::valfunction iF = integral(F);
+        if (!iF.is_zero()) analyze_output[0] += "\n Stammfunction: \n F(x) = " + iF.getinfixnotation();
+    }
+
+    if (F.isconst()) {
+        analyze_output[0] = "f(x) = " + F.getinfixnotation() + " = " + val::ToString(F(0.0));
+        MyThreadEvent event(MY_EVENT,IdAnalyze);
+        if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event.Clone() );
+        return;
+    }
+
+    /*
+    if (isexprational(F)) {
+        analyze_exprationalfunction(F,epsilon,decimals);
+        return;
+    }
+    */
+
+
+
 
     // Zeros:
-    if (!F.isconst()) prezeros = F.double_roots(x1,x2,iterations,epsilon);
+    //if (!F.isconst()) prezeros = F.double_roots(x1,x2,iterations,epsilon);
+    computezeros(F, x1, x2, epsilon, decimals, iterations, prezeros, s_zeros);
+
     for (const auto &z : prezeros) {
-        if (!isInf(F(z)) && !val::isNaN(F(z))) zeros.push_back(z);
+        if (!isInf(f.f(z)) && !val::isNaN(f.f(z))) zeros.push_back(z);
     }
     N=zeros.length();
     if (N) {
@@ -2168,6 +2385,9 @@ void analyzefunction(const plotobject &f,std::string input)
             digits = intdigits(zeros[i]) + decimals;
             digits = val::Min(digits,val::MaxPrec);
             analyze_output[1] += "  " + val::ToString(val::round(zeros[i],decimals),digits);
+            for (const auto &z : s_zeros) {
+                if (val::abs(z(0)-zeros[i]) < epsilon) analyze_output[1] += " [ = " + z.getinfixnotation() + " ],  ";
+            }
             Points[0].push_back(val::GPair<double>(zeros[i],0.0));
         }
     }
@@ -2177,25 +2397,34 @@ void analyzefunction(const plotobject &f,std::string input)
 
     // Extrema:
     FF = F.derive();
+    zeros.dellist(); s_zeros.dellist(); prezeros.dellist();
     FF.setparameter(f.f.getparameter());
-    prezeros = FF.double_roots(x1,x2,iterations,epsilon);
-    zeros.dellist();
+    //prezeros = FF.double_roots(x1,x2,iterations,epsilon);
+    //zeros.dellist();
+    computezeros(FF, x1, x2, epsilon, decimals, iterations, prezeros, s_zeros);
     for (const auto & z : prezeros) {
-        if (!isInf(F(z)) && !val::isNaN(F(z))) zeros.push_back(z);
+        if (!isInf(f.f(z)) && !val::isNaN(f.f(z))) zeros.push_back(z);
     }
     N=zeros.length();
     analyze_output[2]+="f'(x) = " + FF.getinfixnotation() + ".\n";
     vzw.resize(N);
     zeros.sort();
+    for (int i = 1; i < N; ++i) {
+        gap = val::Min(gap, zeros[i] - zeros[i-1]);
+    }
+    for (const auto &x : critx) {
+        for (const auto &z : zeros) gap = val::Min(gap,val::abs(x-z));
+    }
+    gap /= 2.0;
     for (int i=0;i<N;++i) {
         vzw[i]=0;
         if (zeros[i]==0) zeros[i] = 0;
         if (val::isNaN(F(zeros[i]))) continue;
-        if (FF(zeros[i]-2*epsilon) >0 && FF(zeros[i]+2*epsilon)<0) {
+        if (FF(zeros[i]-gap) >0 && FF(zeros[i]+gap)<0) {
             vzw[i]=1;
             pm++;
         }
-        if (FF(zeros[i]-2*epsilon)<0 && FF(zeros[i]+2*epsilon)>0) {
+        if (FF(zeros[i]-gap)<0 && FF(zeros[i]+gap)>0) {
             vzw[i]=-1;
             mp++;
         }
@@ -2213,6 +2442,9 @@ void analyzefunction(const plotobject &f,std::string input)
                     ydigits = intdigits(y) + decimals;
                     ydigits = val::Min(ydigits,val::MaxPrec);
                     analyze_output[2]+="( " + val::ToString(val::round(zeros[i],decimals),digits) + " | " + val::ToString(val::round(y,decimals),ydigits) + " )  ";
+                    for (const auto &z : s_zeros) {
+                        if (val::abs(z(0)-zeros[i]) < epsilon) analyze_output[2] += "[ = ( " + z.getinfixnotation() + " | " + F(z).getinfixnotation() + " ) ] ,";
+                    }
                     Points[1].push_back(val::GPair<double>(zeros[i],y));
                 }
             }
@@ -2227,6 +2459,9 @@ void analyzefunction(const plotobject &f,std::string input)
                     ydigits = intdigits(y) + decimals;
                     ydigits = val::Min(ydigits,val::MaxPrec);
                     analyze_output[2]+="( " + val::ToString(val::round(zeros[i],decimals),digits) + " | " + val::ToString(val::round(y,decimals),ydigits) + " )  ";
+                    for (const auto &z : s_zeros) {
+                        if (val::abs(z(0)-zeros[i]) < epsilon) analyze_output[2] += "[ = ( " + z.getinfixnotation() + " | " + F(z).getinfixnotation() + " ) ] ,";
+                    }
                     Points[1].push_back(val::GPair<double>(zeros[i],y));
                 }
             }
@@ -2240,24 +2475,33 @@ void analyzefunction(const plotobject &f,std::string input)
     vzw.del();pm=0;mp=0;
     FF = FF.derive();
     FF.setparameter(f.f.getparameter());
-    prezeros = FF.double_roots(x1,x2,iterations,epsilon);
-    zeros.dellist();
+    zeros.dellist(); prezeros.dellist(); s_zeros.dellist();
+    //prezeros = FF.double_roots(x1,x2,iterations,epsilon);
+    //zeros.dellist();
+    computezeros(FF, x1, x2, epsilon, decimals, iterations, prezeros, s_zeros);
     for (const auto & z : prezeros) {
-        if (!isInf(F(z)) && !val::isNaN(F(z))) zeros.push_back(z);
+        if (!isInf(f.f(z)) && !val::isNaN(f.f(z))) zeros.push_back(z);
     }
     N=zeros.length();
     analyze_output[3]+="f''(x) = " + FF.getinfixnotation() + ".\n";
     vzw.resize(N);
     zeros.sort();
+    for (int i = 1; i < N; ++i) {
+        gap = val::Min(gap, zeros[i] - zeros[i-1]);
+    }
+    for (const auto &x : critx) {
+        for (const auto &z : zeros) gap = val::Min(gap,val::abs(x-z));
+    }
+    gap /= 2.0;
     for (int i=0;i<N;++i) {
         vzw[i]=0;
         if (zeros[i]==0) zeros[i] = 0;
         if (val::isNaN(F(zeros[i]))) continue;
-        if (FF(zeros[i]-2*epsilon) >0 && FF(zeros[i]+2*epsilon)<0) {
+        if (FF(zeros[i]-gap) >0 && FF(zeros[i]+gap)<0) {
                 vzw[i]=1;
                 pm++;
         }
-        if (FF(zeros[i]-2*epsilon)<0 && FF(zeros[i]+2*epsilon)>0) {
+        if (FF(zeros[i]-gap)<0 && FF(zeros[i]+gap)>0) {
             vzw[i]=-1;
             mp++;
         }
@@ -2275,6 +2519,9 @@ void analyzefunction(const plotobject &f,std::string input)
                     ydigits = intdigits(y) + decimals;
             		ydigits = val::Min(ydigits,val::MaxPrec);
                     analyze_output[3]+="( " + val::ToString(val::round(zeros[i],decimals),digits) + " | " + val::ToString(val::round(y,decimals),ydigits) + " )  ";
+                    for (const auto &z : s_zeros) {
+                        if (val::abs(z(0)-zeros[i]) < epsilon) analyze_output[3] += "[ = ( " + z.getinfixnotation() + " | " + F(z).getinfixnotation() + " ) ] ,";
+                    }
                     Points[2].push_back(val::GPair<double>(zeros[i],y));
                 }
             }
@@ -2289,6 +2536,9 @@ void analyzefunction(const plotobject &f,std::string input)
                     ydigits = intdigits(y) + decimals;
             		ydigits = val::Min(ydigits,val::MaxPrec);
                     analyze_output[3]+="( " + val::ToString(val::round(zeros[i],decimals),digits) + " | " + val::ToString(val::round(y,decimals),ydigits) + " )  ";
+                    for (const auto &z : s_zeros) {
+                        if (val::abs(z(0)-zeros[i]) < epsilon) analyze_output[3] += "[ = ( " + z.getinfixnotation() + " | " + F(z).getinfixnotation() + " ) ] ,";
+                    }
                     Points[2].push_back(val::GPair<double>(zeros[i],y));
                 }
             }
