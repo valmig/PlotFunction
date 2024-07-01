@@ -31,7 +31,7 @@
 class MyThreadEvent;
 class ParentEvent;
 //class myfunction;
-class plotobject;
+struct plotobject;
 
 
 enum viewnum{VGRID, VXAXIS, VYAXIS, VSCALEX, VSCALEY};

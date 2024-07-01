@@ -25,7 +25,7 @@ std::string filesep="\\", filedir=val::CurrentHomeDir(), valdir = val::CurrentHo
             iconpath="C:\\gccprogrammes\\Plot\\PlotFunction\\icon\\MV_plot.xpm",
             handcursor="C:\\gccprogrammes\\Plot\\PlotFunction\\icon\\hand.png",
             alticonpath = val::GetExeDir() + "\\MV_plot.xpm",
-    		errorfile = settingsdir + "\\error.log";
+            errorfile = settingsdir + "\\error.log";
 #endif // _WIN32
 #ifdef __LINUX__
 std::string filesep="/",filedir=val::CurrentHomeDir(), valdir= val::CurrentHomeDir() + "/.config/MVPrograms",
@@ -33,7 +33,7 @@ std::string filesep="/",filedir=val::CurrentHomeDir(), valdir= val::CurrentHomeD
             iconpath = val::CurrentHomeDir() + "/.local/share/icons/MVPrograms/MV_Plot.xpm",
             handcursor = val::CurrentHomeDir() + "/.local/share/icons/MVPrograms/hand.png",
             alticonpath = val::CurrentHomeDir() + "/.local/share/icons/MVPrograms/MV_Plot.xpm",
-    		errorfile = settingsdir + "/error.log";
+            errorfile = settingsdir + "/error.log";
 #endif
 #ifdef __APPLE__
 std::string filesep="/",filedir=val::CurrentHomeDir(), valdir= val::CurrentHomeDir() + "/Library/Application Support",
@@ -41,7 +41,7 @@ std::string filesep="/",filedir=val::CurrentHomeDir(), valdir= val::CurrentHomeD
             iconpath = val::CurrentHomeDir() + "/.local/share/icons/MVPrograms/MV_Plot.xpm",
             handcursor = val::CurrentHomeDir() + "/.local/share/icons/MVPrograms/hand.png",
             alticonpath = val::GetExeDir() + "/../Resources/MV_Plot.xpm",
-    		errorfile = settingsdir + "/error.log";
+            errorfile = settingsdir + "/error.log";
 #endif //
 
 std::string RecentFilesPath = settingsdir + filesep + "recentfiles.txt";
@@ -1884,17 +1884,17 @@ plotobject::plotobject(const std::string &sf)
 int plotobject::iswithparameter() const
 {
     if (objectype != FUNCTION) return 0;
-	int n = s_infix.length(), is = 0;
-	for (int i = 0; i < n-1; ++i) {
-		//if (s[i] == 'P' && s[i+1] == 'I') is = 1;
-		if (s_infix[i] == 'r' && s_infix[i+1] == 't') {  //  case sqrt
-			++i;
-			continue;
-		}
-		if (s_infix[i] == 't' && s_infix[i+1] != 'a') is = 1;
-	}
-	if (s_infix[n-1] == 't') is = 1;
-	return is;
+    int n = s_infix.length(), is = 0;
+    for (int i = 0; i < n-1; ++i) {
+        //if (s[i] == 'P' && s[i+1] == 'I') is = 1;
+        if (s_infix[i] == 'r' && s_infix[i+1] == 't') {  //  case sqrt
+            ++i;
+            continue;
+        }
+        if (s_infix[i] == 't' && s_infix[i+1] != 'a') is = 1;
+    }
+    if (s_infix[n-1] == 't') is = 1;
+    return is;
 }
 
 

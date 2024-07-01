@@ -21,46 +21,46 @@ namespace val
 
 std::istream& operator >>(std::istream& is,valfunction &f)
 {
-	std::string s;
-	is >> s;
-	f = valfunction(s);
-	return is;
+    std::string s;
+    is >> s;
+    f = valfunction(s);
+    return is;
 }
 
 std::ostream& operator <<(std::ostream& os,valfunction &f)
 {
-	os << f.getinfixnotation();
-	return os;
+    os << f.getinfixnotation();
+    return os;
 }
 
 
 int operator ==(const val::valfunction &f, const val::valfunction &g)
 {
-	return (f-g).is_zero();
+    return (f-g).is_zero();
 }
 
 int operator !=(const val::valfunction &f, const val::valfunction &g)
 {
-	return !(f == g);
+    return !(f == g);
 }
 
 valfunction& operator *=(valfunction &f, const valfunction &g)
 {
-	f = f * g;
-	return f;
+    f = f * g;
+    return f;
 }
 
 valfunction& operator /=(valfunction &f, const valfunction &g)
 {
-	f = f / g;
-	return f;
+    f = f / g;
+    return f;
 }
 
 
 
 void set_unity_element(valfunction &f)
 {
-	f = valfunction("1");
+    f = valfunction("1");
 }
 
 } // end namespace val
@@ -134,6 +134,65 @@ int has_pi_or_parameter(const std::string& s)
     if (s[n-1] == 't') is = 1;
     return is;
 }
+
+int sqrt_dis(const val::valfunction &dis, val::valfunction &res)
+{
+    val::valfunction sqrt("sqrt(x)");
+    std::string op;
+    if (!has_pi_or_parameter(dis.getinfixnotation())) {
+        if (dis.isrationalfunction()) {
+            val::rational r = val::FromString<val::rational>(dis.getinfixnotation()), root, rootnum, rootdenum;
+            val::integer num = r.numerator(), denum = r.denominator();
+
+            if (r.signum() == -1) return 0;
+            if (val::isquadratic(num, rootnum)) {
+                res = val::valfunction(val::ToString(rootnum));
+            }
+            else {
+                res = val::valfunction("sqrt(" + val::ToString(num) + ")");
+            }
+            std::cout << "\n res = " << res << std::endl;
+            if (val::isquadratic(denum, rootdenum)) {
+                res /= val::valfunction(val::ToString(rootdenum));
+            }
+            else res *= val::valfunction("sqrt(" + val::ToString(denum) + ")")/val::valfunction(val::ToString(denum));
+            return 1;
+        }
+        else {
+            double value = dis(0);
+            if (value < 0.0) return 0;
+            res = sqrt(dis);
+            return 1;
+        }
+    }
+    else if (dis.getfirstoperator() == "^") {
+        val::valfunction f = dis.getfirstargument(), expo = dis.getsecondargument();
+        if (val::isinteger(expo.getinfixnotation())) {
+            int e = val::FromString<int>(expo.getinfixnotation());
+            if (e%2 == 0) {
+                e/=2;
+                res = val::valfunction("(" + f.getinfixnotation() + ")^(" + val::ToString(e) + ")");
+            }
+            else res = sqrt(dis);
+        }
+        else res = sqrt(dis);
+        return 1;
+    }
+    else if ((op = dis.getfirstoperator()) == "*" || op == "/")  {
+        val::valfunction f = dis.getfirstargument(), g = dis.getsecondargument(), res1, res2;
+        if (sqrt_dis(f, res1) && sqrt_dis(g, res2)) {
+            if (op == "*") res = res1 * res2;
+            else res = res1/res2;
+            return 1;
+        }
+        else return 0;
+    }
+    else {
+        res = sqrt(dis);
+        return 1;
+    }
+}
+
 } // end namespace hzeros
 
 
@@ -248,41 +307,41 @@ std::string factorize(const val::pol<val::rational> &f)
 
 std::string PolfractionToString(const val::rationalfunction &F)
 {
-	int bracket=0;
-	std::string sf;
-	val::pol<val::rational> zero,one(1,0),minusone(-1,0);
+    int bracket=0;
+    std::string sf;
+    val::pol<val::rational> zero,one(1,0),minusone(-1,0);
 
-	if (F.nominator()==zero) return "0";
-	if (F.denominator()==one) return factorize(F.nominator());  //val::PolToString(F.nominator());
-	if (F.denominator()==minusone) return factorize(-F.nominator());  //(val::PolToString(-F.nominator()));
-	if (F.denominator().degree() == 0) return factorize(val::rational(1,F.denominator().LC()) * F.nominator());
+    if (F.nominator()==zero) return "0";
+    if (F.denominator()==one) return factorize(F.nominator());  //val::PolToString(F.nominator());
+    if (F.denominator()==minusone) return factorize(-F.nominator());  //(val::PolToString(-F.nominator()));
+    if (F.denominator().degree() == 0) return factorize(val::rational(1,F.denominator().LC()) * F.nominator());
 
-	val::pol<val::integer> nom,denom;
-	val::rational cont,c1;
+    val::pol<val::integer> nom,denom;
+    val::rational cont,c1;
 
-	val::primitivpart(F.nominator(),nom,cont);
-	val::primitivpart(F.denominator(),denom,c1);
-	cont/=c1;
-	nom*=val::nominator(cont);
-	denom*=val::denominator(cont);
+    val::primitivpart(F.nominator(),nom,cont);
+    val::primitivpart(F.denominator(),denom,c1);
+    cont/=c1;
+    nom*=val::nominator(cont);
+    denom*=val::denominator(cont);
 
-	if (F.nominator().length()>1) {sf+='(';bracket=1;}
-	//sf+=val::PolToString(val::toRationalPolynom(nom));
-	sf+=factorize(val::toRationalPolynom(nom));
-	if (bracket) sf+=')';
-	bracket=0;
-	if (F.denominator()!=one) {
-		sf+='/';
-		if (F.denominator().length()>1) {
-			bracket=1;
-			sf+='(';
-		}
-		//sf+=val::PolToString(val::toRationalPolynom(denom));
-		sf+=factorize(val::toRationalPolynom(denom));
-		if (bracket) sf+=')';
-	}
+    if (F.nominator().length()>1) {sf+='(';bracket=1;}
+    //sf+=val::PolToString(val::toRationalPolynom(nom));
+    sf+=factorize(val::toRationalPolynom(nom));
+    if (bracket) sf+=')';
+    bracket=0;
+    if (F.denominator()!=one) {
+        sf+='/';
+        if (F.denominator().length()>1) {
+            bracket=1;
+            sf+='(';
+        }
+        //sf+=val::PolToString(val::toRationalPolynom(denom));
+        sf+=factorize(val::toRationalPolynom(denom));
+        if (bracket) sf+=')';
+    }
 
-	return sf;
+    return sf;
 }
 
 
@@ -460,142 +519,142 @@ val::valfunction rational_integral(const val::valfunction &f, int k);
 
 int is_polynomial(const val::valfunction &f, int k = 1)
 {
-	if (f.is_zero()) return 1;
-	if (f.isconst(k)) {
-		return 1;
-	}
-	std::string svar = "x" , sf = f.getinfixnotation();
+    if (f.is_zero()) return 1;
+    if (f.isconst(k)) {
+        return 1;
+    }
+    std::string svar = "x" , sf = f.getinfixnotation();
 
-	if (f.numberofvariables() > 1) svar += val::ToString(k);
-	if (sf == svar) return 1;
-	if (k == 1 && sf == "x") return 1;
-	if (k == 2 && sf == "y") return 1;
-	if (k == 3 && sf == "z") return 1;
+    if (f.numberofvariables() > 1) svar += val::ToString(k);
+    if (sf == svar) return 1;
+    if (k == 1 && sf == "x") return 1;
+    if (k == 2 && sf == "y") return 1;
+    if (k == 3 && sf == "z") return 1;
 
-	std::string oper = f.getfirstoperator();
-	val::valfunction g,h;
+    std::string oper = f.getfirstoperator();
+    val::valfunction g,h;
 
-	if (val::isinContainer(oper,operators)) {
-		if (!f.getfirstargument().isconst(k)) return 0;
-		else return 1;
-	}
-	if (oper == "m") return (is_polynomial(f.getfirstargument(),k));
-	else if (oper == "+" || oper == "-" || oper == "*") return(is_polynomial(f.getfirstargument(),k) && is_polynomial(f.getsecondargument(),k));
-	else if (oper == "/") {
-		if (!f.getsecondargument().isconst(k)) return 0;
-		else return is_polynomial(f.getfirstargument(),k);
-	}
-	else if (oper ==  "^") {
-		h = f.getsecondargument();
-		if (!h.isconst(k)) return 0;
-		if (!f.getfirstargument().isconst(k)) {
-			std::string s_h = h.getinfixnotation();
-			if (!val::isinteger(s_h)) return 0;
-			int n = val::FromString<int>(s_h);
-			if (n < 0) return 0;
-			return (is_polynomial(f.getfirstargument(),k));
-		}
-		else return 1;
-	}
-	return 1;
+    if (val::isinContainer(oper,operators)) {
+        if (!f.getfirstargument().isconst(k)) return 0;
+        else return 1;
+    }
+    if (oper == "m") return (is_polynomial(f.getfirstargument(),k));
+    else if (oper == "+" || oper == "-" || oper == "*") return(is_polynomial(f.getfirstargument(),k) && is_polynomial(f.getsecondargument(),k));
+    else if (oper == "/") {
+        if (!f.getsecondargument().isconst(k)) return 0;
+        else return is_polynomial(f.getfirstargument(),k);
+    }
+    else if (oper ==  "^") {
+        h = f.getsecondargument();
+        if (!h.isconst(k)) return 0;
+        if (!f.getfirstargument().isconst(k)) {
+            std::string s_h = h.getinfixnotation();
+            if (!val::isinteger(s_h)) return 0;
+            int n = val::FromString<int>(s_h);
+            if (n < 0) return 0;
+            return (is_polynomial(f.getfirstargument(),k));
+        }
+        else return 1;
+    }
+    return 1;
 }
 
 
 // if f is polynomial in x_k, then this computes the polynomial.
 val::pol<val::valfunction> getpolynomial(const val::valfunction &f, int k = 1)
 {
-	using namespace val;
+    using namespace val;
 
-	std::string oper = f.getfirstoperator(), sf = f.getinfixnotation(), svar = "x" + val::ToString(k);
-	int nvar = f.numberofvariables();
+    std::string oper = f.getfirstoperator(), sf = f.getinfixnotation(), svar = "x" + val::ToString(k);
+    int nvar = f.numberofvariables();
 
-	if (f.is_zero()) return pol<valfunction>();
-	else if (f.isconst(k)) {
-		return pol<valfunction>(f);
-	}
-	else if (k == 1 && nvar == 1 && sf == "x") return pol<valfunction>(valfunction("1"),1);
-	else if (k == 2 &&  sf == "y") return pol<valfunction>(valfunction("1"),1);
-	else if (k == 3 &&  sf == "z") return pol<valfunction>(valfunction("1"),1);
-	else if (sf == svar) return pol<valfunction>(valfunction("1"),1);
-	else if (oper == "m") return -getpolynomial(f.getfirstargument(),k);
-	else if (oper == "+") {
-		return getpolynomial(f.getfirstargument(),k) + getpolynomial(f.getsecondargument(),k);
-	}
-	else if (oper == "-") return getpolynomial(f.getfirstargument(),k) - getpolynomial(f.getsecondargument(),k);
-	else if (oper == "*") {
-		return getpolynomial(f.getfirstargument(),k) * getpolynomial(f.getsecondargument(),k);
-	}
-	else if (oper == "/") return getpolynomial(f.getfirstargument(),k) / getpolynomial(f.getsecondargument(),k);
-	else return (power(getpolynomial(f.getfirstargument(),k),FromString<int>(f.getsecondargument().getinfixnotation())));
+    if (f.is_zero()) return pol<valfunction>();
+    else if (f.isconst(k)) {
+        return pol<valfunction>(f);
+    }
+    else if (k == 1 && nvar == 1 && sf == "x") return pol<valfunction>(valfunction("1"),1);
+    else if (k == 2 &&  sf == "y") return pol<valfunction>(valfunction("1"),1);
+    else if (k == 3 &&  sf == "z") return pol<valfunction>(valfunction("1"),1);
+    else if (sf == svar) return pol<valfunction>(valfunction("1"),1);
+    else if (oper == "m") return -getpolynomial(f.getfirstargument(),k);
+    else if (oper == "+") {
+        return getpolynomial(f.getfirstargument(),k) + getpolynomial(f.getsecondargument(),k);
+    }
+    else if (oper == "-") return getpolynomial(f.getfirstargument(),k) - getpolynomial(f.getsecondargument(),k);
+    else if (oper == "*") {
+        return getpolynomial(f.getfirstargument(),k) * getpolynomial(f.getsecondargument(),k);
+    }
+    else if (oper == "/") return getpolynomial(f.getfirstargument(),k) / getpolynomial(f.getsecondargument(),k);
+    else return (power(getpolynomial(f.getfirstargument(),k),FromString<int>(f.getsecondargument().getinfixnotation())));
 }
 
 
 int is_rational(const val::valfunction &f, int k = 1)
 {
-	if (f.is_zero()) return 1;
-	if (f.isconst(k)) {
-		return 1;
-	}
-	std::string svar = "x" , sf = f.getinfixnotation();
+    if (f.is_zero()) return 1;
+    if (f.isconst(k)) {
+        return 1;
+    }
+    std::string svar = "x" , sf = f.getinfixnotation();
 
-	if (f.numberofvariables() > 1) svar += val::ToString(k);
-	if (sf == svar) return 1;
-	if (k == 1 && sf == "x") return 1;
-	if (k == 2 && sf == "y") return 1;
-	if (k == 3 && sf == "z") return 1;
+    if (f.numberofvariables() > 1) svar += val::ToString(k);
+    if (sf == svar) return 1;
+    if (k == 1 && sf == "x") return 1;
+    if (k == 2 && sf == "y") return 1;
+    if (k == 3 && sf == "z") return 1;
 
-	std::string oper = f.getfirstoperator();
-	val::valfunction g,h;
+    std::string oper = f.getfirstoperator();
+    val::valfunction g,h;
 
-	if (val::isinContainer(oper,operators)) {
-		if (!f.getfirstargument().isconst(k)) return 0;
-		else return 1;
-	}
-	if (oper == "m") return (is_rational(f.getfirstargument(),k));
-	else if (oper == "+" || oper == "-" || oper == "*") return(is_rational(f.getfirstargument(),k) && is_rational(f.getsecondargument(),k));
-	else if (oper == "/") return (is_rational(f.getfirstargument(),k) && is_rational(f.getsecondargument(),k));
-	else if (oper ==  "^") {
-		h = f.getsecondargument();
-		if (!h.isconst(k)) return 0;
-		if (!f.getfirstargument().isconst(k)) {
-			std::string s_h = h.getinfixnotation();
-			if (!val::isinteger(s_h)) return 0;
-			int n = val::FromString<int>(s_h);
-			if (n < 0) return 0;
-			return (is_rational(f.getfirstargument(),k));
-		}
-		else return 1;
-	}
-	return 1;
+    if (val::isinContainer(oper,operators)) {
+        if (!f.getfirstargument().isconst(k)) return 0;
+        else return 1;
+    }
+    if (oper == "m") return (is_rational(f.getfirstargument(),k));
+    else if (oper == "+" || oper == "-" || oper == "*") return(is_rational(f.getfirstargument(),k) && is_rational(f.getsecondargument(),k));
+    else if (oper == "/") return (is_rational(f.getfirstargument(),k) && is_rational(f.getsecondargument(),k));
+    else if (oper ==  "^") {
+        h = f.getsecondargument();
+        if (!h.isconst(k)) return 0;
+        if (!f.getfirstargument().isconst(k)) {
+            std::string s_h = h.getinfixnotation();
+            if (!val::isinteger(s_h)) return 0;
+            int n = val::FromString<int>(s_h);
+            if (n < 0) return 0;
+            return (is_rational(f.getfirstargument(),k));
+        }
+        else return 1;
+    }
+    return 1;
 }
 
 
 // if f is polynomial in x_k, then this computes the polynomial.
 val::fraction<val::pol<val::valfunction>> getrationalfunction(const val::valfunction &f, int k = 1)
 {
-	using namespace val;
+    using namespace val;
 
-	std::string oper = f.getfirstoperator(), sf = f.getinfixnotation(), svar = "x" + val::ToString(k);
-	int nvar = f.numberofvariables();
+    std::string oper = f.getfirstoperator(), sf = f.getinfixnotation(), svar = "x" + val::ToString(k);
+    int nvar = f.numberofvariables();
 
-	if (f.is_zero()) return fraction<pol<valfunction>>();
-	else if (f.isconst(k)) {
-		return fraction<pol<valfunction>>(f);
-	}
-	else if (k == 1 && nvar == 1 && sf == "x") return fraction<pol<valfunction>>(pol<valfunction>(valfunction("1"),1));
-	else if (k == 2 &&  sf == "y") return fraction<pol<valfunction>>(pol<valfunction>(valfunction("1"),1));
-	else if (k == 3 &&  sf == "z") return fraction<pol<valfunction>>(pol<valfunction>(valfunction("1"),1));
-	else if (sf == svar) return fraction<pol<valfunction>>(pol<valfunction>(valfunction("1"),1));
-	else if (oper == "m") return -getrationalfunction(f.getfirstargument(),k);
-	else if (oper == "+") {
-		return getrationalfunction(f.getfirstargument(),k) + getrationalfunction(f.getsecondargument(),k);
-	}
-	else if (oper == "-") return getrationalfunction(f.getfirstargument(),k) - getrationalfunction(f.getsecondargument(),k);
-	else if (oper == "*") {
-		return getrationalfunction(f.getfirstargument(),k) * getrationalfunction(f.getsecondargument(),k);
-	}
-	else if (oper == "/") return getrationalfunction(f.getfirstargument(),k) / getrationalfunction(f.getsecondargument(),k);
-	else return (power(getrationalfunction(f.getfirstargument(),k),FromString<int>(f.getsecondargument().getinfixnotation())));
+    if (f.is_zero()) return fraction<pol<valfunction>>();
+    else if (f.isconst(k)) {
+        return fraction<pol<valfunction>>(f);
+    }
+    else if (k == 1 && nvar == 1 && sf == "x") return fraction<pol<valfunction>>(pol<valfunction>(valfunction("1"),1));
+    else if (k == 2 &&  sf == "y") return fraction<pol<valfunction>>(pol<valfunction>(valfunction("1"),1));
+    else if (k == 3 &&  sf == "z") return fraction<pol<valfunction>>(pol<valfunction>(valfunction("1"),1));
+    else if (sf == svar) return fraction<pol<valfunction>>(pol<valfunction>(valfunction("1"),1));
+    else if (oper == "m") return -getrationalfunction(f.getfirstargument(),k);
+    else if (oper == "+") {
+        return getrationalfunction(f.getfirstargument(),k) + getrationalfunction(f.getsecondargument(),k);
+    }
+    else if (oper == "-") return getrationalfunction(f.getfirstargument(),k) - getrationalfunction(f.getsecondargument(),k);
+    else if (oper == "*") {
+        return getrationalfunction(f.getfirstargument(),k) * getrationalfunction(f.getsecondargument(),k);
+    }
+    else if (oper == "/") return getrationalfunction(f.getfirstargument(),k) / getrationalfunction(f.getsecondargument(),k);
+    else return (power(getrationalfunction(f.getfirstargument(),k),FromString<int>(f.getsecondargument().getinfixnotation())));
 }
 
 
@@ -622,14 +681,14 @@ int isquadratic(const val::rational& r, val::rational &root)
 
 val::pol<val::valfunction> integral(const val::pol<val::valfunction> &f)
 {
-	using namespace val;
-	pol<valfunction> F;
-	int d;
-	for (const auto& m : f) {
-		d = m.actualdegree() + 1;
-		F.insert(m()/valfunction(ToString(d)),d);
-	}
-	return F;
+    using namespace val;
+    pol<valfunction> F;
+    int d;
+    for (const auto& m : f) {
+        d = m.actualdegree() + 1;
+        F.insert(m()/valfunction(ToString(d)),d);
+    }
+    return F;
 }
 
 
@@ -642,17 +701,17 @@ int isoppolynomial(const val::valfunction &f, int k)
 
 
     for (int i = 0; i < n; ++i) {
-		if (op == escop[i] && is_polynomial(f.getfirstargument(),k)) {
-			//std::cout << "Here: i = " << i << "; escop[i] = " << escop[i] << std::endl;
-			return i;
-		}
-	}
+        if (op == escop[i] && is_polynomial(f.getfirstargument(),k)) {
+            //std::cout << "Here: i = " << i << "; escop[i] = " << escop[i] << std::endl;
+            return i;
+        }
+    }
 
     if (op=="*" && is_polynomial(f.getfirstargument(),k)) return isoppolynomial(f.getsecondargument(),k);
 
     if (op=="m") return isoppolynomial(f.getfirstargument(),k);
 
-	return -1;
+    return -1;
 }
 
 
@@ -688,48 +747,48 @@ val::valfunction getopargumentfrom_oprat(const val::valfunction& f, const std::s
 // computes polynomial f(x): integral(cx^n exp (ax+b)) = f(x) * exp(ax+b):
 val::pol<val::valfunction> getpolfromintegralexppol(int n,const val::valfunction &a, const val::valfunction& c)
 {
-	using namespace val;
-	if (a.is_zero() || c.is_zero()) return pol<valfunction>();
-	valfunction coeff = c/a;
-	pol<valfunction> f(coeff,n);
-	//if (n == 0) return f;
-	for (int k = 1; k <= n; ++k) {
-		coeff = -coeff;
-		coeff *= valfunction(ToString(n+1-k));
-		coeff = coeff / a;
-		f.insert(coeff,n-k);
-	}
-	//std::cout<<"\n n = "<<n<<" f_n = "<<val::PolToString(f);
-	return f;
+    using namespace val;
+    if (a.is_zero() || c.is_zero()) return pol<valfunction>();
+    valfunction coeff = c/a;
+    pol<valfunction> f(coeff,n);
+    //if (n == 0) return f;
+    for (int k = 1; k <= n; ++k) {
+        coeff = -coeff;
+        coeff *= valfunction(ToString(n+1-k));
+        coeff = coeff / a;
+        f.insert(coeff,n-k);
+    }
+    //std::cout<<"\n n = "<<n<<" f_n = "<<val::PolToString(f);
+    return f;
 }
 
 
 void getpolsincos(int n,const val::valfunction& a, const val::valfunction &c,const std::string &oper,val::pol<val::valfunction> &f,val::pol<val::valfunction>& g)
 {
-	f.del(); g.del();
-	if (a.is_zero() || c.is_zero()) return;
-	val::valfunction coeff = c/a;
-	val::valfunction sf("1"), sg("1");
+    f.del(); g.del();
+    if (a.is_zero() || c.is_zero()) return;
+    val::valfunction coeff = c/a;
+    val::valfunction sf("1"), sg("1");
 
-	if (oper == "sin") {
-		sg = val::valfunction("-1"); sf = val::valfunction("1");
-	}
+    if (oper == "sin") {
+        sg = val::valfunction("-1"); sf = val::valfunction("1");
+    }
 
-	g.insert(sg*coeff,n);
+    g.insert(sg*coeff,n);
 
-	for (int i = 1; i <= n; ++i) {
-		coeff *= val::valfunction(val::ToString(n-i+1));
-		coeff = coeff / a;
-		if (i%2) {
-			f.insert(sf*coeff,n-i);
-			sf = -sf;
-		}
-		else {
-			sg = -sg;
-			g.insert(sg*coeff,n-i);
-		}
-	}
-	return;
+    for (int i = 1; i <= n; ++i) {
+        coeff *= val::valfunction(val::ToString(n-i+1));
+        coeff = coeff / a;
+        if (i%2) {
+            f.insert(sf*coeff,n-i);
+            sf = -sf;
+        }
+        else {
+            sg = -sg;
+            g.insert(sg*coeff,n-i);
+        }
+    }
+    return;
 }
 
 
@@ -744,7 +803,7 @@ val::valfunction integral_product_subst(const val::valfunction &g, const val::va
     std::string sf;
 
     if (hdivg.isconst(k)) {
-		//std::cout << "\nHere! g = " << g.derive(2).getinfixnotation() << std::endl;
+        //std::cout << "\nHere! g = " << g.derive(2).getinfixnotation() << std::endl;
         if (oper == "*") sf = "1/(2*(" + hdivg.getinfixnotation() + ")) * (" + h.getinfixnotation() + ")^2";
         else sf = "1/(" + hdivg.getinfixnotation() + ") * log(abs(" + h.getinfixnotation() + "))";
         return valfunction(sf);
@@ -759,10 +818,10 @@ val::valfunction integral_product_subst(const val::valfunction &g, const val::va
 
     valfunction z1, z1div;
     const valfunction *ph = nullptr;
-	std::string firstop = h.getfirstoperator();
-	int divisconst = 0;
+    std::string firstop = h.getfirstoperator();
+    int divisconst = 0;
 
-	//std::cout<<"\n firtsop = "<<firstop<<std::endl;
+    //std::cout<<"\n firtsop = "<<firstop<<std::endl;
 
     z = h.getfirstargument(); z1 = z.derive(k); z1div = z1/g;
     if (z1div.isconst(k)) {
@@ -969,120 +1028,119 @@ val::valfunction rational_integral(const val::valfunction &f, int k)
 
 val::valfunction integral_sqrt_qpolynom(val::pol<val::valfunction> &Pg, int k)
 {
-	using namespace val;
-	if (Pg.degree() != 2) return valfunction();
+    using namespace val;
+    if (Pg.degree() != 2) return valfunction();
 
-	valfunction F;
-	valfunction a = Pg.LC();
-	std::string sc , sa, sx, root, sf;
-	rational ra, re;
-	int eisrational = 0, isconst_a, isconst_e;
+    valfunction F;
+    valfunction a = Pg.LC();
+    std::string sc , sa, sx, root, sf;
+    rational ra, re;
+    int eisrational = 0, isconst_a, isconst_e;
 
-	Pg /= a;
-	valfunction d = Pg[1]/valfunction("2"), e = Pg[0] - d*d; //  gp = a[(x+d)^2 +e]
-	eisrational = val::isrationalnumber(e.getinfixnotation());
+    Pg /= a;
+    valfunction d = Pg[1]/valfunction("2"), e = Pg[0] - d*d; //  gp = a[(x+d)^2 +e]
+    eisrational = val::isrationalnumber(e.getinfixnotation());
 
-	if (val::isrationalnumber(sa = a.getinfixnotation())) {
-		if (isquadratic(abs(FromString<rational>(sa)),ra)) sc = ToString(ra);
-		else sc = "sqrt(" + sa + ")";
+    if (val::isrationalnumber(sa = a.getinfixnotation())) {
+        if (isquadratic(abs(FromString<rational>(sa)),ra)) sc = ToString(ra);
+        else sc = "sqrt(" + sa + ")";
+    }
+    else {
+        if (sa[0] == '-') sa = (-a).getinfixnotation();
+        sc = "sqrt(" + sa + ")";
+    }
 
-	}
-	else {
-		if (sa[0] == '-') sa = (-a).getinfixnotation();
-		sc = "sqrt(" + sa + ")";
-	}
+    sx = "(x" + ToString(k) + " + " + d.getinfixnotation() + ")";
 
-	sx = "(x" + ToString(k) + " + " + d.getinfixnotation() + ")";
+    isconst_a = a.isconst() ; isconst_e = e.isconst();
 
-	isconst_a = a.isconst() ; isconst_e = e.isconst();
+    a.setparameter(1); e.setparameter(1);
 
-	a.setparameter(1); e.setparameter(1);
+    if (isconst_a && isconst_e) {
+        double da = a(0), de = e(0);
+        //std::cout << "\n da = " << da << " , de = " << de <<std::endl;
+        if (da < 0.0 && de >= 0.0) return F;
+        else if (da > 0.0) {
+            root = "sqrt(" + sx + "^2 + " + e.getinfixnotation() + ")";
+            if (de > 0.0) {
+                sf = sc + "((" + sx + "/2) * " + root + " + ((" + e.getinfixnotation() + ")/2) * log(" + sx + " + " + root + "))";
+            }
+            else sf = sc + "((" + sx + "/2) * " + root + " + ((" + e.getinfixnotation() + ")/2) * log(abs(" + sx + " + " + root + ")))";
+            return valfunction(sf);
+        }
+        else if (de < 0.0){   // a < 0, e >0:
+            std::string se;
+            e = -e;
+            if (eisrational && isquadratic(FromString<rational>(e.getinfixnotation()),re)) se = ToString(re);
+            else se = "sqrt("+ e.getinfixnotation() + ")";
+            root = "sqrt(" + e.getinfixnotation() + " - " + sx + "^2)";
+            sf = sc + "((" + sx + "/2) * " + root + " + ((" + e.getinfixnotation() + ")/2) * arcsin((" + sx + ")/(" + se + ")))";
+            return valfunction(sf);
+        }
+    }
+    else if (isconst_a) {
+        //std::cout<<"\n a = " << a.getinfixnotation() << " , e = " << e.getinfixnotation() << std::endl;
+            std::string se = e.getinfixnotation();
+        if (a(0) < 0.0) {
+            if (se.length() && se[0] == '-') return F;
+            se = "sqrt("+ se + ")";
+            root = "sqrt(" + e.getinfixnotation() + " - " + sx + "^2)";
+            sf = sc + "((" + sx + "/2) * " + root + " + ((" + e.getinfixnotation() + ")/2) * arcsin((" + sx + ")/(" + se + ")))";
+            return valfunction(sf);
+        }
+        else {
+            root = "sqrt(" + sx + "^2 + " + se + ")";
+            if (se.length() && se[0] == '-') sf = sc + "((" + sx + "/2) * " + root + " + (" + se + "/2) * log(abs(" + sx + " + " + root + ")))";
+            else sf = sc + "((" + sx + "/2) * " + root + " + (" + se + "/2) * log(" + sx + " + " + root + "))";
+            //std::cout << "\n Here!, sf = " << sf << std::endl;
+            return valfunction(sf);
+        }
+    }
+    else if (isconst_e) {
+        if (a.getinfixnotation()[0] == '-') {
+            if (e(0) < 0.0) return F;
+            else {
+                std::string se;
+                e = -e;
+                if (eisrational && isquadratic(FromString<rational>(e.getinfixnotation()),re)) se = ToString(re);
+                else se = "sqrt("+ e.getinfixnotation() + ")";
+                root = "sqrt(" + e.getinfixnotation() + " - " + sx + "^2)";
+                sf = sc + "((" + sx + "/2) * " + root + " + ((" + e.getinfixnotation() + ")/2) * arcsin((" + sx + ")/(" + se + ")))";
+                return valfunction(sf);
+            }
+        }
+        else {
+            root = "sqrt(" + sx + "^2 + " + e.getinfixnotation() + ")";
+            if (e(0) < 0.0) {
+                sf = sc + "((" + sx + "/2) * " + root + " + ((" + e.getinfixnotation() + ")/2) * log(abs(" + sx + " + " + root + ")))";
+            }
+            else sf = sc + "((" + sx + "/2) * " + root + " + ((" + e.getinfixnotation() + ")/2) * log(" + sx + " + " + root + "))";
+            return valfunction(sf);
+        }
 
-	if (isconst_a && isconst_e) {
-		double da = a(0), de = e(0);
-		//std::cout << "\n da = " << da << " , de = " << de <<std::endl;
-		if (da < 0.0 && de >= 0.0) return F;
-		else if (da > 0.0) {
-			root = "sqrt(" + sx + "^2 + " + e.getinfixnotation() + ")";
-			if (de > 0.0) {
-				sf = sc + "((" + sx + "/2) * " + root + " + ((" + e.getinfixnotation() + ")/2) * log(" + sx + " + " + root + "))";
-			}
-			else sf = sc + "((" + sx + "/2) * " + root + " + ((" + e.getinfixnotation() + ")/2) * log(abs(" + sx + " + " + root + ")))";
-			return valfunction(sf);
-		}
-		else if (de < 0.0){   // a < 0, e >0:
-			std::string se;
-			e = -e;
-			if (eisrational && isquadratic(FromString<rational>(e.getinfixnotation()),re)) se = ToString(re);
-			else se = "sqrt("+ e.getinfixnotation() + ")";
-			root = "sqrt(" + e.getinfixnotation() + " - " + sx + "^2)";
-			sf = sc + "((" + sx + "/2) * " + root + " + ((" + e.getinfixnotation() + ")/2) * arcsin((" + sx + ")/(" + se + ")))";
-			return valfunction(sf);
-		}
-	}
-	else if (isconst_a) {
-		//std::cout<<"\n a = " << a.getinfixnotation() << " , e = " << e.getinfixnotation() << std::endl;
-			std::string se = e.getinfixnotation();
-		if (a(0) < 0.0) {
-			if (se.length() && se[0] == '-') return F;
-			se = "sqrt("+ se + ")";
-			root = "sqrt(" + e.getinfixnotation() + " - " + sx + "^2)";
-			sf = sc + "((" + sx + "/2) * " + root + " + ((" + e.getinfixnotation() + ")/2) * arcsin((" + sx + ")/(" + se + ")))";
-			return valfunction(sf);
-		}
-		else {
-			root = "sqrt(" + sx + "^2 + " + se + ")";
-			if (se.length() && se[0] == '-') sf = sc + "((" + sx + "/2) * " + root + " + (" + se + "/2) * log(abs(" + sx + " + " + root + ")))";
-			else sf = sc + "((" + sx + "/2) * " + root + " + (" + se + "/2) * log(" + sx + " + " + root + "))";
-			//std::cout << "\n Here!, sf = " << sf << std::endl;
-			return valfunction(sf);
-		}
-	}
-	else if (isconst_e) {
-		if (a.getinfixnotation()[0] == '-') {
-			if (e(0) < 0.0) return F;
-			else {
-				std::string se;
-				e = -e;
-				if (eisrational && isquadratic(FromString<rational>(e.getinfixnotation()),re)) se = ToString(re);
-				else se = "sqrt("+ e.getinfixnotation() + ")";
-				root = "sqrt(" + e.getinfixnotation() + " - " + sx + "^2)";
-				sf = sc + "((" + sx + "/2) * " + root + " + ((" + e.getinfixnotation() + ")/2) * arcsin((" + sx + ")/(" + se + ")))";
-				return valfunction(sf);
-			}
-		}
-		else {
-			root = "sqrt(" + sx + "^2 + " + e.getinfixnotation() + ")";
-			if (e(0) < 0.0) {
-				sf = sc + "((" + sx + "/2) * " + root + " + ((" + e.getinfixnotation() + ")/2) * log(abs(" + sx + " + " + root + ")))";
-			}
-			else sf = sc + "((" + sx + "/2) * " + root + " + ((" + e.getinfixnotation() + ")/2) * log(" + sx + " + " + root + "))";
-			return valfunction(sf);
-		}
-
-	}
-	else {
-		if (a.getinfixnotation()[0] == '-') {
-			if (e.getinfixnotation().length() > 0 && e.getinfixnotation()[0] == '-') return F;
-			std::string se = "sqrt("+ e.getinfixnotation() + ")";
-			root = "sqrt(" + e.getinfixnotation() + " - " + sx + "^2)";
-			sf = sc + "((" + sx + "/2) * " + root + " + ((" + e.getinfixnotation() + ")/2) * arcsin((" + sx + ")/(" + se + ")))";
-		}
-		else {
-			root = "sqrt(" + sx + "^2 + " + e.getinfixnotation() + ")";
-			if ( e.getinfixnotation().length() > 0 && e.getinfixnotation()[0] == '-') {
-				sf = sc + "((" + sx + "/2) * " + root + " + ((" + e.getinfixnotation() + ")/2) * log(abs(" + sx + " + " + root + ")))";
-			}
-			else {
-				sf = sc + "((" + sx + "/2) * " + root + " + ((" + e.getinfixnotation() + ")/2) * log(" + sx + " + " + root + "))";
-				//std::cout << "\n Here!, sf = " << sf << std::endl;
-			}
-		}
-		return valfunction(sf);
-	}
+    }
+    else {
+        if (a.getinfixnotation()[0] == '-') {
+            if (e.getinfixnotation().length() > 0 && e.getinfixnotation()[0] == '-') return F;
+            std::string se = "sqrt("+ e.getinfixnotation() + ")";
+            root = "sqrt(" + e.getinfixnotation() + " - " + sx + "^2)";
+            sf = sc + "((" + sx + "/2) * " + root + " + ((" + e.getinfixnotation() + ")/2) * arcsin((" + sx + ")/(" + se + ")))";
+        }
+        else {
+            root = "sqrt(" + sx + "^2 + " + e.getinfixnotation() + ")";
+            if ( e.getinfixnotation().length() > 0 && e.getinfixnotation()[0] == '-') {
+                sf = sc + "((" + sx + "/2) * " + root + " + ((" + e.getinfixnotation() + ")/2) * log(abs(" + sx + " + " + root + ")))";
+            }
+            else {
+                sf = sc + "((" + sx + "/2) * " + root + " + ((" + e.getinfixnotation() + ")/2) * log(" + sx + " + " + root + "))";
+                //std::cout << "\n Here!, sf = " << sf << std::endl;
+            }
+        }
+        return valfunction(sf);
+    }
 
 
-	return F;
+    return F;
 }
 
 
@@ -1092,135 +1150,135 @@ val::valfunction integral_sqrt_qpolynom(val::pol<val::valfunction> &Pg, int k)
 
 val::valfunction integral(const val::valfunction &f, int k)
 {
-	using namespace val;
+    using namespace val;
 
-	std::string svar = "x" + ToString(k);
+    std::string svar = "x" + ToString(k);
 
-	if (hintegral::is_polynomial(f,k)) {
-		pol<valfunction> P = hintegral::getpolynomial(f,k), Q = hintegral::integral(P);
-		return Q(valfunction(svar));
-	}
+    if (hintegral::is_polynomial(f,k)) {
+        pol<valfunction> P = hintegral::getpolynomial(f,k), Q = hintegral::integral(P);
+        return Q(valfunction(svar));
+    }
 
-	valfunction F, g = f.getfirstargument();
-	std::string firstop = f.getfirstoperator();
-	pol<valfunction> Pg;
-	int op = -1, operindex;
+    valfunction F, g = f.getfirstargument();
+    std::string firstop = f.getfirstoperator();
+    pol<valfunction> Pg;
+    int op = -1, operindex;
 
-	for (int i = 0; i < hintegral::operators.length(); ++i) {
-		if (firstop == hintegral::operators[i]) {
-			op = i;
-			break;
-		}
-	}
+    for (int i = 0; i < hintegral::operators.length(); ++i) {
+        if (firstop == hintegral::operators[i]) {
+            op = i;
+            break;
+        }
+    }
 
-	if (op != -1) {
-		if (!hintegral::is_polynomial(g,k)) return F;
-		Pg = hintegral::getpolynomial(g,k);
-		if (Pg.degree() > 1 && op != hintegral::SQRT) return F;
-	}
+    if (op != -1) {
+        if (!hintegral::is_polynomial(g,k)) return F;
+        Pg = hintegral::getpolynomial(g,k);
+        if (Pg.degree() > 1 && op != hintegral::SQRT) return F;
+    }
 
-	switch (op) {
-		case hintegral::EXP: {
-			return f/Pg.LC();
-		}
-		break;
-		case hintegral::SIN: {
-			valfunction c("-cos(x)");
-			return c(g)/Pg.LC();
-		}
-		break;
-		case hintegral::COS: {
-			valfunction c("sin(x)");
-			return c(g)/Pg.LC();
-		}
-		break;
-		case hintegral::TAN: {
-			valfunction h1("log(x)"), h2("abs(cos(x))");
-			h2 = h2(g);
-			h1 = h1(h2);
-			return h2/Pg.LC();
-		}
-		break;
-		case hintegral::LOG: {
-			return (g*f - g)/Pg.LC();
-		}
-		break;
-		case hintegral::ARCSIN: {
-			valfunction hF("arcsin(x)"), hG("sqrt(1 - x^2)");
-			hF = g * hF(g) + hG(g);
-			return hF/Pg.LC();
-		}
-		break;
-		case hintegral::ARCCOS: {
-			valfunction hF("arccos(x)"), hG("sqrt(1 - x^2)");
-			hF = g * hF(g) - hG(g);
-			return hF/Pg.LC();
-		}
-		break;
-		case hintegral::ARCTAN: {
-			valfunction hF("arctan(x)"), hG("1/2 * log(1 + x^2)");
-			hF = g * hF(g) - hG(g);
-			return hF/Pg.LC();
-		}
-		break;
-		case hintegral::SQRT: {
-			if (Pg.degree() == 1) {
-				std::string sf = "(" + g.getinfixnotation() + ")^3";
-				F = valfunction("2/3") * valfunction("sqrt(x)")(valfunction(sf))/Pg.LC();
-				return F;
-			}
-			else if (Pg.degree() == 2) return hintegral::integral_sqrt_qpolynom(Pg,k);
-		}
-		break;
-	}
+    switch (op) {
+        case hintegral::EXP: {
+            return f/Pg.LC();
+        }
+        break;
+        case hintegral::SIN: {
+            valfunction c("-cos(x)");
+            return c(g)/Pg.LC();
+        }
+        break;
+        case hintegral::COS: {
+            valfunction c("sin(x)");
+            return c(g)/Pg.LC();
+        }
+        break;
+        case hintegral::TAN: {
+            valfunction h1("log(x)"), h2("abs(cos(x))");
+            h2 = h2(g);
+            h1 = h1(h2);
+            return h2/Pg.LC();
+        }
+        break;
+        case hintegral::LOG: {
+            return (g*f - g)/Pg.LC();
+        }
+        break;
+        case hintegral::ARCSIN: {
+            valfunction hF("arcsin(x)"), hG("sqrt(1 - x^2)");
+            hF = g * hF(g) + hG(g);
+            return hF/Pg.LC();
+        }
+        break;
+        case hintegral::ARCCOS: {
+            valfunction hF("arccos(x)"), hG("sqrt(1 - x^2)");
+            hF = g * hF(g) - hG(g);
+            return hF/Pg.LC();
+        }
+        break;
+        case hintegral::ARCTAN: {
+            valfunction hF("arctan(x)"), hG("1/2 * log(1 + x^2)");
+            hF = g * hF(g) - hG(g);
+            return hF/Pg.LC();
+        }
+        break;
+        case hintegral::SQRT: {
+            if (Pg.degree() == 1) {
+                std::string sf = "(" + g.getinfixnotation() + ")^3";
+                F = valfunction("2/3") * valfunction("sqrt(x)")(valfunction(sf))/Pg.LC();
+                return F;
+            }
+            else if (Pg.degree() == 2) return hintegral::integral_sqrt_qpolynom(Pg,k);
+        }
+        break;
+    }
 
-	if (firstop == "+" || firstop == "-") {
+    if (firstop == "+" || firstop == "-") {
         valfunction f1 = integral(g,k), f2 = integral(f.getsecondargument(),k);
         if (f1.is_zero() || f2.is_zero()) return valfunction();
         if (firstop == "+") return (f1 + f2);
         else return (f1 - f2);
-	}
-	else if (firstop == "m") return -integral(g,k);
-	else if ((operindex = hintegral::isoppolynomial(f,k)) != -1) {  // case f = polynomial * oper(ax +b)
-		valfunction h = hintegral::getrationalfrom_oprat(f,hintegral::escop[operindex]), h1 = hintegral::getopargumentfrom_oprat(f,hintegral::escop[operindex]);
-		pol<valfunction> pfactor = hintegral::getpolynomial(h,k), parg = hintegral::getpolynomial(h1,k);
-		int n = parg.degree();
-		if (n <= 1) {
-			if (operindex == 0) { // exp
-				pol<valfunction> P;
-				for (int i = 0; i <= pfactor.degree(); ++i) P += hintegral::getpolfromintegralexppol(i,parg.LC(),pfactor[i]);
-				h = P(valfunction(svar));
-				h1 = valfunction("exp(x)")(h1);
-				return h * h1;
-			}
-			else if (operindex <= 2) {    // sin or cos:
-				pol<valfunction> fh,gh,P,Q;
-				for (int i = 0; i <= pfactor.degree(); ++i) {
-					hintegral::getpolsincos(i,parg.LC(),pfactor[i],hintegral::escop[operindex],fh,gh);
-					P += fh; Q += gh;
-				}
-				std::string oper1 = "sin(x)", oper2 = "cos(x)";
-				if (operindex == 2) {
-					oper1 = "cos(x)"; oper2 = "sin(x)";
-				}
-				F = P(valfunction(svar)) * (valfunction(oper1)(h1)) +
-				    Q(valfunction(svar)) * (valfunction(oper2)(h1));
-			}
-			else {    // log:
+    }
+    else if (firstop == "m") return -integral(g,k);
+    else if ((operindex = hintegral::isoppolynomial(f,k)) != -1) {  // case f = polynomial * oper(ax +b)
+        valfunction h = hintegral::getrationalfrom_oprat(f,hintegral::escop[operindex]), h1 = hintegral::getopargumentfrom_oprat(f,hintegral::escop[operindex]);
+        pol<valfunction> pfactor = hintegral::getpolynomial(h,k), parg = hintegral::getpolynomial(h1,k);
+        int n = parg.degree();
+        if (n <= 1) {
+            if (operindex == 0) { // exp
+                pol<valfunction> P;
+                for (int i = 0; i <= pfactor.degree(); ++i) P += hintegral::getpolfromintegralexppol(i,parg.LC(),pfactor[i]);
+                h = P(valfunction(svar));
+                h1 = valfunction("exp(x)")(h1);
+                return h * h1;
+            }
+            else if (operindex <= 2) {    // sin or cos:
+                pol<valfunction> fh,gh,P,Q;
+                for (int i = 0; i <= pfactor.degree(); ++i) {
+                    hintegral::getpolsincos(i,parg.LC(),pfactor[i],hintegral::escop[operindex],fh,gh);
+                    P += fh; Q += gh;
+                }
+                std::string oper1 = "sin(x)", oper2 = "cos(x)";
+                if (operindex == 2) {
+                    oper1 = "cos(x)"; oper2 = "sin(x)";
+                }
+                F = P(valfunction(svar)) * (valfunction(oper1)(h1)) +
+                    Q(valfunction(svar)) * (valfunction(oper2)(h1));
+            }
+            else {    // log:
                 std::string  sparg = parg(valfunction(svar)).getinfixnotation(), sF1 = "log(" + sparg + ")", sF2 = pfactor(valfunction(svar)).getinfixnotation() , sF3;
                 valfunction F1(sF1), F2 = integral(valfunction(sF2)), F3;
                 sF3 = parg.LC().getinfixnotation() + "*(" + F2.getinfixnotation() + ")/(" + sparg + ")";
                 F3 = integral(valfunction(sF3));
                 if (!F3.is_zero()) return (F1 * F2 - F3);
-			}
-		}
-		else if (firstop == "*") {
+            }
+        }
+        else if (firstop == "*") {
             valfunction h = f.getsecondargument();
             //std::cout << "\n g.nvar = " << g.numberofvariables();
             if (!g.isconst(k) && !h.isconst(k)) F = hintegral::integral_product_subst(g,h,k);
-		}
-	}
-	else if (hintegral::is_rational(f,k)) {
+        }
+    }
+    else if (hintegral::is_rational(f,k)) {
         fraction<pol<valfunction>> R = hintegral::getrationalfunction(f,k);
         //std::cout << "\n f.num = \n" << R.numerator();
         //std::cout << "\n f.denum = \n" << R.denominator();
@@ -1228,8 +1286,8 @@ val::valfunction integral(const val::valfunction &f, int k)
         //std::cout << "\n f.num%f.denum = \n" << R.numerator()%R.denominator();
 
         return hintegral::rational_integral(f,k);
-	}
-	else if (firstop == "*" || firstop == "/") {
+    }
+    else if (firstop == "*" || firstop == "/") {
         valfunction h = f.getsecondargument();
         int g_const = g.isconst(k), h_const = h.isconst(k);
         if (!g_const && !h_const) {
@@ -1242,33 +1300,33 @@ val::valfunction integral(const val::valfunction &f, int k)
             if (firstop == "*") return h * integral(g,k);
             else return integral(g,k)/h;
         }
-	}
-	else if (firstop == "^") {
-		valfunction h = f.getsecondargument();
-		if (!h.isconst(k)) {
-			std::string sf = "exp(log(" + g.getinfixnotation() + ") * (" + h.getinfixnotation() + "))";
-			return integral(valfunction(sf),k);
-		}
-		if (g.getfirstoperator() == "sqrt") {
-			g = g.getfirstargument();
-			h *= valfunction("1/2");
-		}
-		if (hintegral::is_polynomial(g,k)) {
-			pol<valfunction> Pg = hintegral::getpolynomial(g,k);
-			if (Pg.degree() > 1) return F;
-			valfunction a = Pg.LC();
-			if (h.getinfixnotation() == "-1") {
-				F = valfunction("log(abs(x))");
-				return F(g)/a;
-			}
-			h += valfunction("1");
-			std::string sh = h.getinfixnotation(),
-						sf = "1/((" + sh + ") * " + a.getinfixnotation() + ") * (" + g.getinfixnotation() + ")^(" + sh + ")";
-			return valfunction(sf);
-		}
-	}
+    }
+    else if (firstop == "^") {
+        valfunction h = f.getsecondargument();
+        if (!h.isconst(k)) {
+            std::string sf = "exp(log(" + g.getinfixnotation() + ") * (" + h.getinfixnotation() + "))";
+            return integral(valfunction(sf),k);
+        }
+        if (g.getfirstoperator() == "sqrt") {
+            g = g.getfirstargument();
+            h *= valfunction("1/2");
+        }
+        if (hintegral::is_polynomial(g,k)) {
+            pol<valfunction> Pg = hintegral::getpolynomial(g,k);
+            if (Pg.degree() > 1) return F;
+            valfunction a = Pg.LC();
+            if (h.getinfixnotation() == "-1") {
+                F = valfunction("log(abs(x))");
+                return F(g)/a;
+            }
+            h += valfunction("1");
+            std::string sh = h.getinfixnotation(),
+                        sf = "1/((" + sh + ") * " + a.getinfixnotation() + ") * (" + g.getinfixnotation() + ")^(" + sh + ")";
+            return valfunction(sf);
+        }
+    }
 
-	return F;
+    return F;
 }
 
 
@@ -1427,7 +1485,16 @@ void computezeros(const val::valfunction &f,const double &x1,const double &x2,co
     std::string f_oper = f.getfirstoperator();
     pol<valfunction> pF;
 
-    if (hintegral::is_polynomial(f)) pF = hintegral::getpolynomial(f);
+    if (hintegral::is_polynomial(f)) pF = hintegral::getpolynomial(valfunction(f.getinfixnotation()));
+
+    if (pF[0].is_zero()) {
+        int n = 1;
+        while (n <= pF.degree() && pF[n].is_zero()) ++n;
+        pF.getdivbypower(n);
+        s_zeros.push(valfunction("0"));
+        d_zeros.push(0.0);
+        if (pF.degree() == 0) return;
+    }
 
     if (pF.degree() == 1) {                     // Linear Funktion with symbols
         valfunction m = pF.LC(), b = pF[0], z = -b/m;
@@ -1457,21 +1524,8 @@ void computezeros(const val::valfunction &f,const double &x1,const double &x2,co
         }
         valfunction phalf = -pF[1]/valfunction("2"), dis = phalf*phalf - pF[0], sqrt("sqrt(x)"), d, z1, z2;
         double x1, x2;
-        if (!hzeros::has_pi_or_parameter(dis.getinfixnotation())) {
-            if (dis.isrationalfunction()) {
-                rational r, root;
-                r = FromString<rational>(dis.getinfixnotation());
-                if (r.signum() == -1) return;
-                if (isquadratic(r, root)) d = valfunction(ToString(root));
-                else d = sqrt(dis);
-            }
-            else {
-                double value = dis(0);
-                if (value < 0.0) return;
-                d = sqrt(dis);
-            }
-        }
-        else d = sqrt(dis);
+
+        if (!hzeros::sqrt_dis(dis, d)) return;
         z1 = phalf - d;
         z2 = phalf + d;
         z1.setparameter(f.getparameter()); z2.setparameter(f.getparameter());
@@ -2346,9 +2400,9 @@ void analyzefunction(const plotobject &f,std::string input)
         }
     }
     //
-    F.simplify();
+    if (F.getfirstoperator() != "*") F.simplify();
     {
-        val::valfunction iF = integral(F);
+        val::valfunction iF = integral(val::valfunction(F.getinfixnotation()));
         if (!iF.is_zero()) analyze_output[0] += "\n Stammfunction: \n F(x) = " + iF.getinfixnotation();
     }
 
@@ -2396,6 +2450,7 @@ void analyzefunction(const plotobject &f,std::string input)
     //
 
     // Extrema:
+    F.simplify();
     FF = F.derive();
     zeros.dellist(); s_zeros.dellist(); prezeros.dellist();
     FF.setparameter(f.f.getparameter());
@@ -2561,11 +2616,12 @@ void intersection(const plotobject &f, const plotobject &g, std::string input)
 
     int i,iterations=1000,decimals=4,n, N = 0, digits, ydigits;//=input.length();
     double x1=-5,x2=5,epsilon=1e-9, y;
-    val::vector<double> zeros;
-    val::d_array<double> places;
-    val::d_array<val::rational> r_places;
-    val::rationalfunction h_r;
-    val::pol<val::rational> h_p;
+    val::Glist<double> zeros;
+    val::Glist<double> places;
+    //val::d_array<val::rational> r_places;
+    val::Glist<val::valfunction> r_places;
+    //val::rationalfunction h_r;
+    //val::pol<val::rational> h_p;
     //std::string s_n="";
 
     analyze_output.resize(2);
@@ -2596,6 +2652,8 @@ void intersection(const plotobject &f, const plotobject &g, std::string input)
     // ------------------------------------------------------------
 
     val::valfunction F(f.getinfixnotation(),0), G(g.getinfixnotation()), h = F-G;
+    h.setparameter(g.f.getparameter()); F.setparameter(f.f.getparameter()); G.setparameter(g.f.getparameter());
+    h.setparameter(f.f.getparameter());
     h.simplify(1);
 
     if (h.is_zero()) {
@@ -2605,6 +2663,7 @@ void intersection(const plotobject &f, const plotobject &g, std::string input)
         return;
     }
 
+    /*
     if (h.isrationalfunction()) {
         h_r = h.getrationalfunction();
         h_p = h_r.nominator();
@@ -2626,10 +2685,12 @@ void intersection(const plotobject &f, const plotobject &g, std::string input)
         zeros = val::vector<double>(n);
         for (i = 0; i < n; ++i) zeros[i] = prezeros[i];
     }
+    */
+    computezeros(h, x1, x2, epsilon, decimals, iterations, zeros, r_places);
 
-    n = zeros.dimension();
+    n = zeros.length();
     if (n) {
-        places.reserve(n);
+        //places.reserve(n);
         for (i = 0; i < n; ++i) {
             if (!isInf(f.f(zeros[i])) && !val::isNaN(f.f(zeros[i])) && !isInf(g.f(zeros[i])) && !val::isNaN(g.f(zeros[i]))) places.push_back(zeros[i]);
         }
@@ -2651,10 +2712,12 @@ void intersection(const plotobject &f, const plotobject &g, std::string input)
         Points[0].reserve(N);
         places.sort();
         analyze_output[1]+="Number of real intersection points: "+ val::ToString(N) + "\n";
+        /*
         if (!h_p.iszero()) {
             r_places = val::rational_roots(h_p);
             r_places.sort();
         }
+        */
         for (auto &x : places) {
             if (x == 0) x = 0;
             y = f.f(x);
@@ -2666,8 +2729,8 @@ void intersection(const plotobject &f, const plotobject &g, std::string input)
             Points[0].push_back(val::GPair<double>(val::round(x,decimals),val::round(y,decimals)));
             rat = 0;
             for (const auto& r : r_places) {
-                if (val::abs(double(r)-x) < epsilon) {
-                    xr = val::ToString(r); yr = F(val::valfunction(xr)).getinfixnotation();
+                if (val::abs(r(0)-x) < epsilon) {
+                    xr = r.getinfixnotation(); yr = F(val::valfunction(xr)).getinfixnotation();
                     rat = 1;
                     break;
                 }

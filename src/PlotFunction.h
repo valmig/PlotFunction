@@ -63,21 +63,20 @@ wxDECLARE_EVENT(MY_EVENT, MyThreadEvent);
 class MyThreadEvent: public wxThreadEvent
 {
 public:
-	MyThreadEvent(wxEventType commandType, int id = 0)
-        		:  wxThreadEvent(commandType, id) { }
+        MyThreadEvent(wxEventType commandType, int id = 0)
+                    :  wxThreadEvent(commandType, id) { }
 
-	// You *must* copy here the data to be transported
-	MyThreadEvent(const MyThreadEvent& event)
-        		:  wxThreadEvent(event) { this->SetMessage(event.GetMessage()); }
+        // You *must* copy here the data to be transported
+        MyThreadEvent(const MyThreadEvent& event)
+                    :  wxThreadEvent(event) { this->SetMessage(event.GetMessage()); }
 
-	// Required for sending with wxPostEvent()
-	wxEvent* Clone() const { return new MyThreadEvent(*this); }
+        // Required for sending with wxPostEvent()
+        wxEvent* Clone() const { return new MyThreadEvent(*this); }
 
-	std::string GetMessage() const { return message; }
-	void SetMessage(const std::string &s) { message = s; }
-
+        std::string GetMessage() const { return message; }
+        void SetMessage(const std::string &s) { message = s; }
 private:
-	std::string message;
+        std::string message;
 };
 
 enum myevent_id{IdPaint,IdTable,IdIntegral,IdRefresh,IdIteration,IdAnalyze,IdInfo,IdEval, IdIntersection, IdCalculate, IdPointStat, IdTriangle};
@@ -268,7 +267,7 @@ struct plotobject
     val::d_array<double> farray, critx;
     val::d_array<val::d_array<double> > curvearray;
     val::Glist<val::GPair<double>> critpoints;//,undef_intervals;
-	val::Glist<drawingword> TextWords;
+    val::Glist<drawingword> TextWords;
     wxString textdata;
     std::string s_infix;
     val::GPair<double> x_range{0.0,0.0};
