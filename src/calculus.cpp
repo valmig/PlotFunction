@@ -1487,7 +1487,7 @@ void computezeros(const val::valfunction &f,const double &x1,const double &x2,co
 
     if (hintegral::is_polynomial(f)) pF = hintegral::getpolynomial(valfunction(f.getinfixnotation()));
 
-    if (pF[0].is_zero()) {
+    if (!pF.iszero() && pF[0].is_zero()) {
         int n = 1;
         while (n <= pF.degree() && pF[n].is_zero()) ++n;
         pF.getdivbypower(n);
