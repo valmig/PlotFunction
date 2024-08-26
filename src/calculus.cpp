@@ -1388,6 +1388,7 @@ void computeintegral(const plotobject& f,std::string x1,std::string x2,double de
         {
             val::valfunction F= integral(val::valfunction(f.getinfixnotation()));
             if (!F.is_zero()) {
+                F.setparameter(f.f.getparameter());
                 name += "integral("+f.getinfixnotation()+") \n= " + F.getinfixnotation() + "\n\n";
                 exact = 1;
                 symbolic = F(B) - F(A);

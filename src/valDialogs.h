@@ -203,7 +203,8 @@ public:
     ListBox(wxWindow* parent,wxWindowID id,const d_array<std::string> &G,long style = 0, int max_choices = -1)
             : wxListBox(parent,id,wxDefaultPosition,wxDefaultSize,G.length(),(List = getwxStringarray(G)),style), Max_Choices(max_choices), len(G.length()), Style(style) {}
     virtual ~ListBox() {delete[] List;}
-    d_array<int> GetSelections() const;
+    using wxListBox::GetSelections;
+    virtual d_array<int> GetSelections() const;
 	template <template <typename> class C> void SetSelections(const C<int> &List);
 };
 
