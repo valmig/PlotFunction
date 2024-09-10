@@ -274,20 +274,20 @@ IntervalSlider::IntervalSlider(wxWindow *parent,wxWindowID id,int p_size,int b_h
         r = val::Max(0,r); g = val::Max(0,g); b = val::Max(0,b);
         pointcolor = wxColour(r,g,b);
     }
-
+    wxPanel *MPanel = new wxPanel(this,-1);
     wxBoxSizer *BoxSizer=new wxBoxSizer(wxVERTICAL);
     wxBoxSizer *VBoxSizer = new wxBoxSizer(wxHORIZONTAL);
-    DrawPanel = new wxPanel(this,100, wxDefaultPosition, wxSize(panelsize,height),wxBORDER_NONE);
+    DrawPanel = new wxPanel(MPanel,100, wxDefaultPosition, wxSize(panelsize,height),wxBORDER_NONE);
     BoxSizer->Add(DrawPanel,0,wxALL|wxALIGN_LEFT,2);
-    LSpin = new wxSpinCtrl(this,201,val::ToString(leftvalue),wxDefaultPosition,wxSize(120,35),0x4000|wxALIGN_RIGHT,lvalue,uvalue,leftvalue);
-    RSpin = new wxSpinCtrl(this,202,val::ToString(rightvalue),wxDefaultPosition,wxSize(120,35),0x4000|wxALIGN_RIGHT,lvalue,uvalue,rightvalue);
+    LSpin = new wxSpinCtrl(MPanel,201,val::ToString(leftvalue),wxDefaultPosition,wxSize(120,35),0x4000|wxALIGN_RIGHT,lvalue,uvalue,leftvalue);
+    RSpin = new wxSpinCtrl(MPanel,202,val::ToString(rightvalue),wxDefaultPosition,wxSize(120,35),0x4000|wxALIGN_RIGHT,lvalue,uvalue,rightvalue);
     VBoxSizer->Add(LSpin,0,wxALL|wxALIGN_LEFT,2);
     VBoxSizer->AddStretchSpacer(1);
     //VBoxSizer->Add(RSpin,0,wxALL|wxALIGN_RIGHT,2);
     VBoxSizer->Add(RSpin,0,wxALL,2);
     BoxSizer->Add(VBoxSizer,0,wxALL|wxEXPAND);
-    SetSizer(BoxSizer);
-    BoxSizer->Fit(this);
+    MPanel->SetSizer(BoxSizer);
+    BoxSizer->Fit(MPanel);
     BoxSizer->SetSizeHints(this);
 
     DrawPanel->Bind(wxEVT_PAINT,(wxObjectEventFunction)&IntervalSlider::OnDrawPanelPaint,this);

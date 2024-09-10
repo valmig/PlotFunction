@@ -50,8 +50,8 @@ class DLL_PUBLIC MultiLineDialog: public wxDialog
 {
 	public:
 
-		MultiLineDialog(wxWindow* parent,const std::string &Entry="",const std::string &SText="Entry Settings",int sx=240,int sy=100,
-                  const std::string &title="",int fontsize=10,int singleline=0,int style=0);
+		MultiLineDialog(wxWindow* parent,const wxString &Entry="",const wxString &SText="Entry Settings",int sx=240,int sy=100,
+                  const wxString &title="",int fontsize=10,int singleline=0,int style=0);
 		virtual ~MultiLineDialog();
 
 		/*
@@ -62,7 +62,7 @@ class DLL_PUBLIC MultiLineDialog: public wxDialog
 		wxTextCtrl* TextCtrl1;
 		//
 		*/
-		std::string GetSettingsText() const;
+		wxString GetSettingsText() const;
 		wxString GetValue() const;
 
 	protected:

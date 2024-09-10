@@ -2102,7 +2102,7 @@ void PlotFunctionFrame::OnMenuSizeSelected(wxCommandEvent& event)
     dialog.Centre();
 #endif // __APPLE__
      if (dialog.ShowModal()!=wxID_OK) return;
-     std::string svalue = dialog.GetSettingsText();
+     std::string svalue(dialog.GetSettingsText());
      ChangeSettings(PANEL_SIZE,svalue,id);
 
      return;
@@ -2323,7 +2323,7 @@ void PlotFunctionFrame::OnMenuFontSize(wxCommandEvent& event)
     fontsizedialog.Centre();
 #endif // __APPLE__
     if (fontsizedialog.ShowModal()==wxID_OK) {
-        std::string svalue = fontsizedialog.GetSettingsText();
+        std::string svalue(fontsizedialog.GetSettingsText());
         ChangeSettings(cmd,svalue);
     }
 }
@@ -2383,7 +2383,7 @@ void PlotFunctionFrame::OnMenuTools(wxCommandEvent &event)
 #endif // __APPLE__
         if (dialog.ShowModal()==wxID_CANCEL) return;
         d_array<char> sep{' '};
-        std::string s = dialog.GetSettingsText(), fw = getfirstwordofstring(s,sep);
+        std::string s(dialog.GetSettingsText()), fw = getfirstwordofstring(s,sep);
         int nr = -1, l = fw.length();
 
         if (s == "") nr = 0;
@@ -2437,8 +2437,8 @@ void PlotFunctionFrame::OnMenuTools(wxCommandEvent &event)
 
         val::d_array<plotobject*> H;
         for (int i : ind) H.push_back(&F[i]);
-        std::string input = dialog.GetSettingsText() + " " + val::ToString(x1) + " " + val::ToString(x2);
-        std::thread t(computerotation,H,input);
+        wxString input = dialog.GetSettingsText() + " " + val::ToString(x1) + " " + val::ToString(x2);
+        std::thread t(computerotation,H,std::string(input));
         t.detach();
         return;
     }
@@ -2578,12 +2578,12 @@ void PlotFunctionFrame::OnMenuTools(wxCommandEvent &event)
     else if (id==7003) { // Table
         if (nchildwindows) return;
 
-        MultiLineDialog tabledialog(this,xstring + " ; 0.5" ,"Entry x1,x2,dx:",240,-1,"Set Values for Table",fontsize,1);
+        MultiLineDialog tabledialog(this,wxString(xstring) + " ; 0.5" ,"Entry x1,x2,dx:",240,-1,"Set Values for Table",fontsize,1);
 #ifdef __APPLE__
         tabledialog.Centre();
 #endif // __APPLE__
         if (tabledialog.ShowModal()==wxID_CANCEL) return;
-        ExecuteCommand(TABLE,j,tabledialog.GetSettingsText());
+        ExecuteCommand(TABLE,j,std::string(tabledialog.GetSettingsText()));
         return;
     }
     else if (id==7004 || id==7005 || id==7008)    { // Integral + Iteration:
@@ -2608,7 +2608,7 @@ void PlotFunctionFrame::OnMenuTools(wxCommandEvent &event)
         integraldialog.SetPosition(wxPoint(Point.x,Point.y+10));
 
         if (integraldialog.ShowModal()==wxID_CANCEL) return;
-        ExecuteCommand(INTEGRAL,j,integraldialog.GetSettingsText(),id);
+        ExecuteCommand(INTEGRAL,j,std::string(integraldialog.GetSettingsText()),id);
         return;
     }
     GetSettings();
@@ -2626,7 +2626,7 @@ void PlotFunctionFrame::OnChangeParmeterMenu(wxCommandEvent & event)
         dialog.Centre();
 #endif // __APPLE__
         if (dialog.ShowModal()==wxID_CANCEL) return;
-        std::string svalue = dialog.GetSettingsText();
+        std::string svalue(dialog.GetSettingsText());
         ChangeSettings(REGRESSION_DEGREE,svalue);
         return;
     }
@@ -2637,7 +2637,7 @@ void PlotFunctionFrame::OnChangeParmeterMenu(wxCommandEvent & event)
         dialog.Centre();
 #endif // __APPLE__
         if (dialog.ShowModal()==wxID_CANCEL) return;
-        std::string svalue = dialog.GetSettingsText();
+        std::string svalue(dialog.GetSettingsText());
         ChangeSettings(POINT_DECIMALS,svalue);
         return;
     }
@@ -4418,6 +4418,7 @@ void PlotFunctionFrame::OnMouseDouble(wxMouseEvent &event)
     if (dpanelinsertmode == insert_type::POLYGON_I) {
         n_points  = 0;
         iscomputing = 1;
+        refreshfunctionstring();
         Paint();
     }
     else if (dpanelinsertmode == insert_type::POINTS_I) {
@@ -4801,6 +4802,7 @@ void PlotFunctionFrame::OnSelectActiveFunction(wxCommandEvent &event)
     }
     else {
         if (dpanelinsertmode) {
+            if (n_points) refreshfunctionstring();
             changedpanelinsertmode(insert_type::NORMAL_I);
             return;
         }
@@ -4974,6 +4976,10 @@ void PlotFunctionFrame::WriteText()
         SideText->WriteText(s_f + ";\n");
     }
     SideText_Word = SideText->GetValue();
+    Style.SetFontWeight(wxFONTWEIGHT_NORMAL);
+    Style.SetFontUnderlined(false);
+    Style.SetTextColour(def_color);
+    SideText->SetDefaultStyle(Style);
 }
 
 

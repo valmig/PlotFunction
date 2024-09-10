@@ -51,18 +51,6 @@ class PlotFunctionFrame: public wxFrame
     private:
         enum insert_type{NORMAL_I, POINTS_I, POLYGON_I, LINE_I, RECTANGLE_I, CIRCLE_I, TRIANGLE_I};
 
-        //*Handlers(PlotFunctionFrame)
-        void OnQuit(wxCommandEvent& event);
-        void OnAbout(wxCommandEvent& event);
-        void OnDrawPanelPaint(wxPaintEvent& event);
-        void OnDrawPanelResize(wxSizeEvent& event);
-        void OnAllSettingsSelected(wxCommandEvent& event);
-        void OnMenu_xAxisSelected(wxCommandEvent& event);
-        void OnMenuSaveSelected(wxCommandEvent& event);
-        void OnMenuSizeSelected(wxCommandEvent& event);
-        void OnMenuFontSize(wxCommandEvent& event);
-        //*)
-
         //(*Identifiers(PlotFunctionFrame)
         static const long ID_PANEL1;
         static const long idMenuQuit;
@@ -92,42 +80,6 @@ class PlotFunctionFrame: public wxFrame
         wxBoxSizer *BoxSizer1, *BoxSizer2;
         val::CompleteTextCtrl *SideText = nullptr;
 
-        void SetAccelerators(const val::Glist<wxAcceleratorEntry> &Accel);
-        void GetSizeSettings();
-        void OnFileMenu(wxCommandEvent &event);
-        void OnMenunewfunction(wxCommandEvent &event);
-        void OnMenuColours(wxCommandEvent &event);
-        void OnMenuResetColours(wxCommandEvent &event);
-        void OnMenuParameter(wxCommandEvent &event);
-        void OnMenuTools(wxCommandEvent &event);
-        void OnChangeParmeterMenu(wxCommandEvent & event);
-        void OnRangeMenu(wxCommandEvent &event);
-        void OnScaleMenu(wxCommandEvent &event);
-        void OnGridMenu(wxCommandEvent &event);
-        void OnMoveMenu(wxCommandEvent &);
-        void OnMenuFill(wxCommandEvent &event);
-        void OnInputDialog(wxCommandEvent &event);
-        void ChangeSettings(int command, const std::string &svalue="", int id = 0);
-        void ExecuteCommand(int command, int f_nr = 0, const std::string &svalue="", int id = 0);
-        int findactivefunction(int x,int y);
-        void displacefunction(int i,const double& dx,const double& dy);
-        void OnMenuButton(wxCommandEvent&);
-        // Mouse - Handler
-        void OnMouseDown(wxMouseEvent &event);
-        void OnMouseWheel(wxMouseEvent &event);
-        void OnMouseCaptured(wxMouseEvent& event);
-        void OnMouseReleased(wxMouseEvent& event);
-        void OnMouseMoved(wxMouseEvent& event);
-        void OnMouseDouble(wxMouseEvent& event);
-        void OnLostMouse(wxMouseCaptureLostEvent &event);
-        void changefunctionsettings(int i);
-        void changedpanelinsertmode(int mode = 0);
-        void SendNotification(const std::string& s);
-        //
-        void OnZoom(wxCommandEvent &event);
-        void OnMove(wxCommandEvent &event);
-        void OnSelectActiveFunction(wxCommandEvent &event);
-        //
         wxMenu *Menu_functions,*colorsubmenu,*rightclickmenu, *rightclickfunctionsmenu;
         wxMenuItem *hideallmenu,*showallmenu,*deletelastmenu,*deleteallmenu,*x_scaleactiv,*y_scaleactiv,*gridactiv,*undomenu,*redomenu,*addfunction,
                     *addpointsmenu, *polygonpointsmenu, *linepointsmenu, *rectanglemenu , *circlemenu, *multicolormenu, *trianglemenu;
@@ -142,8 +94,6 @@ class PlotFunctionFrame: public wxFrame
         bool closebrackets = true;
         wxPoint actuallinepoint,actualpolygonpoint;
         val::rational pi_factor_x,pi_factor_y,g_pi_factor_x,g_pi_factor_y;
-        void Paint();
-        void Compute(int i=-1, int computepoints = 1);
         double x1=-5,x2=5,y1=-5,y2=5,ymin=-5,ymax=5,x_scale=1,y_scale=1,gx_scale=0.5,gy_scale=0.5,delta=1e-8,zoom=1.0,mx1,mx2,my1,my2,movedx = 0.1, movedy = 0.1;
         double movex = 0, movey = 0;
         std::string Program_Name="PlotFunction",x_axis="x",y_axis="y",sx_scale="1",sy_scale="1",sgx_scale="0.5",sgy_scale="0.5",actual_filename="",actual_dirname="";
@@ -175,12 +125,23 @@ class PlotFunctionFrame: public wxFrame
         wxNotebook *notebook = nullptr;
         val::d_array<val::SwitchCtrl*> ViewSwitches{nullptr,12};
         val::d_array<wxTextCtrl*> Set_TextEdit{nullptr,12};
+
         //
+        void ChangeSettings(int command, const std::string &svalue="", int id = 0);
+        void ExecuteCommand(int command, int f_nr = 0, const std::string &svalue="", int id = 0);
+        int findactivefunction(int x,int y);
+        void displacefunction(int i,const double& dx,const double& dy);
+        void changefunctionsettings(int i);
+        void changedpanelinsertmode(int mode = 0);
+        void SendNotification(const std::string& s);
+        //
+        void Paint();
+        void Compute(int i=-1, int computepoints = 1);
         void ResetColours();
         void GetSettings();
-        void OnMyEvent(MyThreadEvent& event);
-        void OnParentEvent(ParentEvent& event);
 
+        void SetAccelerators(const val::Glist<wxAcceleratorEntry> &Accel);
+        void GetSizeSettings();
         void valFloodFill(wxMemoryDC& dc, int x, int y, const wxColour &fgc);
         void plotvertices(wxDC& dc);
         /*
@@ -215,7 +176,6 @@ class PlotFunctionFrame: public wxFrame
         void openfile(const std::string& dirname,const std::string& filename);
         void setfunctionsmenu();
         //
-        void OnMenuRecent(wxCommandEvent& event);
         int checkinrecent(const std::string& filename);
         void appendrecentfiles(const std::string& filename);
         //
@@ -234,7 +194,47 @@ class PlotFunctionFrame: public wxFrame
         void switchrefresh();
         void Text_Editrefresh();
 
-        //DECLARE_EVENT_TABLE()
+        //*Handlers(PlotFunctionFrame)
+        void OnQuit(wxCommandEvent& event);
+        void OnAbout(wxCommandEvent& event);
+        void OnDrawPanelPaint(wxPaintEvent& event);
+        void OnDrawPanelResize(wxSizeEvent& event);
+        void OnAllSettingsSelected(wxCommandEvent& event);
+        void OnMenu_xAxisSelected(wxCommandEvent& event);
+        void OnMenuSaveSelected(wxCommandEvent& event);
+        void OnMenuSizeSelected(wxCommandEvent& event);
+        void OnMenuFontSize(wxCommandEvent& event);
+        void OnFileMenu(wxCommandEvent &event);
+        void OnMenunewfunction(wxCommandEvent &event);
+        void OnMenuColours(wxCommandEvent &event);
+        void OnMenuResetColours(wxCommandEvent &event);
+        void OnMenuParameter(wxCommandEvent &event);
+        void OnMenuTools(wxCommandEvent &event);
+        void OnChangeParmeterMenu(wxCommandEvent & event);
+        void OnRangeMenu(wxCommandEvent &event);
+        void OnScaleMenu(wxCommandEvent &event);
+        void OnGridMenu(wxCommandEvent &event);
+        void OnMoveMenu(wxCommandEvent &);
+        void OnMenuFill(wxCommandEvent &event);
+        void OnInputDialog(wxCommandEvent &event);
+        void OnMenuButton(wxCommandEvent&);
+        void OnMenuRecent(wxCommandEvent& event);
+        // Mouse - Handler
+        void OnMouseDown(wxMouseEvent &event);
+        void OnMouseWheel(wxMouseEvent &event);
+        void OnMouseCaptured(wxMouseEvent& event);
+        void OnMouseReleased(wxMouseEvent& event);
+        void OnMouseMoved(wxMouseEvent& event);
+        void OnMouseDouble(wxMouseEvent& event);
+        void OnLostMouse(wxMouseCaptureLostEvent &event);
+        //
+        void OnZoom(wxCommandEvent &event);
+        void OnMove(wxCommandEvent &event);
+        void OnSelectActiveFunction(wxCommandEvent &event);
+        //
+        void OnMyEvent(MyThreadEvent& event);
+        void OnParentEvent(ParentEvent& event);
+        //*)
 };
 
 #endif // PLOTFUNCTIONMAIN_H

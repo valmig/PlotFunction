@@ -2391,13 +2391,16 @@ void analyzefunction(const plotobject &f,std::string input)
             else analyze_output[0]+= " )  ";
         }
         if (!undef_points.isempty()) {
+            int i = 0, n = undef_points.length();
             analyze_output[0]+= " { ";
             for (const auto &x : undef_points) {
                 digits = intdigits(x) + decimals;
                 digits = val::Min(digits,val::MaxPrec);
-                analyze_output[0] += val::ToString(val::round(x, decimals),digits) + " ";
+                analyze_output[0] += val::ToString(val::round(x, decimals),digits);
+                if (i != n-1) analyze_output[0] += "; ";
+                ++i;
             }
-            analyze_output[0] += "}";
+            analyze_output[0] += " }";
         }
     }
     //

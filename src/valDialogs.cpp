@@ -71,8 +71,8 @@ const long MultiLineDialog::ID_TEXTCTRL1 = wxNewId();
 //
 
 
-MultiLineDialog::MultiLineDialog(wxWindow* parent,const std::string &Entry,const std::string &SText,int sx,int sy,
-                  const std::string &title,int fontsize,int singleline,int style) : Style(style)
+MultiLineDialog::MultiLineDialog(wxWindow* parent,const wxString &Entry,const wxString &SText,int sx,int sy,
+                  const wxString &title,int fontsize,int singleline,int style) : Style(style)
 {
 	if (sx<100) sx=100;
 	if (sx>400) sx=400;
@@ -157,9 +157,9 @@ void MultiLineDialog::OnCancelButtonClick(wxCommandEvent& event)
 }
 
 
-std::string MultiLineDialog::GetSettingsText() const
+wxString MultiLineDialog::GetSettingsText() const
 {
-    return std::string(TextCtrl1->GetValue());
+    return TextCtrl1->GetValue();
 }
 
 wxString MultiLineDialog::GetValue() const
