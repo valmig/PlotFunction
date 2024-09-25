@@ -92,6 +92,9 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
 #ifdef _WIN32
     plusw = 18;
 #endif
+#ifdef __APPLE_
+    plusw = 16;
+#endif
 
     if (val::FileExists(iconpath)) {
         wxIcon FrameIcon;

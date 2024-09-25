@@ -341,6 +341,33 @@ void IntervalSlider::setlimits(int l_val,int r_val)
     SendSliderEvent();
 }
 
+void IntervalSlider::setvalues(int l, int r)
+{
+    if (l >= r) return;
+    if (l < lvalue) l = lvalue;
+    if (r > uvalue) r = uvalue;
+    leftvalue = l; rightvalue = r;
+    LSpin->SetValue(leftvalue); RSpin->SetValue(rightvalue);
+    Paint();
+    SendSliderEvent();
+}
+
+
+void IntervalSlider::setallvalues(int l_l, int l_r, int l, int r)
+{
+    if ((l_l >= l_r) || (l >= r)) return;
+    lvalue = l_l; uvalue = l_r;
+    leftvalue = l; rightvalue = r;
+    if (leftvalue < lvalue) leftvalue = lvalue;
+    if (rightvalue > uvalue) rightvalue = uvalue;
+    s_lvalue = val::ToString(lvalue); s_uvalue = val::ToString(uvalue);
+    LSpin->SetValue(leftvalue); RSpin->SetValue(rightvalue);
+    LSpin->SetRange(lvalue,uvalue);
+    RSpin->SetRange(lvalue,uvalue);
+    Paint();
+    SendSliderEvent();
+}
+
 IntervalSlider::~IntervalSlider()
 {
     if (MouseCaptured) return;

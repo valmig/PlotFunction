@@ -11,6 +11,7 @@
 #include <polfactor.h>
 #include <ideal_roots.h>
 #include <analysis.h>
+#include <complex.h>
 #include <pol_arithmetic.h>
 
 
@@ -129,7 +130,7 @@ const val::d_array<wxString> CommandsList({"derive", "analyze", "tangent", "norm
 const val::d_array<wxString> CommandsParList({"derive [#nr = 1]",
                                                  "analyze [#nr = 1] [x1 x2] [prec = 1e-09] [iterations] [decimals]    <Ctrl-A>",
                                                  "tangent [#nr = 1] x / x y    <Alt-T>",
-                                                 "normal [#nr = 1] x / x y    <Shit-Alt-N>",
+                                                 "normal [#nr = 1] x / x y    <Shift-Alt-N>",
                                                  "interpolation #nr / points for f; [points for f']; [points for f'']    <Ctrl-I>" ,
                                                  "regression #nr [ = 1]/points [degree = regression-degree]    <Alt-A>",
                                                  "table [#nr = 1] [x1 x2] [dx = 0.5] [;]    <Ctrl-T>",
@@ -223,9 +224,9 @@ val::Glist<val::GPair<double>> critical_points_pl_alg_curve(const val::valfuncti
     val::n_polynom<val::rational>::setstaticexpodim(2);
     val::n_expo::setordtype(-1);
     val::s_expo::setordtype(-1);
-    h=val::primitivpart(f.gets_polynom());
+    h=val::primitivpart(f.gets_polynom<val::rational>());
     g=f.derive(2);
-    h1=val::primitivpart(g.gets_polynom());
+    h1=val::primitivpart(g.gets_polynom<val::rational>());
     //h.reord();
     //h1.reord();
     G.sinsert(std::move(h));
@@ -991,6 +992,7 @@ void computeevaluation(const plotobject& f, double par)
     valfunction F(f.getinfixnotation()), g, h;
     double x, y, limit = 1e50;
     int precision = val::MaxPrec, yprecision = val::MaxPrec;
+    val::complex z(0);
 
     //F.setparameter(par);
 
@@ -1013,6 +1015,9 @@ void computeevaluation(const plotobject& f, double par)
             yprecision = intdigits(y) + decimals;
         }
         precision = val::Min(precision,val::MaxPrec); yprecision = val::Min(yprecision, val::MaxPrec);
+        if (g.iscomplex()) {
+            tablestring += "\n\nComplex evaluation:\n f(" + w + ") = " + ToString(h(g(z)));
+        }
         tablestring += "\n\nDouble evaluation:\n f(" + w + ") = " + ToString(y,yprecision);
         tablestring += "\nPoint in graph: \n" + ToString(x,precision) + "  " + ToString(y,yprecision) + "\n";
     }
@@ -1026,7 +1031,12 @@ void calculate(std::string s)
     val::replace<char>(s, "ans", ansexpr);
     val::valfunction f(s);
 
-    tablestring = "Evaluation of:\n" + s +": \nSymbolic:\n" + f.getinfixnotation() + "\n\ndouble:\n" + val::ToString(f(0),8);
+    tablestring = "Evaluation of:\n" + s +": \nSymbolic:\n" + f.getinfixnotation();
+    if (f.iscomplex()) {
+        tablestring += "\n\ncomplex:\n" + val::ToString(f(val::complex(0)));
+    }
+    else tablestring += "\n\ndouble:\n" + val::ToString(f(0),8);
+
     ansexpr = "(" + f.getinfixnotation() + ")";
     MyThreadEvent event(MY_EVENT,IdCalculate);
     if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event.Clone() );
@@ -1574,7 +1584,7 @@ void computetangent(std::string sf,const plotobject &f,double x1,double x2,int t
             if (tangent) g = Fx*val::valfunction("x - "+val::ToString(x)) + Fy*val::valfunction("y - "+val::ToString(y));
             else g = Fy*val::valfunction("x - "+val::ToString(x)) - Fx*val::valfunction("y - "+val::ToString(y));
 
-            g1=val::primitivpart(F.gets_polynom()); g2 = val::primitivpart(g.gets_polynom());
+            g1=val::primitivpart(F.gets_polynom<val::rational>()); g2 = val::primitivpart(g.gets_polynom<val::rational>());
             G.sinsert(std::move(g1)); G.sinsert(std::move(g2));
             val::primitiv_groebner(G);
 
