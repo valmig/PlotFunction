@@ -86,10 +86,11 @@ functionpairs ({ {"sqrt",val::sqrt}, {"abs",val::abs}, {"exp", val::exp}, {"log"
 const val::d_array<wxColour> defaultcolors{wxColour(0,0,255), wxColour(255,0,0), wxColour(0,255,0), wxColour(173,216,230),
                                       wxColour(255,116,0), wxColour(238,0,255), wxColour(125,125,125), wxColour(255,255,255),
                                       wxColour(0,0,0), wxColour(191,191,191), wxColour(255,255,0), wxColour(0,128,0), wxColour(245,245,220), wxColour(165,42,42),
-                                      wxColour(0,0,128), wxColour(255,192,203), wxColour(135,206,235), wxColour(144,238,144)};
+                                      wxColour(0,0,128), wxColour(255,192,203), wxColour(135,206,235), wxColour(144,238,144), wxColour(255,0,255),
+                                      wxColour(128,128,0), wxColour(128,0,128), wxColour(255,215,0), wxColour(0,255,255)};
 
 const val::d_array<wxString> defaultcolornames{"blue", "red", "green", "lblue", "orange", "violet", "grey", "white", "black",
-                                "lgrey", "yellow", "dgreen", "beige", "brown", "dblue", "pink", "skyblue", "lgreen" };
+                                "lgrey", "yellow", "dgreen", "beige", "brown", "dblue", "pink", "skyblue", "lgreen", "magenta", "olive", "purple", "gold", "cyan"};
 
 const val::d_array<wxString> SettingsList({"axis-scale", "axis-color", "grid-scale", "grid-color", "values-number", "axis-range", "show-x-axis",
                                 "show-y-axis", "show-grid" , "show-x-scale", "show-y-scale" , "reset-colors", "font-size", "function-color", "panel-size", "axis-names", "regression-degree",
@@ -540,7 +541,9 @@ int getfunctionfromstring(std::string &fstring, plotobject &f)
     std::string ns="";
     int i, colorindex = -1;
     //int i, n, colorindex = -1;
+    f = plotobject(fstring);
 
+    ns = extractstringfrombrackets(fstring, '{', '}');  // so it is allow to have < , > in textdata.
     ns = extractstringfrombrackets(fstring,'<','>');
 
     i = 0;
@@ -551,7 +554,6 @@ int getfunctionfromstring(std::string &fstring, plotobject &f)
         }
         ++i;
     }
-    f = plotobject(fstring);
 
     return colorindex;
 }
@@ -1757,8 +1759,9 @@ plotobject::plotobject(const std::string &sf)
 
     islinear = 0;
 
-    ns = extractstringfrombrackets(s_f, '[', ']');
     textdata = extractstringfrombrackets(s_f, '{', '}');
+    ns = extractstringfrombrackets(s_f, '<', '>');              // get rid of colour defenition.
+    ns = extractstringfrombrackets(s_f, '[', ']');
     fw = val::getfirstwordofstring<val::d_array>(s_f);
 
     val::Glist<std::string> values = getwordsfromstring(ns,val::d_array<char>({','}),0,val::d_array<char>({' '}));
@@ -1839,6 +1842,7 @@ plotobject::plotobject(const std::string &sf)
         if (f.getinfixnotation() == "0" && s_f != "0") s_infix = "";
         else if (f.is_zero()) s_infix = "0";
         else s_infix = f.getinfixnotation();
+        //val::valfunction g(s_f);
         islinear = f.islinearfunction();
         return;
     }

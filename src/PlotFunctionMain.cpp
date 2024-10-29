@@ -785,7 +785,10 @@ void PlotFunctionFrame::GetSettings()
         wxYield();
     }
     ispainted=0;
-    F.dellist();
+
+    val::Glist<plotobject> Fold(std::move(F));   // => F empty.
+    //F.dellist();
+
     //x_range.dellist();
     //critpoints.del();
     //critx.del();
@@ -869,6 +872,7 @@ void PlotFunctionFrame::GetSettings()
             f = plotobject(g.getinfixnotation());
         }
         if (!f.is_empty()) {
+            //std::cout << std::endl << f.getinfixnotation();
             F.push_back(std::move(f));
             //x_range.push_back(xr);
             colorindezes.push_back(cindex);
@@ -912,6 +916,31 @@ void PlotFunctionFrame::GetSettings()
         }
 
     }
+    {
+        val::d_array<int> remained(-1,N);
+        auto Fontold = Font;
+        auto Colorold = Color;
+        auto penold = pen;
+        for (int i = 0; i < N; ++i) {
+            for (int j = 0; j < Fold.length(); ++j) {
+                if (F[i].getinfixnotation() == Fold[j].getinfixnotation()) {
+                    remained[i] = j;
+                    break;
+                }
+            }
+        }
+        for (int i = 0; i < N; ++i) {
+            if (remained[i] != -1) {
+                if (colorindezes[i] == -1) Color[i] = Colorold[remained[i]];
+                Font[i] = Fontold[remained[i]];
+                pen[i] = penold[remained[i]];
+            }
+        }
+        // std::cout << std::endl;
+        // for (int i = 0; i < N; ++i) std::cout << remained[i] << " ";
+        // std::cout << std::endl;
+    }
+
     n=Parameter.length();
     //islinear.reserve(N);
     for (i=0;i<N;++i) {
@@ -1497,12 +1526,15 @@ void PlotFunctionFrame::plotfill(wxMemoryDC& dc,int colour)
     int ix,iy;
     wxColor &col =Color[colour], bgc;
 
+
     if (f[2]!=1.0) {
         char green=col.Green(),blue=col.Blue(),red=col.Red();
         int transp = int(val::round(f[2]*255,0));
 
         col = wxColour(red,green,blue,transp);
+        //std::cout << transp << std::endl;
     }
+
 
     ix=abst+int(double(sizex-1)*((f[0]-x1)/(x2-x1)));
     iy=yzero -int((double(sizey-1)/double(y2-y1)) * f[1]);
@@ -3721,12 +3753,13 @@ void PlotFunctionFrame::OnMenuFill(wxCommandEvent &event)
         return;
     }
     if (id == 1105) {
-        wxBitmap *paper = new wxBitmap(DrawPanel->GetSize());
+        wxBitmap paper(DrawPanel->GetSize());
 
         // Create a memory Device Context
         wxMemoryDC memDC;
         // Tell memDC to write on “paper”.
-        memDC.SelectObject( *paper );
+        cpaper = &paper;
+        memDC.SelectObject( paper );
 
         plottomemoryDc(memDC);
         // Tell memDC to write on a fake bitmap;
@@ -3734,11 +3767,12 @@ void PlotFunctionFrame::OnMenuFill(wxCommandEvent &event)
         memDC.SelectObject( wxNullBitmap );
 
         if (wxTheClipboard->Open()) {
-            wxTheClipboard->SetData( new wxBitmapDataObject(*paper) );
+            wxTheClipboard->SetData( new wxBitmapDataObject(paper) );
             wxTheClipboard->Close();
         }
+        cpaper = nullptr;
 
-        delete paper;
+        //delete paper;
 
         return;
     }
