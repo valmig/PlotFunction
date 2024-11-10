@@ -9,7 +9,7 @@
 #include "PlotFunctionMain.h"
 #include "MultiLineDialog.h"
 #include "calculus.h"
-#include "PlotFunction.h"
+//#include "PlotFunction.h"
 //#include <functional>
 #include <string>
 #include <wx/msgdlg.h>
@@ -612,7 +612,7 @@ void PlotFunctionFrame::OnFileMenu(wxCommandEvent& event)
         SetLabel(Program_Name);
         pi_scale_x=rzero; pi_scale_y=rzero; pi_factor_x=rzero; pi_factor_y=rzero; g_pi_factor_x=rzero; g_pi_factor_y=rzero;
         abst=10; x_scale=1; y_scale=1; gx_scale = gy_scale = 0.5;
-        x_axis="x"; y_axis="y"; sx_scale="1"; sy_scale="1"; sgx_scale = sgy_scale  = "0.5";
+        x_axis="x"; y_axis="y"; sx_scale="1"; sy_scale="1"; sgx_scale = sgy_scale  = "0.5", sabst = "10";
         fstring="";
         xstring="-5;5";
         ystring="-5;5";
@@ -709,6 +709,8 @@ void PlotFunctionFrame::GetSizeSettings()
 	if (clientsize_x == 0) clientsize_x = 400;
 	if (clientsize_y == 0) clientsize_y = 400;
 	if (fontsize < 8) fontsize = 8;
+    sfontsize = val::ToString(fontsize);
+    saxis_fontsize = val::ToString(axis_fontsize);
 	file.clear();
 	file.seekg(0,std::ios::beg);
 	while (file && i<=5) {
@@ -2056,6 +2058,7 @@ void PlotFunctionFrame::OnAllSettingsSelected(wxCommandEvent& event)
 
     if (points<500) points=500;
     else if(points>6000) points=6000;
+    spoints = val::ToString(points);
 
     GetSettings();
     Compute();
@@ -2755,9 +2758,10 @@ void PlotFunctionFrame::OnGridMenu(wxCommandEvent &event)
 
 void PlotFunctionFrame::OnInputDialog(wxCommandEvent&)
 {
+    computedefaultobject = false;
     if (dpanelinsertmode) changedpanelinsertmode(insert_type::NORMAL_I);
 
-    wxSize size = GetSize();
+    wxSize size = GetSize(), panelsize = DrawPanel->GetSize();
 
     wxPoint point = GetPosition();
     point.y += 60;
@@ -2769,14 +2773,16 @@ void PlotFunctionFrame::OnInputDialog(wxCommandEvent&)
     point.y -= 30;
 #endif // __APPLE__
 
+    sPanelx = val::ToString(panelsize.x); sPanely = val::ToString(panelsize.y);
 
     if (SideText_isshown) {
         size.x -= (widthSideText + 10);
         point.x += widthSideText +10;
     }
+
     InputDialog input(this,1,InputDialogTree,"",size,point,fontsize);
     input.SetComLists(CommandsList,CommandsParList);
-    input.SetParLists(SettingsList,SettingsParList);
+    input.SetParLists(SettingsList,SettingsParList, SettingsCurrent);
     input.SetHistory(recentcommands);
 #ifdef __APPLE__
     StatusBar1->SetStatusText(_T("Type Cmd-H for help"),1);
@@ -2821,6 +2827,13 @@ void PlotFunctionFrame::OnInputDialog(wxCommandEvent&)
         svalue = val::tailofstring(svalue,svalue.length()-s_id.length() -1);
         s_id = val::tailofstring(s_id,s_id.length() - 1);
         id = val::FromString<int>(s_id);
+    }
+    else {
+        std::string s = extractstringfrombrackets(svalue, '"', '"');
+        if (s != "") {
+            defaultplotobject = plotobject(s);
+            computedefaultobject = true;
+        }
     }
 
     // Check if command is settingsList:
@@ -2901,12 +2914,14 @@ void PlotFunctionFrame::ChangeSettings(int command, const std::string &svalue, i
             if (command == FONT_SIZE) {
                 fontsize = fsize;
                 if (fontsize<10) fontsize=10;
+                sfontsize = val::ToString(fontsize);
                 WriteText();
             }
             else {
                 axis_fontsize = fsize;
                 if (axis_fontsize < 2) axis_fontsize = 2;
                 if (axis_fontsize > 30) axis_fontsize = 30;
+                saxis_fontsize = val::ToString(axis_fontsize);
                 Paint();
             }
         }
@@ -2916,6 +2931,7 @@ void PlotFunctionFrame::ChangeSettings(int command, const std::string &svalue, i
             regressiondegree = val::FromString<int>(svalue);
             if (regressiondegree<1) regressiondegree = 1;
             if (regressiondegree>4) regressiondegree = 4;
+            sregressiondegree = val::ToString(regressiondegree);
         }
         break;
     case val_settings::POINT_DECIMALS:
@@ -2923,6 +2939,7 @@ void PlotFunctionFrame::ChangeSettings(int command, const std::string &svalue, i
             rounddrawingpoints=val::FromString<int>(svalue);
             if (rounddrawingpoints<-2) rounddrawingpoints=-2;
             if (rounddrawingpoints>9) rounddrawingpoints=9;
+            srounddrawingspoints = val::ToString(rounddrawingpoints);
         }
         break;
     case val_settings::PARAMETER_VALUES:
@@ -3165,6 +3182,7 @@ void PlotFunctionFrame::ChangeSettings(int command, const std::string &svalue, i
             points = val::FromString<int>(svalue);
             if (points < 500) points = 500;
             if (points > 6000) points = 6000;
+            spoints = val::ToString(points);
             Compute();
         }
         break;
@@ -3190,47 +3208,51 @@ void PlotFunctionFrame::ChangeSettings(int command, const std::string &svalue, i
             abst = val::FromString<int>(svalue);
             if (abst < 10) abst = 10;
             if (abst > 60) abst = 60;
+            sabst = val::ToString(abst);
             Paint();
         }
         break;
     case val_settings::FUNCTION_SETTINGS:
-    	{
+        {
             if (id <= 0 || id > N) return;
             changefunctionsettings(id-1);
         }
         break;
     case val_settings::MOVEINC:
-    	{
-      		val::d_array<char> separators({';'});
-      		val::Glist<std::string> values = getwordsfromstring(svalue, separators);
-      		int n = values.length(), l;
+        {
+            val::d_array<char> separators({';'});
+            val::Glist<std::string> values = getwordsfromstring(svalue, separators);
+            int n = values.length(), l;
 
 
             moveinpointsx = moveinpointsy = 0;
 
             if (n > 0) {
-        		l = values[0].length();
-        		if (values[0][l - 1] == 'p') {
-          			moveinpointsx = 1;
-          			values[0].resize(l - 1);
-        		}
-        		movedx = val::FromString<double>(values[0]);
-        		moveinpointsy = moveinpointsx;
-       	 	movedy = movedx;
-      		}
-      		if (n > 1) {
-        		l = values[1].length();
+                l = values[0].length();
+                if (values[0][l - 1] == 'p') {
+                    moveinpointsx = 1;
+                    values[0].resize(l - 1);
+                }
+                movedx = val::FromString<double>(values[0]);
+                moveinpointsy = moveinpointsx;
+                movedy = movedx;
+            }
+            if (n > 1) {
+                l = values[1].length();
                 if (values[1][l - 1] == 'p') {
-          			moveinpointsy = 1;
-          			values[1].resize(l - 1);
-        		}
+                    moveinpointsy = 1;
+                    values[1].resize(l - 1);
+                }
                 else moveinpointsy = 0;
-        		movedy = val::FromString<double>(values[1]);
-      		}
+                movedy = val::FromString<double>(values[1]);
+            }
             if (movedx <= 0) movedx = 0.1;
             if (movedy <= 0) movedy = 0.1;
+            smovedx = val::ToString(movedx); smovedy = val::ToString(movedy);
+            if (moveinpointsx) smovedx += " p";
+            if (moveinpointsy) smovedy += " p";
             Text_Editrefresh();
-    	}
+        }
         break;
     default:
         break;
@@ -3240,11 +3262,12 @@ void PlotFunctionFrame::ChangeSettings(int command, const std::string &svalue, i
 
 void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string &svalue, int id)
 {
-    if ((command != REGRESSION && command != INTERPOLATION && command != CALCULATE)  && (f_nr < 0 || f_nr >= N)) return;
+    //if ((command != REGRESSION && command != INTERPOLATION && command != CALCULATE)  && (f_nr < 0 || f_nr >= N)) return;
     switch (command)
     {
     case val_commands::DERIVE:
         {
+            if (f_nr < 0 || f_nr >= N) return;
             std::string sf=F[f_nr].getinfixnotation();
             int n = fstring.length()-1, m = sf.size()-1;
             if (m<0) return;
@@ -3270,6 +3293,7 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
         break;
     case val_commands::ANALYZE: case val_commands::INTERSECTION:
         {
+            if (f_nr < 0 || f_nr >= N) return;
             if (F[f_nr].getmode() != plotobject::FUNCTION) {
                 if (F[f_nr].getmode() != plotobject::POINTS && F[f_nr].getmode() != plotobject::POLYGON && F[f_nr].getmode() != plotobject::TRIANGLE) return;
                 else if (command != ANALYZE) return;
@@ -3326,6 +3350,7 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
         break;
     case val_commands::TANGENT: case val_commands::NORMAL:
         {
+            if (f_nr < 0 || f_nr >= N) return;
             int tangent = 1;
 
             if (command == NORMAL || id == 7007) tangent = 0;
@@ -3381,6 +3406,7 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
         break;
     case val_commands::TABLE:
         {
+            if (f_nr < 0 || f_nr >= N) return;
             if (nchildwindows) return;
 
             val::rational x_1(x1),x_2(x2),d_x(0.5);
@@ -3416,6 +3442,7 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
         break;
     case val_commands::EVALUATE:
         {
+            if (f_nr < 0 || f_nr >= N) return;
             if ((F[f_nr].getmode() != plotobject::FUNCTION) || F[f_nr].f.numberofvariables() > 1) return;
             tablestring = svalue;
             double par = 1.0;
@@ -3438,14 +3465,19 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
         break;
     case val_commands::INTEGRAL: case val_commands::ARCLENGTH: case val_commands::ZERO_ITERATION:
         {
+            if (!computedefaultobject && (f_nr < 0 || f_nr >= N)) return;
             int arclength = 0;
 
             if (id == 7005 || command == ARCLENGTH) {
                 //if (isderived(F[f_nr])) return;
                 arclength = 1;
             }
-            if (id == 7004 || id == 7005) command = INTEGRAL;
-            if (id == 7008) command = ZERO_ITERATION;
+            if (id == 7004 || id == 7005) {
+                command = INTEGRAL;
+            }
+            if (id == 7008) {
+                command = ZERO_ITERATION;
+            }
 
             val::rational xr1,xr2;
             std::string sxr1, sxr2;
@@ -3475,19 +3507,38 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
             if (delta>0.1) delta=0.1;
 
             if (command == INTEGRAL || command == ARCLENGTH) {
-                std::thread t(computeintegral,std::cref(F[f_nr]),sxr1,sxr2,delta,iter,dez,arclength);
-                t.detach();
+                if (!computedefaultobject) {
+                    if (!F[f_nr].IsParcurve() && !F[f_nr].IsFunction()) return;
+                    std::thread t(computeintegral,std::cref(F[f_nr]),sxr1,sxr2,delta,iter,dez,arclength);
+                    t.detach();
+                }
+                else {
+                    if (!defaultplotobject.IsParcurve() && !defaultplotobject.IsFunction()) return;
+                    std::thread t(computeintegral,std::cref(defaultplotobject),sxr1,sxr2,delta,iter,dez,arclength);
+                    t.detach();
+                    computedefaultobject = false;
+                }
                 return;
             }
             else {
-                std::thread t(computezeroiteration,std::cref(F[f_nr]),xr1,xr2,delta,iter,dez);
-                t.detach();
+                if (!computedefaultobject) {
+                    if (!F[f_nr].IsFunction() || (F[f_nr].f.numberofvariables() > 1)) return;
+                    std::thread t(computezeroiteration,std::cref(F[f_nr]),xr1,xr2,delta,iter,dez);
+                    t.detach();
+                }
+                else {
+                    if (!defaultplotobject.IsFunction() || (defaultplotobject.f.numberofvariables() > 1)) return;
+                    std::thread t(computezeroiteration,std::cref(defaultplotobject),xr1,xr2,delta,iter,dez);
+                    t.detach();
+                    computedefaultobject = false;
+                }
                 return;
             }
         }
         break;
     case val_commands::MOVE:
         {
+            if (f_nr < 0 || f_nr >= N) return;
             double dx = 0, dy = 0;
             val::d_array<char> separ{' ', ';' };
             val::Glist<std::string> s_values = getwordsfromstring(svalue,separ);
@@ -3527,6 +3578,7 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
         break;
     case val_commands::ROTATE:
         {
+            if (f_nr < 0 || f_nr >= N) return;
             val::Glist<std::string> s_values = getwordsfromstring(svalue, val::d_array<char>({' '}));
             std::string input = svalue;
             val::d_array<plotobject*> H;
@@ -4020,6 +4072,7 @@ void PlotFunctionFrame::openfile(const std::string &dirname,const std::string &f
 
     file>>xsize>>ysize>>points;
     file>>iwert; BackgroundColor.SetRGB(iwert);
+    spoints = val::ToString(points);
     //Axis:
     file>>abst>>x_scale>>y_scale>>pi_scale_x>>pi_scale_y>>pi_factor_x>>pi_factor_y;
     getline(file,sx_scale); getline(file,sy_scale); getline(file,x_axis); getline(file,y_axis);
@@ -4689,6 +4742,7 @@ void PlotFunctionFrame::OnZoom(wxCommandEvent &event)
             if (id == 20012) ++fontsize;
             else --fontsize;
             if (fontsize < 10) fontsize = 10;
+            sfontsize = val::ToString(fontsize);
             WriteText();
         }
         else {
@@ -4696,6 +4750,7 @@ void PlotFunctionFrame::OnZoom(wxCommandEvent &event)
             else --axis_fontsize;
             if (axis_fontsize < 2) axis_fontsize = 2;
             if (axis_fontsize > 30) axis_fontsize = 30;
+            saxis_fontsize = val::ToString(axis_fontsize);
             Paint();
         }
         return;
@@ -5163,9 +5218,9 @@ void PlotFunctionFrame::CreateNoteBook()
     val::d_array<wxButton*> ToolButtons{nullptr,n_tools};
     val::d_array<std::string> button_names{"Analyze", "Table", "Tangent", "Normal", "Derive", "Integral", "ArcLen", "PolInt", "Regress", "Intersec", "Zero", "Rotate" };
     val::d_array<std::string> button_tips{"Analyze Function  \tCtrl-A", "Table of values \tCtrl-T", "Tangent to function \tAlt-T", "Normal to function \tShift-Alt-N",
-											"Derive function \tAlt-D", "Compute Integral \tAlt-I", "Arclength of function \tShift-Alt-I", "Polynomial Interpolation \tCtrl-I",
-											"Polynomial Regression of set regressiondegree \tAlt-A", "Intersection points of two functions \tShift-Ctrl-I",
-											"Computation of a root in an interval \tAlt-Z", "Rotate geometric element \tAlt-R"};
+                                          "Derive function \tAlt-D", "Compute Integral \tAlt-I", "Arclength of function \tShift-Alt-I", "Polynomial Interpolation \tCtrl-I",
+                                          "Polynomial Regression of set regressiondegree \tAlt-A", "Intersection points of two functions \tShift-Ctrl-I",
+                                          "Computation of a root in an interval \tAlt-Z", "Rotate geometric element \tAlt-R"};
     i = 0;
     rows = 6; columns = 2;
     for (int r = 0; r < rows; ++r, y += dy ) {
@@ -5181,10 +5236,10 @@ void PlotFunctionFrame::CreateNoteBook()
 
     // Add items to Settings-Panel:
     val::d_array<std::string> set_names{"x-Range:", "y-Range:", "axis-scales:", "grid-scales:", "axis-names:", "axis-fsize:", "panel-size:", "margin:", "point-dec.:",
-										"move-inc:", "par.-values:", "reg.-deg:"};
+                                        "move-inc:", "par.-values:", "reg.-deg:"};
     val::d_array<std::string> set_tips{"x-range \tCtrl-X", "y-range \tCtrl-X", "axis scales \tShift-Alt-S", "grid scales \tCtrl-G", "axis names \tShift-Alt-S",
-										"axis fontsize \tShift-Ctrl-F", "panel Size \tF8", "margin \tSchift-Alt-S", "point decimals \tCtrl-D", "move increment \tCtrl-M",
-										"parameter values \tCtrl-P", "regression degree \tShift-Alt-A"};
+                                       "axis fontsize \tShift-Ctrl-F", "panel Size \tF8", "margin \tSchift-Alt-S", "point decimals \tCtrl-D", "move increment \tCtrl-M",
+                                       "parameter values \tCtrl-P", "regression degree \tShift-Alt-A"};
     val::d_array<wxStaticText*> SetStatic{nullptr,12};
 
     i = 0; rows = 6; columns = 2; y = 10;

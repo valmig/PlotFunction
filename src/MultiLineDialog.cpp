@@ -546,6 +546,8 @@ InputDialog::InputDialog(wxWindow *parent, wxWindowID id, const val::trie_type<w
     input = new val::CompleteTextCtrl(this,101,list,value,size,wxDefaultPosition,wxTE_PROCESS_ENTER);
 #endif // _WIN32
 
+    input->SetCloseBrackets(true);
+
     if (fonts < 10) fonts = 10;
     if (fonts > 20) fonts = 20;
     fontsize = fonts;
@@ -651,9 +653,18 @@ void InputDialog::OnHelp(wxCommandEvent &event)
             }
         }
         if (com != -1) {
+            wxString s = (*SettingsParList)[com];
+            if (com < (*SettingsCurrent).length()) {
+                if (!(*SettingsCurrent)[com].isempty()) {
+                    s += "\nCurrent: ";
+                    for (const auto &v : (*SettingsCurrent)[com]) {
+                        s += *v + "  ";
+                    }
+                }
+            }
             Style.SetFontStyle(wxFONTSTYLE_ITALIC);
             tooltip->SetDefaultStyle(Style);
-            tooltip->SetValue((*SettingsParList)[com]);
+            tooltip->SetValue(s);
         }
         else return;
     }

@@ -159,7 +159,7 @@ public:
     void SetTextValue(const wxString& s) {input->SetValue(s);}
     const wxString GetTextValue() const {return input->GetValue();}
     void SetComLists(const val::d_array<wxString> &CL, const val::d_array<wxString> &CPL) {CommandsList = &CL; CommandsParList = &CPL;}
-    void SetParLists(const val::d_array<wxString> &SL, const val::d_array<wxString> &SPL) {SettingsList = &SL; SettingsParList = &SPL;}
+    void SetParLists(const val::d_array<wxString> &SL, const val::d_array<wxString> &SPL, const val::d_array<val::d_array<const std::string*>> &SC) {SettingsList = &SL; SettingsParList = &SPL; SettingsCurrent = &SC;}
     void SetHistory(const val::Glist<wxString> &SH) {history = &SH; ahistory = history->length();}
 
 private:
@@ -170,6 +170,7 @@ private:
     wxBoxSizer *BoxSizer = nullptr;
     int fontsize, ahistory;
     const val::d_array<wxString> *CommandsParList = nullptr, *CommandsList = nullptr, *SettingsList = nullptr, *SettingsParList = nullptr;
+    const val::d_array<val::d_array<const std::string*>> *SettingsCurrent = nullptr;
     const val::Glist<wxString> *history = nullptr;
     //wxTextCtrl *input = nullptr;
     void OnEnterhit(wxCommandEvent&);

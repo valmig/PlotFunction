@@ -151,7 +151,7 @@ int sqrt_dis(const val::valfunction &dis, val::valfunction &res)
             else {
                 res = val::valfunction("sqrt(" + val::ToString(num) + ")");
             }
-            std::cout << "\n res = " << res << std::endl;
+            //std::cout << "\n res = " << res << std::endl;
             if (val::isquadratic(denum, rootdenum)) {
                 res /= val::valfunction(val::ToString(rootdenum));
             }
@@ -2313,6 +2313,7 @@ void analyzefunction(const plotobject &f,std::string input)
 
     int i,iterations=1000,decimals=4,n;//=input.length();
     double x1=-5,x2=5,epsilon=1e-9;
+    double xmin = val::Inf, xmax = -val::Inf, ymin = val::Inf, ymax = -val::Inf;
     //std::string s_n="";
 
     analyze_output.resize(4);
@@ -2371,6 +2372,8 @@ void analyzefunction(const plotobject &f,std::string input)
     if (!intervals.isempty()) {
         val::Glist<double> undef_points;
         analyze_output[0]+= "\n f not  defined at:\n";
+
+        xmin = val::Min(xmin, intervals[0].x); xmax = val::Max(xmax, intervals[intervals.length()-1].y);
         for (const auto& P : intervals) {
             critx.push_back(P.x);
             if (val::abs(P.x-P.y)<epsilon) {
@@ -2448,6 +2451,8 @@ void analyzefunction(const plotobject &f,std::string input)
             }
             Points[0].push_back(val::GPair<double>(zeros[i],0.0));
         }
+        xmin = val::Min(zeros[0], xmin); xmax = val::Max(xmax, zeros[N-1]);
+        ymin = ymax = 0;
     }
     else analyze_output[1] += "\nNo real zeros.";
     analyze_output[1]+="\n";
@@ -2489,6 +2494,7 @@ void analyzefunction(const plotobject &f,std::string input)
         }
     }
     if (pm+mp) {
+        xmin = val::Min(xmin, zeros[0]); xmax = val::Max(xmax, zeros[N-1]);
         analyze_output[2]+="\nNumber of extrema: " + val::ToString(pm+mp);
         Points[1].reserve(pm+mp);
         if (pm) {
@@ -2505,6 +2511,7 @@ void analyzefunction(const plotobject &f,std::string input)
                         if (val::abs(z(0)-zeros[i]) < epsilon) analyze_output[2] += "[ = ( " + z.getinfixnotation() + " | " + F(z).getinfixnotation() + " ) ] ,";
                     }
                     Points[1].push_back(val::GPair<double>(zeros[i],y));
+                    ymin = val::Min(ymin, y); ymax = val::Max(ymax, y);
                 }
             }
         }
@@ -2522,10 +2529,10 @@ void analyzefunction(const plotobject &f,std::string input)
                         if (val::abs(z(0)-zeros[i]) < epsilon) analyze_output[2] += "[ = ( " + z.getinfixnotation() + " | " + F(z).getinfixnotation() + " ) ] ,";
                     }
                     Points[1].push_back(val::GPair<double>(zeros[i],y));
+                    ymin = val::Min(ymin, y); ymax = val::Max(ymax, y);
                 }
             }
         }
-
     }
     else analyze_output[2]+="No extrema.";
     analyze_output[2]+="\n";
@@ -2566,22 +2573,24 @@ void analyzefunction(const plotobject &f,std::string input)
         }
     }
     if (pm+mp) {
+        xmin = val::Min(xmin, zeros[0]); xmax = val::Max(xmax, zeros[N-1]);
         Points[2].reserve(pm+mp);
         analyze_output[3]+="\nNumber of inflection points (IP): " + val::ToString(pm+mp);
         if (pm) {
             analyze_output[3]+="\nNumber of  LR-IP: " + val::ToString(pm) + "\n";
             for (int i=0;i<N;++i) {
                 if (vzw[i]==1) {
-            		digits = intdigits(zeros[i]) + decimals;
-           		digits = val::Min(digits,val::MaxPrec);
+                    digits = intdigits(zeros[i]) + decimals;
+                    digits = val::Min(digits,val::MaxPrec);
                     y = F(zeros[i]);
                     ydigits = intdigits(y) + decimals;
-            		ydigits = val::Min(ydigits,val::MaxPrec);
+                    ydigits = val::Min(ydigits,val::MaxPrec);
                     analyze_output[3]+="( " + val::ToString(val::round(zeros[i],decimals),digits) + " | " + val::ToString(val::round(y,decimals),ydigits) + " )  ";
                     for (const auto &z : s_zeros) {
                         if (val::abs(z(0)-zeros[i]) < epsilon) analyze_output[3] += "[ = ( " + z.getinfixnotation() + " | " + F(z).getinfixnotation() + " ) ] ,";
                     }
                     Points[2].push_back(val::GPair<double>(zeros[i],y));
+                    ymin = val::Min(ymin, y); ymax = val::Max(ymax, y);
                 }
             }
         }
@@ -2589,16 +2598,17 @@ void analyzefunction(const plotobject &f,std::string input)
             analyze_output[3]+="\nNumber of RL-IP: " + val::ToString(mp) + "\n";
             for (int i=0;i<N;++i) {
                 if (vzw[i]==-1) {
-            		digits = intdigits(zeros[i]) + decimals;
-           		digits = val::Min(digits,val::MaxPrec);
+                    digits = intdigits(zeros[i]) + decimals;
+                    digits = val::Min(digits,val::MaxPrec);
                     y = F(zeros[i]);
                     ydigits = intdigits(y) + decimals;
-            		ydigits = val::Min(ydigits,val::MaxPrec);
+                    ydigits = val::Min(ydigits,val::MaxPrec);
                     analyze_output[3]+="( " + val::ToString(val::round(zeros[i],decimals),digits) + " | " + val::ToString(val::round(y,decimals),ydigits) + " )  ";
                     for (const auto &z : s_zeros) {
                         if (val::abs(z(0)-zeros[i]) < epsilon) analyze_output[3] += "[ = ( " + z.getinfixnotation() + " | " + F(z).getinfixnotation() + " ) ] ,";
                     }
                     Points[2].push_back(val::GPair<double>(zeros[i],y));
+                    ymin = val::Min(ymin, y); ymax = val::Max(ymax, y);
                 }
             }
         }
@@ -2606,6 +2616,10 @@ void analyzefunction(const plotobject &f,std::string input)
     }
     else analyze_output[3]+="No inflection points.";
     analyze_output[3] += "\n";
+
+    if (xmin != val::Inf) {
+        analyze_output[0] += "\n\nComputations in:\n x in [" + val::ToString(xmin) + " , " + val::ToString(xmax) + "]\n y in [" + val::ToString(ymin) + " , " + val::ToString(ymax) + "]";
+    }
 
 
     MyThreadEvent event(MY_EVENT,IdAnalyze);

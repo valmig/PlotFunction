@@ -294,6 +294,7 @@ struct plotobject
     int IsPolygon() const {return objectype==POLYGON;}
     int IsPoints() const {return objectype==POINTS;}
     int IsParcurve() const {return objectype==PARCURVE;}
+    int IsFunction() const {return objectype==FUNCTION;}
     //
     val::pol<double> getpol(const double& x) const;
     //

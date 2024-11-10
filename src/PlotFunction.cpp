@@ -134,10 +134,10 @@ const val::d_array<wxString> CommandsParList({"derive [#nr = 1]",
                                                  "normal [#nr = 1] x / x y    <Shift-Alt-N>",
                                                  "interpolation #nr / points for f; [points for f']; [points for f'']    <Ctrl-I>" ,
                                                  "regression #nr [ = 1]/points [degree = regression-degree]    <Alt-A>",
-                                                 "table [#nr = 1] [x1 x2] [dx = 0.5] [;]    <Ctrl-T>",
-                                                 "integral [#nr = 1] [decimals iterations precision] [x1 x2]    <Alt-I>",
-                                                 "arclength [#nr = 1] [decimals iterations precision] [x1 x2]    <Shift-Alt-I>",
-                                                 "zero-iteration [#nr = 1] [decimals iterations precision] [x1 x2]    <Alt-Z>",
+                                                 "table [#nr = 1 / \"function\"] [x1 x2] [dx = 0.5] [;]    <Ctrl-T>",
+                                                 "integral [#nr = 1 / \"function\"] [decimals iterations precision] [x1 x2]    <Alt-I>",
+                                                 "arclength [#nr = 1 / \"function\"] [decimals iterations precision] [x1 x2]    <Shift-Alt-I>",
+                                                 "zero-iteration [#nr = 1 / \"function\"] [decimals iterations precision] [x1 x2]    <Alt-Z>",
                                                  "move [#nr = 1] x y",
                                                  "evaluate [#nr = 1] expressions [ddecimals[ = 4 ]]",
                                                  "intersection [#nr1 = 1] #nr2 [x1 x2] [prec] [iterations] [decimals]",
@@ -152,7 +152,7 @@ const val::d_array<wxString> CommandsParList({"derive [#nr = 1]",
 const val::trie_type<wxString> WordTree(WordList + defaultcolornames, 58, int('A'));
 
 
-const val::trie_type<wxString> InputDialogTree(SettingsList + CommandsList + defaultcolornames, 78, int('-'));
+const val::trie_type<wxString> InputDialogTree(WordList + SettingsList + CommandsList + defaultcolornames, 78, int('-'));
 
 
 wxDEFINE_EVENT(MY_EVENT,MyThreadEvent);
@@ -1031,15 +1031,114 @@ void computeevaluation(const plotobject& f, double par)
 void calculate(std::string s)
 {
     val::replace<char>(s, "ans", ansexpr);
+    std::string   os = s, rw, rs;
+    int i, n = WordList.length(), found = 0, j = 1; //nvar = 0;
+    val::Glist<char> VarList;
+
+    for (i = 0; i < n; ++i) {
+        rw = "#" + val::ToString(i);
+        if (val::replace(s, std::string(WordList[i]), rw)) found = 1;
+    }
+
+    /*
+    val::valfunction g(s,0);
+    nvar = g.numberofvariables();
+
+
+    n = s.length();
+
+    for (i = 0; i < n; ++i) {
+        if ((s[i] >= 65 && s[i] <= 90) || (s[i] >= 97 && s[i] <= 122 && s[i] != 'x' && s[i] != 'i' && s[i]  != 'y' && s[i] != 'z')) {
+            VarList.push_back(s[i]);
+            rw = "x" + val::ToString(nvar + j);
+            rs = "";
+            rs += s[i];
+            ++j;
+            val::replace(s, rs, rw);
+            n = s.length();
+        }
+    }
+
+    n = WordList.length();
+    for (i = n-1; found && i >= 0; --i) {
+        rw = "#" + val::ToString(i);
+        val::replace(s, rw, std::string(WordList[i]));
+    }
+
+    //wxMessageBox(val::ToString(nvar) + "\n" + s);
     val::valfunction f(s);
 
-    tablestring = "Evaluation of:\n" + s +": \nSymbolic:\n" + f.getinfixnotation();
+    s = f.getinfixnotation();
+
+    std::cout << std::endl << "nvar = " << nvar;
+
+
+    for (i = 0; i < VarList.length(); ++i) {
+        rw = "x" + val::ToString(nvar + i + 1);
+        rs = "";
+        rs += VarList[i];
+        if (f.numberofvariables() <= 3) {
+            if (nvar + i + 1 == 1) rw = "x";
+            if (nvar + i + 1 == 2) rw = "y";
+            if (nvar + i + 1 == 3) rw = "z";
+        }
+        //std::cout << std::endl << rw << " , " << rs;
+        val::replace(s, rw, rs);
+    }
+    */
+
+    //wxMessageBox(s);
+    //
+    n = s.length();
+    for (i = 0; i < n; ++i) {
+        if ((s[i] >= 65 && s[i] <= 90) || (s[i] >= 97 && s[i] <= 122 && s[i] != 'i')) {
+            VarList.sinsert(s[i]);
+        }
+    }
+
+    for (const auto &v : VarList) {
+            rw = "A" + val::ToString(j);
+            rs = "";
+            rs += v;
+            ++j;
+            val::replace(s, rs, rw);
+            n = s.length();
+    }
+
+    //std::cout << "\n s = " << s;
+    n = WordList.length();
+    for (i = n-1; found && i >= 0; --i) {
+        rw = "#" + val::ToString(i);
+        val::replace(s, rw, std::string(WordList[i]));
+    }
+
+    val::replace(s, std::string("A"), std::string("x"));
+    //std::cout << "\n s = " << s;
+
+    val::valfunction f(s);
+    s = f.getinfixnotation();
+    //std::cout << "\n s = " << s;
+
+    for (i  = 0; i < VarList.length();++i) {
+        rw = "x" + val::ToString(i+1);
+        rs = VarList[i];
+        if (f.numberofvariables() <= 3) {
+            if (i + 1 == 1) rw = "x";
+            if (i + 1 == 2) rw = "y";
+            if (i + 1 == 3) rw = "z";
+        }
+        val::replace(s, rw, rs);
+    }
+
+    //
+
+    tablestring = "Evaluation of:\n" + os +": \nSymbolic:\n" + s;
     if (f.iscomplex()) {
         tablestring += "\n\ncomplex:\n" + val::ToString(f(val::complex(0)));
     }
     else tablestring += "\n\ndouble:\n" + val::ToString(f(0),8);
 
-    ansexpr = "(" + f.getinfixnotation() + ")";
+    ansexpr = "(" + s + ")";
     MyThreadEvent event(MY_EVENT,IdCalculate);
     if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event.Clone() );
 }

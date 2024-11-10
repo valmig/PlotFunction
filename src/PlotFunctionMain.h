@@ -26,7 +26,7 @@
 #include <rational.h>
 #include <string>
 #include "valControls.h"
-
+#include "PlotFunction.h"
 
 class MyThreadEvent;
 class ParentEvent;
@@ -91,12 +91,14 @@ class PlotFunctionFrame: public wxFrame
         int bitmapbackground = 0, axis_fontsize = 10, SideText_isshown = 0, widthSideText = 200;
         int notebook_isshown = 0, widthNoteBookPanel = 200, plusw = 12, dpanelinsertmode = NORMAL_I, n_points = 0, wraptext = 0;
         long InfoStyle = wxRESIZE_BORDER;
-        bool closebrackets = true;
+        bool closebrackets = true, computedefaultobject = false;
         wxPoint actuallinepoint,actualpolygonpoint;
         val::rational pi_factor_x,pi_factor_y,g_pi_factor_x,g_pi_factor_y;
         double x1=-5,x2=5,y1=-5,y2=5,ymin=-5,ymax=5,x_scale=1,y_scale=1,gx_scale=0.5,gy_scale=0.5,delta=1e-8,zoom=1.0,mx1,mx2,my1,my2,movedx = 0.1, movedy = 0.1;
         double movex = 0, movey = 0;
-        std::string Program_Name="PlotFunction",x_axis="x",y_axis="y",sx_scale="1",sy_scale="1",sgx_scale="0.5",sgy_scale="0.5",actual_filename="",actual_dirname="";
+        std::string Program_Name="PlotFunction",x_axis="x",y_axis="y",sx_scale="1",sy_scale="1",sgx_scale="0.5",sgy_scale="0.5",actual_filename="",actual_dirname="", sabst = "10",
+                    saxis_fontsize = "10", sfontsize = "10", spoints = "1000", srounddrawingspoints = "-2", sregressiondegree = "1", sPanelx, sPanely,
+                    smovedx = "0.1", smovedy = "0.1";
         wxString SideText_Word;
         wxFont defaultFont;
         wxSize bitmapsize,actualPanelsize; //DialogInputSize{wxDefaultSize};
@@ -106,6 +108,7 @@ class PlotFunctionFrame: public wxFrame
         //val::d_array<val::d_array<double> > farray;
         //val::d_array<val::d_array<val::d_array<double> > > curvearray;
         wxColour BackgroundColor = wxColour(255,255,255);
+        plotobject defaultplotobject;
         val::d_array<wxColor> Color;
         val::d_array<wxFont> Font;
         val::d_array<wxMenuItem*> f_menu,c_menu;
@@ -115,6 +118,10 @@ class PlotFunctionFrame: public wxFrame
         //val::Glist<val::GPair<double> > x_range;
         val::d_array<std::string> functionstring{30};
         val::d_array<std::string> dpanelnotification{"Points", "Polygon", "Line", "Rectangle", "Circle", "Triangle"};
+        //
+        const val::d_array<val::d_array<const std::string*>> SettingsCurrent{{&sx_scale, &sy_scale}, {}, {&sgx_scale, &sgy_scale}, {}, {&spoints}, {&xstring, &ystring},
+                                                                             {}, {}, {}, {}, {}, {}, {&sfontsize}, {}, {&sPanelx, &sPanely}, {&x_axis, &y_axis}, {&sregressiondegree}, {&srounddrawingspoints},
+                                                                             {}, {}, {}, {}, {&sabst}, {&saxis_fontsize}, {}, {&smovedx, &smovedy}};
         //
         wxMenu* MenuRecentfiles;
         val::Glist<wxMenuItem*> recent_menu;
