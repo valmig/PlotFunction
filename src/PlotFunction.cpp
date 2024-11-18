@@ -1091,7 +1091,7 @@ void calculate(std::string s)
     //
     n = s.length();
     for (i = 0; i < n; ++i) {
-        if ((s[i] >= 65 && s[i] <= 90) || (s[i] >= 97 && s[i] <= 122 && s[i] != 'i')) {
+        if ((s[i] >= 65 && s[i] <= 90) || (s[i] >= 97 && s[i] <= 122 && s[i] != 'i' && s[i] != 'e')) {
             VarList.sinsert(s[i]);
         }
     }

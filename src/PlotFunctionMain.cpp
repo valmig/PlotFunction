@@ -1031,6 +1031,12 @@ void PlotFunctionFrame::valFloodFill(wxMemoryDC& dc, int x, int y, const wxColou
 
     p.MoveTo(data,x,y);
     bgc = wxColour(p.Red(),p.Green(),p.Blue());
+    //bgc = BackgroundColor;
+
+    if (bgc == fgc) {
+        dc.SelectObject(*cpaper);
+        return;
+    }
 
     S.push_back(quadruple(x,x,y,1));
     S.push_back(quadruple(x,x,y-1,-1));
@@ -3662,6 +3668,9 @@ void PlotFunctionFrame::OnMyEvent(MyThreadEvent& event)
     wxSize  Size= this->GetClientSize();
     wxDisplay display(unsigned(0));
     int x=Point.x,y=Point.y,dx=Size.GetWidth(), dy = Size.GetHeight(),sx,sy,maxx=display.GetGeometry().GetWidth();
+    wxString pi(L"\u03C0");
+
+    tablestring.Replace(wxString("PI"), pi);
 
 
     if (id == myevent_id::IdTable || id == myevent_id::IdEval) { //
