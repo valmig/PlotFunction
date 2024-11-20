@@ -315,6 +315,62 @@ std::string delcharfromstring(const std::string& s,const char z)
     return out;
 }
 
+val::Glist<char> substitutepar(std::string &s)
+{
+    int found = 0 , j = 1, n = WordList.length(), i;
+    std::string rw, rs;
+    val::Glist<char> VarList;
+
+    for (i = 0; i < n; ++i) {
+        rw = "#" + val::ToString(i);
+        if (val::replace(s, std::string(WordList[i]), rw)) found = 1;
+    }
+
+    n = s.length();
+    for (i = 0; i < n; ++i) {
+        if ((s[i] >= 65 && s[i] <= 90) || (s[i] >= 97 && s[i] <= 122 && s[i] != 'i' && s[i] != 'e')) {
+            if (!val::isinContainer(s[i], VarList)) VarList.sinsert(s[i]);
+        }
+    }
+
+    for (const auto &v : VarList) {
+        rw = "A" + val::ToString(j);
+        rs = v;
+        ++j;
+        val::replace(s, rs, rw);
+        n = s.length();
+    }
+
+    //std::cout << "\n s = " << s;
+    n = WordList.length();
+    for (i = n-1; found && i >= 0; --i) {
+        rw = "#" + val::ToString(i);
+        val::replace(s, rw, std::string(WordList[i]));
+    }
+
+    val::replace(s, std::string("A"), std::string("x"));
+    // std::cout << "\n s = " << s;
+    return VarList;
+}
+
+void back_substitutepar(std::string &s, const val::Glist<char> &VarList, int nvariables)
+{
+    std::string rw, rs;
+
+    for (int i  = 0; i < VarList.length();++i) {
+        rw = "x" + val::ToString(i+1);
+        rs = VarList[i];
+        if (nvariables <= 3) {
+            if (i + 1 == 1) rw = "x";
+            if (i + 1 == 2) rw = "y";
+            if (i + 1 == 3) rw = "z";
+        }
+        // std::cout << "\n rw = " << rw << " , rs  = " << rs;
+        val::replace(s, rw, rs);
+    }
+}
+
+
 
 double squaredistance(const wxPoint& l1, const wxPoint &l2, const wxPoint &p)
 {
@@ -995,6 +1051,8 @@ void computeevaluation(const plotobject& f, double par)
     double x, y, limit = 1e50;
     int precision = val::MaxPrec, yprecision = val::MaxPrec;
     val::complex z(0);
+    std::string ow;
+    val::Glist<char> VarList;
 
     //F.setparameter(par);
 
@@ -1002,11 +1060,16 @@ void computeevaluation(const plotobject& f, double par)
 
     for (auto & w : wlist) {
         replace<char>(w, "ans", ansexpr);
-        g = valfunction(w);
+        ow = w;
+        VarList = substitutepar(w);
+        h = F(valfunction(w));
+        w = h.getinfixnotation();
+        back_substitutepar(w, VarList, h.numberofvariables());
+        tablestring += "\n x = " + ow + ":" + "\nSymbolic evaluation:\n f(" + ow + ") = " + w;
+        g = valfunction(ow);
         h = F(g);
         g.setparameter(par);
         h.setparameter(par);
-        tablestring += "\n x = " + w + ":" + "\nSymbolic evaluation:\n f(" + w + ") = " + h.getinfixnotation();
         x = g(0); y = h(0);
         if (val::abs(x) < limit) {
             x = val::round(x,decimals);
@@ -1031,78 +1094,29 @@ void computeevaluation(const plotobject& f, double par)
 void calculate(std::string s)
 {
     val::replace<char>(s, "ans", ansexpr);
-    std::string   os = s, rw, rs;
-    int i, n = WordList.length(), found = 0, j = 1; //nvar = 0;
+    std::string   os = s;//, rw, rs;
+    //int i, n = WordList.length(), found = 0, j = 1; //nvar = 0;
     val::Glist<char> VarList;
 
+    /*
     for (i = 0; i < n; ++i) {
         rw = "#" + val::ToString(i);
         if (val::replace(s, std::string(WordList[i]), rw)) found = 1;
     }
 
-    /*
-    val::valfunction g(s,0);
-    nvar = g.numberofvariables();
-
-
-    n = s.length();
-
-    for (i = 0; i < n; ++i) {
-        if ((s[i] >= 65 && s[i] <= 90) || (s[i] >= 97 && s[i] <= 122 && s[i] != 'x' && s[i] != 'i' && s[i]  != 'y' && s[i] != 'z')) {
-            VarList.push_back(s[i]);
-            rw = "x" + val::ToString(nvar + j);
-            rs = "";
-            rs += s[i];
-            ++j;
-            val::replace(s, rs, rw);
-            n = s.length();
-        }
-    }
-
-    n = WordList.length();
-    for (i = n-1; found && i >= 0; --i) {
-        rw = "#" + val::ToString(i);
-        val::replace(s, rw, std::string(WordList[i]));
-    }
-
-    //wxMessageBox(val::ToString(nvar) + "\n" + s);
-    val::valfunction f(s);
-
-    s = f.getinfixnotation();
-
-    std::cout << std::endl << "nvar = " << nvar;
-
-
-    for (i = 0; i < VarList.length(); ++i) {
-        rw = "x" + val::ToString(nvar + i + 1);
-        rs = "";
-        rs += VarList[i];
-        if (f.numberofvariables() <= 3) {
-            if (nvar + i + 1 == 1) rw = "x";
-            if (nvar + i + 1 == 2) rw = "y";
-            if (nvar + i + 1 == 3) rw = "z";
-        }
-        //std::cout << std::endl << rw << " , " << rs;
-        val::replace(s, rw, rs);
-    }
-    */
-
-    //wxMessageBox(s);
-    //
     n = s.length();
     for (i = 0; i < n; ++i) {
         if ((s[i] >= 65 && s[i] <= 90) || (s[i] >= 97 && s[i] <= 122 && s[i] != 'i' && s[i] != 'e')) {
-            VarList.sinsert(s[i]);
+            if (!val::isinContainer(s[i], VarList)) VarList.sinsert(s[i]);
         }
     }
 
     for (const auto &v : VarList) {
-            rw = "A" + val::ToString(j);
-            rs = "";
-            rs += v;
-            ++j;
-            val::replace(s, rs, rw);
-            n = s.length();
+        rw = "A" + val::ToString(j);
+        rs = v;
+        ++j;
+        val::replace(s, rs, rw);
+        n = s.length();
     }
 
     //std::cout << "\n s = " << s;
@@ -1113,12 +1127,16 @@ void calculate(std::string s)
     }
 
     val::replace(s, std::string("A"), std::string("x"));
-    //std::cout << "\n s = " << s;
+    // std::cout << "\n s = " << s;
+    */
+    VarList = substitutepar(s);
 
     val::valfunction f(s);
     s = f.getinfixnotation();
-    //std::cout << "\n s = " << s;
 
+    back_substitutepar(s, VarList, f.numberofvariables());
+
+    /*
     for (i  = 0; i < VarList.length();++i) {
         rw = "x" + val::ToString(i+1);
         rs = VarList[i];
@@ -1127,8 +1145,10 @@ void calculate(std::string s)
             if (i + 1 == 2) rw = "y";
             if (i + 1 == 3) rw = "z";
         }
+        // std::cout << "\n rw = " << rw << " , rs  = " << rs;
         val::replace(s, rw, rs);
     }
+    */
 
     //
 

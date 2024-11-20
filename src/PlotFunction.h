@@ -138,6 +138,11 @@ val::pol<val::rational> interpolation(const std::string &s);
 
 std::string delcharfromstring(const std::string& s,const char z=' ');
 
+val::Glist<char> substitutepar(std::string &s);
+
+void back_substitutepar(std::string &s, const val::Glist<char> &VarList, int nvariables);
+
+
 void computepoints(val::Glist<plotobject> &F, int points,const double &x1,const double &x2,double &ymax,double &ymin,int activef,int comppoints);
 
 void computetable(const plotobject& f,double x1,double x2,double dx);
