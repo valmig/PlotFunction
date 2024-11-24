@@ -1893,39 +1893,41 @@ void PlotFunctionFrame::plotparcurve(wxDC& dc,int colour)
 void PlotFunctionFrame::plotallfunctions(wxMemoryDC& dc)
 {
     for (int i=0;i<N;++i) {
-        if (F[i].f.numberofvariables() <= 1) {
-            if (f_menu[i]->IsChecked()) {
-                switch (F[i].getmode()) {
-                    case plotobject::LINE :
-                        plotline(dc,i); break;
-                    case plotobject::CIRCLE :
-                        plotcircle(dc,i); break;
-                    case plotobject::TEXT :
-                        plottext(dc,i);break;
-                    case plotobject::RECTANGLE :
-                        plotrectangle(dc,i);break;
-                    case plotobject::TRIANGLE :
-                        plottriangle(dc,i);break;
-                    case plotobject::POLYGON :
-                        plotpolygon(dc,i);break;
-                    case plotobject::POINTS :
-                        plotpoints(dc,i);break;
-                    case plotobject::FILL :
-                        if (fillfunctions) {plotfill(dc,i);} break;
-                    case plotobject::PARCURVE:
-                        plotparcurve(dc, i); break;
-                    case plotobject::BITMAP:
-                        plotbitmap(dc, i); break;
-                    default:
-                        {
-                            plotfunction(dc,i);
-                        } break;
-                }
+        //if (F[i].f.numberofvariables() <= 1) {
+        if (f_menu[i]->IsChecked()) {
+            switch (F[i].getmode()) {
+                case plotobject::LINE :
+                    plotline(dc,i); break;
+                case plotobject::CIRCLE :
+                    plotcircle(dc,i); break;
+                case plotobject::TEXT :
+                    plottext(dc,i);break;
+                case plotobject::RECTANGLE :
+                    plotrectangle(dc,i);break;
+                case plotobject::TRIANGLE :
+                    plottriangle(dc,i);break;
+                case plotobject::POLYGON :
+                    plotpolygon(dc,i);break;
+                case plotobject::POINTS :
+                    plotpoints(dc,i);break;
+                case plotobject::FILL :
+                    if (fillfunctions) {plotfill(dc,i);} break;
+                case plotobject::PARCURVE:
+                    plotparcurve(dc, i); break;
+                case plotobject::BITMAP:
+                    plotbitmap(dc, i); break;
+                case plotobject::ALGCURVE:
+                    plotcurve(dc, i); break;
+                default:
+                {
+                    plotfunction(dc,i);
+                } break;
             }
         }
-        else { // alg. Kurve.
-            if (f_menu[i]->IsChecked()) plotcurve(dc,i);
-        }
+        //}
+        // else { // alg. Kurve.
+        //     if (f_menu[i]->IsChecked()) plotcurve(dc,i);
+        // }
     }
 }
 
@@ -2522,7 +2524,7 @@ void PlotFunctionFrame::OnMenuTools(wxCommandEvent &event)
         if (f_menu[i]->IsChecked() && (id == 7001 || id == 7007 || id == 7005) && F[i].getmode() == plotobject::PARCURVE) {
             j=i; ++naktiv; List.push_back(F[i].getinfixnotation());indezes.push_back(i);
         }
-        if (f_menu[i]->IsChecked() && F[i].getmode()==plotobject::FUNCTION) {
+        if (f_menu[i]->IsChecked() && (F[i].getmode()==plotobject::FUNCTION || F[i].getmode() == plotobject::ALGCURVE)) {
             if (id!=7001 && id!= 7007 && F[i].f.numberofvariables()>1) continue;
             j=i; ++naktiv; List.push_back(F[i].getinfixnotation());indezes.push_back(i);
         }
@@ -2764,6 +2766,7 @@ void PlotFunctionFrame::OnGridMenu(wxCommandEvent &event)
 
 void PlotFunctionFrame::OnInputDialog(wxCommandEvent&)
 {
+    CompareSideTextInput();
     computedefaultobject = false;
     if (dpanelinsertmode) changedpanelinsertmode(insert_type::NORMAL_I);
 
@@ -3300,11 +3303,14 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
     case val_commands::ANALYZE: case val_commands::INTERSECTION:
         {
             if (f_nr < 0 || f_nr >= N) return;
-            if (F[f_nr].getmode() != plotobject::FUNCTION) {
+            if (command == ANALYZE && F[f_nr].getmode() != plotobject::FUNCTION) {
                 if (F[f_nr].getmode() != plotobject::POINTS && F[f_nr].getmode() != plotobject::POLYGON && F[f_nr].getmode() != plotobject::TRIANGLE) return;
-                else if (command != ANALYZE) return;
+                //else if (command != ANALYZE) return;
             }
-            else if (F[f_nr].f.numberofvariables() > 1) return;
+            else {    // command == INTERSECTION
+                if (!F[f_nr].IsFunction() && !F[f_nr].IsAlgCurve() && !F[f_nr].IsParcurve()) return;
+            }
+            //else if (F[f_nr].f.numberofvariables() > 1) return;
             val::d_array<char> separators{' ', ';', '\n'};
             val::Glist<std::string> s_values = getwordsfromstring(svalue,separators);
             int n = s_values.length(), nr2 = 1;
@@ -3318,7 +3324,7 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
                     nr2 = val::FromString<int>(nvalue) - 1;
                 }
                 if (nr2 == f_nr || nr2 < 0 || nr2 >= N) return;
-                if (F[nr2].getmode() != plotobject::FUNCTION || F[nr2].f.numberofvariables() > 1) return;
+                if (F[nr2].getmode() != plotobject::FUNCTION && !F[nr2].IsAlgCurve() && !F[nr2].IsParcurve()) return;
                 n = s_values.length();
                 nvalue = "";
             }
@@ -4180,7 +4186,7 @@ int PlotFunctionFrame::findactivefunction(int x, int y)
         }
         switch (F[i].getmode())
         {
-        case plotobject::FUNCTION :
+        case plotobject::FUNCTION : case plotobject::ALGCURVE :
             {
                 if (F[i].f.numberofvariables()>1) {
                     for (ix = val::Max(abst,x); ix < endx; ++ix) {
@@ -4550,7 +4556,7 @@ void PlotFunctionFrame::displacefunction(int i,const double &dx1,const double &d
 
     switch (F[i].getmode())
     {
-        case plotobject::FUNCTION :
+        case plotobject::FUNCTION : case plotobject::ALGCURVE :
             {
                 if (F[i].f.numberofvariables() == 1) {
                     val::valfunction f(F[i].getinfixnotation()), g("x"),h(val::ToString(dx)), d = g - h, y(val::ToString(dy));

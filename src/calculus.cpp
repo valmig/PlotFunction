@@ -2632,15 +2632,65 @@ void intersection(const plotobject &f, const plotobject &g, std::string input)
 {
     if (f.f.is_zero() || g.f.is_zero()) return;
 
-    int i,iterations=1000,decimals=4,n, N = 0, digits, ydigits;//=input.length();
+    enum {FF, FA, FP};
+    int i,iterations=1000,decimals=4,n, N = 0, digits, ydigits, type = FF;//=input.length();
     double x1=-5,x2=5,epsilon=1e-9, y;
     val::Glist<double> zeros;
     val::Glist<double> places;
-    //val::d_array<val::rational> r_places;
     val::Glist<val::valfunction> r_places;
-    //val::rationalfunction h_r;
-    //val::pol<val::rational> h_p;
-    //std::string s_n="";
+    val::valfunction F, G, h;
+    plotobject const *pcurve = nullptr;
+
+    if (f.IsFunction()) {
+        F = val::valfunction(f.getinfixnotation(), 0);
+        F.setparameter(f.f.getparameter());
+        if (g.IsFunction()) {
+            G = val::valfunction(g.getinfixnotation(),0);
+            G.setparameter(g.f.getparameter());
+            h = F-G; h.simplify();
+            type = FF;
+        }
+        else if (g.IsAlgCurve()) {
+            std::string s = g.getinfixnotation();
+
+            type = FA;
+            F = val::valfunction(f.getinfixnotation(), 0);
+            G = val::valfunction(s, 0);
+            val::replace<char>(s, "y", "(" + f.getinfixnotation() + ")");
+            h = val::valfunction(s);
+        }
+        else if (g.IsParcurve()) {
+            std::string s1 = g.f.getinfixnotation() , s = f.getinfixnotation();
+            val::replace<char>(s,"x","(" + s1 + ")");
+            h = g.g - val::valfunction(s);
+            h.simplify();
+            type = FP;
+            pcurve = &g;
+            x1 = g.x_range.x; x2 = g.x_range.y;
+        }
+        else return;
+    }
+    else if(g.IsFunction()) {
+        F = val::valfunction(g.getinfixnotation(), 0);
+        if (f.IsAlgCurve()) {
+            std::string s = f.getinfixnotation();
+            type = FA;
+            G = val::valfunction(s, 0);
+            val::replace<char>(s, "y", "(" + g.getinfixnotation() + ")");
+            h = val::valfunction(s);
+        }
+        else if (f.IsParcurve()) {
+            std::string s1 = f.f.getinfixnotation() , s = g.getinfixnotation();
+            val::replace<char>(s,"x","(" + s1 + ")");
+            h = f.g - val::valfunction(s);
+            h.simplify();
+            type = FP;
+            pcurve = &f;
+            x1 = f.x_range.x; x2 = f.x_range.y;
+        }
+        else return;
+    }
+    else return;
 
     analyze_output.resize(2);
     Points.resize(1);
@@ -2652,8 +2702,8 @@ void intersection(const plotobject &f, const plotobject &g, std::string input)
     auto values = getwordsfromstring(input,sep);
 
     n = values.length();
-    if (n>0) x1 = val::FromString<double>(values[0]);
-    if (n>1) x2 = val::FromString<double>(values[1]);
+    if (n>0 && type != FP) x1 = val::FromString<double>(values[0]);
+    if (n>1 && type != FP) x2 = val::FromString<double>(values[1]);
     if (n>2) epsilon = val::FromString<double>(values[2]);
     if (n>3) iterations = val::FromString<int>(values[3]);
     if (n>4) decimals = val::FromString<int>(values[4]);
@@ -2669,10 +2719,12 @@ void intersection(const plotobject &f, const plotobject &g, std::string input)
     analyze_output[0] += "\n Number of iterations: " + val::ToString(iterations);
     // ------------------------------------------------------------
 
+    /*
     val::valfunction F(f.getinfixnotation(),0), G(g.getinfixnotation()), h = F-G;
     h.setparameter(g.f.getparameter()); F.setparameter(f.f.getparameter()); G.setparameter(g.f.getparameter());
     h.setparameter(f.f.getparameter());
     h.simplify(1);
+    */
 
     if (h.is_zero()) {
         analyze_output[1] = "f = g !";
@@ -2681,64 +2733,70 @@ void intersection(const plotobject &f, const plotobject &g, std::string input)
         return;
     }
 
-    /*
-    if (h.isrationalfunction()) {
-        h_r = h.getrationalfunction();
-        h_p = h_r.nominator();
-        h_p /= val::gcd(h_p,h_p.derive());
-        val::pol<double> h_d = val::ToDoublePolynom(h_p);
-        val::realRoots(h_d,zeros,epsilon);
-    }
-    else if (isexprational(h)) {
-        h_r = hintegral::getrationalfrom_oprat(h,"exp").getrationalfunction();
-        h_p = h_r.nominator();
-        h_p /= val::gcd(h_p,h_p.derive());
-        val::pol<double> h_d = val::ToDoublePolynom(h_p);
-        val::realRoots(h_d,zeros,epsilon);
-    }
-    else {
-        val::Glist<double> prezeros;
-        if (!h.isconst()) prezeros = h.double_roots(x1,x2,iterations,epsilon);
-        n = prezeros.length();
-        zeros = val::vector<double>(n);
-        for (i = 0; i < n; ++i) zeros[i] = prezeros[i];
-    }
-    */
+
     computezeros(h, x1, x2, epsilon, decimals, iterations, zeros, r_places);
 
     n = zeros.length();
+    //std::cout << " " << h.getinfixnotation() << " , n = " << n << " pf = " << pcurve->f.getinfixnotation() << std::endl;
     if (n) {
-        //places.reserve(n);
         for (i = 0; i < n; ++i) {
-            if (!isInf(f.f(zeros[i])) && !val::isNaN(f.f(zeros[i])) && !isInf(g.f(zeros[i])) && !val::isNaN(g.f(zeros[i]))) places.push_back(zeros[i]);
+            if ((type == FF) && !isInf(f.f(zeros[i])) && !val::isNaN(f.f(zeros[i])) && !isInf(g.f(zeros[i])) && !val::isNaN(g.f(zeros[i]))) places.push_back(zeros[i]);
+            else if ((type == FA) && !isInf(F(zeros[i])) && !val::isNaN(F(zeros[i]))) places.push_back(zeros[i]);
+            else if (type == FP && !isInf(pcurve->f(zeros[i])) && !val::isNaN(pcurve->f(zeros[i])) && !isInf(pcurve->g(zeros[i])) && !val::isNaN(pcurve->g(zeros[i]))) {
+                places.push_back(zeros[i]);
+                //std::cout << std::endl << zeros[i];
+            }
         }
         N = places.length();
+    }
+    if (type == FP) {
+        for (auto &v : r_places) {
+            v = pcurve->f(v);
+            v.simplify();
+        }
+        places.sort();
     }
 
     if (!N) analyze_output[1]+="No real intersection points.\n";
     else {
         int rat, diff = 0;
         std::string xr,yr;
-        val::valfunction f1, g1;
-        double alpha;
+        val::valfunction f1, g1, g2;
+        double alpha = 0;
 
-        F.simplify(); G.simplify();
-        if (F.isdifferentiable() && G.isdifferentiable()) {
-            diff = 1;
-            f1 = F.derive(); g1 = G.derive();
+        F.simplify();
+        if (type <= 1) {   // type == FF || type == FA
+            G.simplify();
+            if (F.isdifferentiable() && G.isdifferentiable()) {
+                diff = 1;
+                f1 = F.derive(); g1 = G.derive();
+            }
+            if (type == FA) g2 = G.derive(2);
+        }
+        else {
+            g1 = pcurve->f; g2 = pcurve->g;
+            g1.simplify(); g2.simplify();
+            if (g1.isdifferentiable() && g2.isdifferentiable() && F.isdifferentiable()) {
+                diff = 1;
+                g1 = g1.derive(); g2 = g2.derive();
+                f1 = F.derive();
+            }
         }
         Points[0].reserve(N);
         places.sort();
         analyze_output[1]+="Number of real intersection points: "+ val::ToString(N) + "\n";
-        /*
-        if (!h_p.iszero()) {
-            r_places = val::rational_roots(h_p);
-            r_places.sort();
-        }
-        */
+
+        double f1x , g1x , g2x, a, xo;
+        val::vector<double> v(2);
+
         for (auto &x : places) {
+            if (type == FP) {
+                xo = x;
+                y = pcurve->g(x);
+                x = pcurve->f(x);
+            }
+            else y = F(x);
             if (x == 0) x = 0;
-            y = f.f(x);
             digits = intdigits(x) + decimals;
             digits = val::Min(digits,val::MaxPrec);
             ydigits = intdigits(y) + decimals;
@@ -2758,10 +2816,30 @@ void intersection(const plotobject &f, const plotobject &g, std::string input)
             }
             else analyze_output[1] += "\n";
             if (diff) {
-                alpha = val::abs(val::arctan(f1(x)) - val::arctan(g1(x))) * 180/val::PI;
+                f1x = f1(x);
+                if (type == FF) {
+                    g1x = g1(x);
+                    alpha = val::abs(val::arctan(f1x) - val::arctan(g1x)) * 180/val::PI;
+                }
+                else if (type == FA) {
+                    v(0) = x, v(1) = y;
+                    g1x = g1(v);
+                    g2x = g2(v);
+                    //std::cout << "\n" << f1x << " , " << g1x << " , " << g2x << " , " << g2.getinfixnotation();
+                    a = val::sqrt(f1x*f1x*(g1x*g1x + g2x*g2x));
+                    if (a != 0.0) alpha = val::arccos(abs(g1x*f1x - g2x)/a) * 180/val::PI;
+                    else alpha = val::NaN;
+                    //double a = val::abs(g1(x)*f1(x) - g2(x)), b = val::sqrt(f1(x)*f1(x)*(g1(x)));
+                }
+                else if (type == FP){
+                    f1x = f1(x); g1x = g1(xo); g2x = g2(xo);
+                    a = val::sqrt(f1x*f1x*(g1x*g1x + g2x*g2x));
+                    if (a != 0.0) alpha = val::arccos(abs(g1x + f1x*g2x)/a) * 180/val::PI;
+                    else alpha = val::NaN;
+                }
                 if (alpha > 90) alpha = 180 - alpha;
                 alpha = val::round(alpha,2);
-                analyze_output[1] += "Intersection angle: " + val::ToString(alpha) + _T("°\n");
+                if (!val::isNaN(a)) analyze_output[1] += "Intersection angle: " + val::ToString(alpha) + _T("°\n");
             }
         }
     }

@@ -866,8 +866,8 @@ void computepoints(val::Glist<plotobject> &F,int points,const double &x1,const d
             }
             //std::cout << dx << std::endl;
         }
-        if (F[i].getmode() != plotobject::FUNCTION) continue;
-        if (F[i].f.numberofvariables()==1) {
+        //if (F[i].getmode() != plotobject::FUNCTION) continue;
+        if (F[i].getmode() == plotobject::FUNCTION) {
             F[i].farray.reserve(points);
             for (x=x1,j=0;j<points;++j,x+=delta) {
                 //y=farray[i_f][j]=F[i](val::round(x,dec));
@@ -876,7 +876,7 @@ void computepoints(val::Glist<plotobject> &F,int points,const double &x1,const d
                 ymin=val::Min(ymin,y);
             }
         }
-        else { //algebraische Kurve.
+        else if (F[i].getmode() == plotobject::ALGCURVE) { //algebraische Kurve.
                 //std::ofstream file("/home/miguel/test/log",std::ios::out | std::ios::trunc);
             F[i].curvearray.del();
             F[i].curvearray.reserve(points);
@@ -1284,7 +1284,7 @@ void computerotation(const val::d_array<plotobject*> F,std::string input)
             }
             default: break;
         }
-        if (fmode != plotobject::PARCURVE && fmode != plotobject::FUNCTION) {
+        if (fmode != plotobject::PARCURVE && fmode != plotobject::FUNCTION && fmode != plotobject::ALGCURVE) {
             n = d_f.length();
             for (i =0;i<n;++i) {
                 x(i%2) = d_f[i];
@@ -1963,6 +1963,13 @@ plotobject::plotobject(const std::string &sf)
         else s_infix = f.getinfixnotation();
         //val::valfunction g(s_f);
         islinear = f.islinearfunction();
+        if (f.numberofvariables() > 1) {
+            if (f.numberofvariables() > 2 || !f.ispolynomialfunction()) {
+                s_infix = "";
+                f = val::valfunction("");
+            }
+            else objectype = ALGCURVE;
+        }
         return;
     }
     values.dellist();
