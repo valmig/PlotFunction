@@ -68,7 +68,7 @@ const val::d_array<wxString> greek_letters{L"\u03B1", L"\u03B2", L"\u03B3", L"\u
                                            L"\u03BE", L"\u03BF", L"\u03C0", L"\u03C1", L"\u03C3", L"\u03C4", L"\u03C6", L"\u03C7", L"\u03C8", L"\u03C9", L"\u0393", L"\u0394", L"\u03A0",
                                            L"\u03A3", L"\u03A6", L"\u03A8", L"\u03A9"};
 
-const val::d_array<wxString> WordList{"PI", "exp", "log", "line", "sinh", "sqrt", "cosh", "circle", "tanh", "text", "triangle", "polygon", "points",
+const val::d_array<wxString> WordList{"PI", "exp", "log", "line", "sinh", "sqrt", "cosh", "circle", "tanh", "text", "triangle", "polygon", "points", "histogram",
                                    "inf", "fill", "abs", "arcsin", "arccos", "arctan", "rectangle", "sin", "cos", "tan",
                                    "arsinh", "arcosh", "artanh", "bitmap"};
 
@@ -1804,7 +1804,7 @@ void computeinterpolation(std::string input,std::string &Fstring)
 
 // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-const val::d_array<std::string> plotobject::s_object_type{"line", "text", "circle", "rectangle", "triangle", "fill", "polygon", "points"};
+const val::d_array<std::string> plotobject::s_object_type{"line", "text", "circle", "rectangle", "triangle", "fill", "polygon", "points", "histogram"};
 const val::d_array<int> plotobject::defnpoints{5,2,6,4,6,3,2,2,4};
 val::Glist<wxImage> plotobject::image;
 
@@ -1891,16 +1891,12 @@ plotobject::plotobject(const std::string &sf)
         x1 = val::valfunction(values[0]);
         x2 = x1;
         x_range.x = x1(0);
-        x_range.y = x_range.x;
+        //x_range.y = x_range.x;
     }
     if (n > 1) {
         //if (!getpiscale(values[1],factor,x_range.y,0)) x_range.y = val::FromString<double>(values[1]);
         x2 = val::valfunction(values[1]);
         x_range.y = x2(0);
-    }
-    if (x_range.x > x_range.y) {
-        x1 = x2 = val::valfunction("0");
-        x_range.x = x_range.y = 0.0;
     }
 
     // Check if object is a bitmap
@@ -1942,6 +1938,12 @@ plotobject::plotobject(const std::string &sf)
             break;
         }
     }
+
+    if (x_range.x > x_range.y && objectype != HISTOGRAM) {
+        x1 = x2 = val::valfunction("0");
+        x_range.x = x_range.y = 0.0;
+    }
+
     // Check if object is a parametric curve:
     if (s_f.find(",") != std::string::npos ) {
         s_f = extractstringfrombrackets(s_f, '(', ')');
@@ -1985,6 +1987,44 @@ plotobject::plotobject(const std::string &sf)
     n = values.length();
 
     switch (objectype) {
+        case HISTOGRAM:
+        {
+            //int m = n;
+            double dx = val::Inf;
+            val::GPair<double> *pair = nullptr;
+            int m;
+            if (n < 4) {
+                objectype = FUNCTION;
+                s_infix = "";
+                return;
+            }
+            /*
+            if (n%2 == 0) m = n+1;
+            farray = val::d_array<double>(0.0,m);
+            for (int i = 0; i < n; ++i) {
+                farray[i] = val::FromString<double>(values[i]);
+                if (i < m-1) s_infix += " " + values[i];
+            }
+            farray[m-1] = val::Max(0.0, farray[m-1]);
+            farray[m-1] = val::Min(1.0, farray[m-1]);
+            */
+            for (int i = 0; i < n-1; i += 2) {
+                critpoints.sinsert(val::GPair<double>(val::FromString<double>(values[i]),double(val::FromString<val::rational>(values[i+1]))));
+            }
+            m = critpoints.length();
+            for (int i = 0; i < m; ++i) {
+                pair = &critpoints[i];
+                s_infix += " " + val::ToString(pair->x) + " " + val::ToString(pair->y);
+                if (i < m-1) dx = val::Min(dx,val::abs(pair->x-critpoints[i+1].x));
+            }
+            // solid background factor in x_range.x with 0 <= x_range.x <= 1.0;
+            x_range.x = val::Max(x_range.x,0.0);
+            x_range.x = val::Min(x_range.x,1.0);
+            // with of column in x_range.y;
+            if (x_range.y <= 0.0 || x_range.y > dx) x_range.y = dx;
+            x1 = val::valfunction(val::ToString(x_range.x));
+            x2 = val::valfunction(val::ToString(x_range.y));
+        } break;
         case POINTS: case POLYGON:
         {
             if (n%2) --n;

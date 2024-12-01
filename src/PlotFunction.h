@@ -265,7 +265,7 @@ int NewtonIteration(const T& f, const T &f1, double &x, const double& eps, int n
 
 struct plotobject
 {
-    enum modetype {LINE,TEXT,CIRCLE,RECTANGLE,TRIANGLE,FILL,POLYGON,POINTS,BITMAP,PARCURVE,ALGCURVE,FUNCTION};
+    enum modetype {LINE,TEXT,CIRCLE,RECTANGLE,TRIANGLE,FILL,POLYGON,POINTS,HISTOGRAM,BITMAP,PARCURVE,ALGCURVE,FUNCTION};
     //
     val::valfunction f,g,x1,x2;
     wxBitmap bitmap;
@@ -298,6 +298,7 @@ struct plotobject
     int IsFill() const {return (objectype==FILL);}
     int IsPolygon() const {return objectype==POLYGON;}
     int IsPoints() const {return objectype==POINTS;}
+    int IsHistogram() const {return objectype==HISTOGRAM;}
     int IsParcurve() const {return objectype==PARCURVE;}
     int IsFunction() const {return objectype==FUNCTION;}
     int IsAlgCurve() const {return objectype==ALGCURVE;}

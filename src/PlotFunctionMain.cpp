@@ -157,7 +157,7 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     Menu_yAxis = new wxMenuItem(submenuaxis, ID_MENUITEM3, _("y-Axis\tAlt-Y"), wxEmptyString, wxITEM_CHECK);
     submenuaxis->Append(Menu_yAxis);
     Menu_yAxis->Check(true);
-    Menu3->Append(ID_MENUITEM7, _("Axis"), submenuaxis, wxEmptyString);
+    Menu3->AppendSubMenu(submenuaxis, _("Axis"));
     MenuSize = new wxMenuItem(Menu3, ID_MENUITEM5, _("Size for png-Graphic"), wxEmptyString, wxITEM_NORMAL);
     Menu3->Append(MenuSize);
     MenuItem4 = new wxMenuItem(Menu3, ID_MENUITEM6, _("Font Size\tCtrl-F"), wxEmptyString, wxITEM_NORMAL);
@@ -1482,6 +1482,49 @@ void PlotFunctionFrame::plotrectangle(wxDC& dc, int colour)
 }
 
 
+void PlotFunctionFrame::plothistogram(wxDC& dc, int colour, const double& solid)
+{
+    if (!yset) return;
+    const plotobject &f = F[colour];
+    double dx = f.x_range.y/2.0, sol = solid;
+    wxColour c_brush = Color[colour];
+    int ix0,ix1,iy1, l = pen[colour];
+
+    if (bitmapbackground) {
+        if (sol > 0.0) sol = 1;
+    }
+    if (sol == 0.0) {
+        wxBrush brush(Color[colour]);
+        brush.SetStyle(wxBrushStyle::wxBRUSHSTYLE_TRANSPARENT);
+        dc.SetBrush(brush);
+    }
+    else {
+        double f_bgc = 1.0 - sol;
+        const wxColour &bgc = BackgroundColor;
+        unsigned char gr = c_brush.Green(), red = c_brush.Red(), bl = c_brush.Blue();
+        gr = (unsigned char)(double(gr)*sol + double(bgc.Green())*f_bgc);
+        red = (unsigned char)(double(red)*sol + double(bgc.Red())*f_bgc);
+        bl = (unsigned char)(double(bl)*sol + double(bgc.Blue())*f_bgc);
+        wxBrush brush(wxColour(red,gr,bl));
+        dc.SetBrush(brush);
+    }
+
+    if (active_function == colour) dc.SetPen(wxPen(Color[colour],pen[colour]+3));
+    else dc.SetPen(wxPen(Color[colour],pen[colour]));
+
+    for (const auto &p : f.critpoints) {
+        ix0 = abst + int(double(sizex - 1) * ((p.x-dx - x1) / (x2 - x1)));
+        ix1 = abst + int(double(sizex - 1) * ((p.x+dx - x1) / (x2 - x1)));
+        iy1 = yzero - int((double(sizey - 1) / double(y2 - y1)) * p.y);
+        ix1 -= ix0;
+        iy1 -= yzero;
+        if (p.y < 0) iy1 += l;
+        dc.DrawRectangle(ix0,yzero,ix1,iy1);
+    }
+}
+
+
+
 void PlotFunctionFrame::plottriangle(wxDC& dc,int colour)
 {
     if (!yset) return;
@@ -1918,6 +1961,16 @@ void PlotFunctionFrame::plotallfunctions(wxMemoryDC& dc)
                     plotbitmap(dc, i); break;
                 case plotobject::ALGCURVE:
                     plotcurve(dc, i); break;
+                case plotobject::HISTOGRAM:
+                {
+                    if (histogrames) {
+                        plothistogram(dc, i, F[i].x_range.x);
+                    }
+                    else {
+                        //if (F[i].x_range.x != 0.0 && F[i].x_range.x != 1.0) plothistogram(dc, i);
+                        plothistogram(dc, i);
+                    }
+                } break;
                 default:
                 {
                     plotfunction(dc,i);
@@ -1980,14 +2033,18 @@ void PlotFunctionFrame::plottomemoryDc(wxMemoryDC &memDC)
     }
 
     fillfunctions=0;
+    histogrames = 0;
     for (int i=0;i<N;++i) {
             if (F[i].IsFill() && f_menu[i]->IsChecked()) ++fillfunctions;
+            if (F[i].IsHistogram() && f_menu[i]->IsChecked()) ++histogrames;
     }
 
     plotvertices(memDC);
     plotallfunctions(memDC);
-    if (fillfunctions && gridactiv->IsCheck()) {
+    //histogrames = 0;
+    if ((fillfunctions && gridactiv->IsCheck()) || histogrames) {
         fillfunctions=0;
+        histogrames = 0;
         plotvertices(memDC);
         plotallfunctions(memDC);
     }
@@ -3551,6 +3608,7 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
     case val_commands::MOVE:
         {
             if (f_nr < 0 || f_nr >= N) return;
+            if (F[f_nr].IsHistogram() || F[f_nr].IsFill()) return;
             double dx = 0, dy = 0;
             val::d_array<char> separ{' ', ';' };
             val::Glist<std::string> s_values = getwordsfromstring(svalue,separ);
@@ -3564,7 +3622,7 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
             int i = 0;
             for (const auto & v : F) {
                 if (F[i].x_range.x == F[i].x_range.y) fstring += v.getinfixnotation() + ";\n";
-                else fstring += v.getinfixnotation() + "[" + F[i].x1.getinfixnotation() + " , " + F[i].x2.getinfixnotation() + "];\n";
+                else fstring += v.getinfixnotation() + "  [ " + F[i].x1.getinfixnotation() + " , " + F[i].x2.getinfixnotation() + " ];\n";
                 ++i;
             }
             refreshfunctionstring();
@@ -3939,7 +3997,7 @@ void PlotFunctionFrame::OnMenuButton(wxCommandEvent &event)
         return;
     }
     if (!yset) return;
-    if (id == 7201 || id == 7201) return;
+    if (id == 7201 || id == 7202) return;
     wxMouseState m_state = wxGetMouseState();
     wxPoint P_abs = m_state.GetPosition(), P_cl = DrawPanel->ScreenToClient(P_abs);
     mouse_x1 = P_cl.x; mouse_y1 = P_cl.y;
@@ -4267,7 +4325,7 @@ int PlotFunctionFrame::findactivefunction(int x, int y)
                 }
             }
             break;
-        case plotobject::FILL: break;
+        case plotobject::FILL: case plotobject::HISTOGRAM: break;
         case plotobject::RECTANGLE :
             {
                 int ix0,iy0,ix1,iy1;
@@ -4402,7 +4460,7 @@ void PlotFunctionFrame::OnMouseCaptured(wxMouseEvent &event)
         return;
     }
 
-    if (wxGetKeyState(WXK_CONTROL)) {
+    if (wxGetKeyState(WXK_CONTROL) && active_function == -1) {
         active_function = findactivefunction(mouse_x1,mouse_y1);
         if (active_function == -1) return;
     }
@@ -4494,12 +4552,18 @@ void PlotFunctionFrame::OnMouseReleased(wxMouseEvent &event)
         while (iscomputing) {
             wxYield();
         }
+        if (F[active_function].IsHistogram()) {
+            active_function = -1;
+            refreshfunctionstring();
+            Paint();
+            return;
+        }
 
         fstring = "";
         int i = 0;
         for (const auto & v : F) {
             if (F[i].x_range.x == F[i].x_range.y) fstring += v.getinfixnotation() + ";\n";
-            else fstring += v.getinfixnotation() + "[" + F[i].x1.getinfixnotation() + " , " + F[i].x2.getinfixnotation() + "];\n";
+            else fstring += v.getinfixnotation() + "  [" + F[i].x1.getinfixnotation() + " , " + F[i].x2.getinfixnotation() + "];\n";
             ++i;
         }
         refreshfunctionstring();
@@ -4642,7 +4706,7 @@ void PlotFunctionFrame::displacefunction(int i,const double &dx1,const double &d
                 F[i] = plotobject(nf);
             }
             break;
-        case plotobject::FILL :
+        case plotobject::FILL : case plotobject::HISTOGRAM :
             {
             }
             break;
