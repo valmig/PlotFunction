@@ -1563,20 +1563,34 @@ void computezeros(const val::valfunction &f,const double &x1,const double &x2,co
         }
 
         F /= gcd(F,F.derive());
-        f_d = ToDoublePolynom(F);
-        realRoots(f_d, zeros,epsilon);
-        zeros.sort();
         r_zeros = rational_roots(F);
         r_zeros.sort();
 
-        for (const auto &v : zeros) {
-            if (abs(v) < epsilon) d_zeros.push_back(0);
-            else d_zeros.push_back(v);
+        if (!r_zeros.isempty()) {
+            pol<rational> p(rational(1),1); // g = x
+            for (const auto &v : r_zeros) {
+                s_zeros.push_back(valfunction(ToString(v)));
+                d_zeros.push_back(double(v));
+                F /= (p - pol<rational>(v));
+            }
+            valfunction g(PolToString(F));
+            Glist<double> d_zeros2;
+            Glist<valfunction> s_zeros2;
+            computezeros(g, x1, x2, epsilon, decimals, iterations, d_zeros2, s_zeros2);
+            hzeros::addto(d_zeros,d_zeros2,epsilon);
+            hzeros::addto(s_zeros,s_zeros2);
+            return;
         }
-        for (const auto &v : r_zeros) {
-            s_zeros.push_back(valfunction(ToString(v)));
+        else {
+            f_d = ToDoublePolynom(F);
+            realRoots(f_d, zeros, epsilon);
+            zeros.sort();
+            for (const auto &v : zeros) {
+                if (abs(v) < epsilon) d_zeros.push_back(0);
+                else d_zeros.push_back(v);
+            }
+            return;
         }
-        return;
     }
     else if (f_oper == "exp") {
         return;
