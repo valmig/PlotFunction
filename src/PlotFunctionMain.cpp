@@ -926,7 +926,10 @@ void PlotFunctionFrame::GetSettings()
         for (int i = 0; i < N; ++i) {
             for (int j = 0; j < Fold.length(); ++j) {
                 if (F[i].getinfixnotation() == Fold[j].getinfixnotation()) {
-                    remained[i] = j;
+                    if (F[i].iswithparameter()) {
+                        if (F[i].f.getparameter() == Fold[j].f.getparameter()) remained[i] = j;
+                    }
+                    else remained[i] = j;
                     break;
                 }
             }
