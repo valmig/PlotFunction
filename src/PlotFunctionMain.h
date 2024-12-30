@@ -137,7 +137,7 @@ class PlotFunctionFrame: public wxFrame
         void ChangeSettings(int command, const std::string &svalue="", int id = 0);
         void ExecuteCommand(int command, int f_nr = 0, const std::string &svalue="", int id = 0);
         int findactivefunction(int x,int y);
-        void displacefunction(int i,const double& dx,const double& dy);
+        void displacefunction(int i,const std::string& dx,const std::string& dy);
         void changefunctionsettings(int i);
         void changedpanelinsertmode(int mode = 0);
         void SendNotification(const std::string& s);

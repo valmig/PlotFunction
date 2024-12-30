@@ -277,6 +277,7 @@ struct plotobject
     std::string s_infix;
     val::GPair<double> x_range{0.0,0.0};
     int objectype = FUNCTION, islinear = 0;
+    wxPenStyle penstyle = wxPENSTYLE_SOLID;
     //
     static const val::d_array<std::string> s_object_type;
     static const val::d_array<int> defnpoints;               // default number number of points for each objectype

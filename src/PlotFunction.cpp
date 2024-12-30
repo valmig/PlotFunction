@@ -595,12 +595,18 @@ int getfunctionfromstring(std::string &fstring, plotobject &f)
 {
     val::rational factor;
     std::string ns="";
-    int i, colorindex = -1;
+    int i, colorindex = -1, style = 0;
     //int i, n, colorindex = -1;
     f = plotobject(fstring);
 
     ns = extractstringfrombrackets(fstring, '{', '}');  // so it is allow to have < , > in textdata.
     ns = extractstringfrombrackets(fstring,'<','>');
+    auto svalues = getwordsfromstring(ns, val::d_array<char>{','},0,val::d_array<char>{' '});
+    if (svalues.length() > 1) {
+        style = val::FromString<int>(svalues[1]);
+        ns = svalues[0];
+        if (style < 0 || style > 4) style = 0;
+    }
 
     i = 0;
     for (const auto& v : defaultcolornames) {
@@ -610,6 +616,15 @@ int getfunctionfromstring(std::string &fstring, plotobject &f)
         }
         ++i;
     }
+    switch (style) {
+        case 0: f.penstyle = wxPENSTYLE_SOLID; break;
+        case 1: f.penstyle = wxPENSTYLE_DOT; break;
+        case 2: f.penstyle = wxPENSTYLE_LONG_DASH; break;
+        case 3: f.penstyle = wxPENSTYLE_SHORT_DASH; break;
+        case 4: f.penstyle = wxPENSTYLE_DOT_DASH; break;
+        default: break;
+    }
+
 
     return colorindex;
 }
