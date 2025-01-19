@@ -1227,8 +1227,6 @@ void PlotFunctionFrame::plotfunction(wxDC& dc,int colour)
     int ix0,ix1,iy0,iy1,index,ylimit=abst+sizey-1,aw=0,ew=sizex, ready = 0, i, k;
     double faktor_x,faktor_y,xr1=F[colour].x_range.x, xr2=F[colour].x_range.y, yvalue = 0, yold = val::Inf, dyzero(yzero);
 
-    if (active_function == colour) dc.SetPen(wxPen(Color[colour],pen[colour]+3, F[colour].penstyle));
-    else dc.SetPen(wxPen(Color[colour],pen[colour], F[colour].penstyle));
 
     if (xr1 == xr2) {
         aw=0;
@@ -1247,6 +1245,8 @@ void PlotFunctionFrame::plotfunction(wxDC& dc,int colour)
     faktor_y=double(sizey-1)/(y2-y1);
 
     if (F[colour].islinear) {
+        if (active_function == colour) dc.SetPen(wxPen(Color[colour],pen[colour]+3, F[colour].penstyle));
+        else dc.SetPen(wxPen(Color[colour],pen[colour], F[colour].penstyle));
         i = aw;
         do {
             index = int (val::round(double(i)*faktor_x,0));
@@ -1271,8 +1271,18 @@ void PlotFunctionFrame::plotfunction(wxDC& dc,int colour)
         return;
     }
 
+    if (active_function == colour) dc.SetPen(wxPen(Color[colour],pen[colour]+3));
+    else dc.SetPen(wxPen(Color[colour],pen[colour]));
+
+    int j = 0, style = 0;
+    bool draw = true;
+
+    if (F[colour].penstyle != wxPENSTYLE_SOLID) style = 1;
+
     i = aw;
     do {
+        draw = true;
+        j = 0;
         k = 0;
         do { // search first point:
             ++k;
@@ -1294,7 +1304,11 @@ void PlotFunctionFrame::plotfunction(wxDC& dc,int colour)
             if (iy0 < abst) iy0 = abst;
         }
 
-        for (; i < ew; ++i, ix0 = ix1, iy0 = iy1) {
+        for (; i < ew; ++i, ix0 = ix1, iy0 = iy1, ++j) {
+            if (j == 5) {
+                draw = !draw;
+                j = 0;
+            }
             ix1=abst+i;
             index=int (val::round(double(i)*faktor_x,0));
             if (index<0 || index >=points) return;
@@ -1311,7 +1325,10 @@ void PlotFunctionFrame::plotfunction(wxDC& dc,int colour)
                 ++i;
                 break;
             }
-            dc.DrawLine(ix0,iy0,ix1,iy1);
+            if (style) {
+                if (draw) dc.DrawLine(ix0,iy0,ix1,iy1);
+            }
+            else dc.DrawLine(ix0,iy0,ix1,iy1);
         }
         if (i >= ew) ready = 1;
     }

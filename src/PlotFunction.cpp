@@ -68,9 +68,13 @@ const val::d_array<wxString> greek_letters{L"\u03B1", L"\u03B2", L"\u03B3", L"\u
                                            L"\u03BE", L"\u03BF", L"\u03C0", L"\u03C1", L"\u03C3", L"\u03C4", L"\u03C6", L"\u03C7", L"\u03C8", L"\u03C9", L"\u0393", L"\u0394", L"\u03A0",
                                            L"\u03A3", L"\u03A6", L"\u03A8", L"\u03A9"};
 
-const val::d_array<wxString> WordList{"PI", "exp", "log", "line", "sinh", "sqrt", "cosh", "circle", "tanh", "text", "triangle", "polygon", "points", "histogram",
-                                   "inf", "fill", "abs", "arcsin", "arccos", "arctan", "rectangle", "sin", "cos", "tan",
-                                   "arsinh", "arcosh", "artanh", "bitmap"};
+// const val::d_array<wxString> WordList{"PI", "exp", "log", "line", "sinh", "sqrt", "cosh", "circle", "tanh", "text", "triangle", "polygon", "points", "histogram",
+//                                    "inf", "fill", "abs", "arcsin", "arccos", "arctan", "rectangle", "sin", "cos", "tan",
+//                                    "arsinh", "arcosh", "artanh", "bitmap"};
+
+const val::d_array<wxString> WordList{"PI", "exp", "log", "line",  "sqrt", "circle", "text", "triangle", "polygon", "points", "histogram",
+                                   "inf", "fill", "abs", "arcsin", "arccos", "arctan", "rectangle",
+                                   "arsinh", "arcosh", "artanh", "sinh", "cosh", "tanh", "sin", "cos", "tan", "bitmap"};
 
 /*
 val::d_array<std::string> sfunctionlist({"sqrt", "exp", "log", "abs", "sinh", "cosh", "tanh", "arsinh", "arcosh", "artanh",
@@ -602,11 +606,17 @@ int getfunctionfromstring(std::string &fstring, plotobject &f)
     ns = extractstringfrombrackets(fstring, '{', '}');  // so it is allow to have < , > in textdata.
     ns = extractstringfrombrackets(fstring,'<','>');
     auto svalues = getwordsfromstring(ns, val::d_array<char>{','},0,val::d_array<char>{' '});
+
     if (svalues.length() > 1) {
         style = val::FromString<int>(svalues[1]);
         ns = svalues[0];
-        if (style < 0 || style > 4) style = 0;
     }
+    else if (svalues.length() == 1 && val::isinteger(svalues[0])) {
+        style = val::FromString<int>(svalues[0]);
+        ns = "";
+    }
+
+    if (style < 0 || style > 4) style = 0;
 
     i = 0;
     for (const auto& v : defaultcolornames) {
