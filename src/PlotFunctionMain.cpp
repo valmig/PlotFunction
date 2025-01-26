@@ -3449,6 +3449,14 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
             return;
         }
         break;
+    case val_commands::OSCCIRCLE:
+        {
+            if (f_nr < 0 || f_nr >= N) return;
+            std::thread t(computeosccircle,svalue,std::cref(F[f_nr]));
+            t.detach();
+            return;
+        }
+        break;
     case val_commands::INTERPOLATION:
         {
             std::string nvalue = svalue;

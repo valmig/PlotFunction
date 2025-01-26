@@ -130,7 +130,7 @@ const val::d_array<wxString> SettingsParList({"axis-scale sx [sy]	<Shift-Alt-S>"
                                              });
 
 const val::d_array<wxString> CommandsList({"derive", "analyze", "tangent", "normal", "interpolation", "regression", "table", "integral",
-                                             "arclength", "zero-iteration", "move", "evaluate", "intersection", "calculate", "rotate" });
+                                             "arclength", "zero-iteration", "move", "evaluate", "intersection", "calculate", "rotate", "osc_circle" });
 
 const val::d_array<wxString> CommandsParList({"derive [#nr = 1]",
                                                  "analyze [#nr = 1] [x1 x2] [prec = 1e-09] [iterations] [decimals]    <Ctrl-A>",
@@ -146,7 +146,8 @@ const val::d_array<wxString> CommandsParList({"derive [#nr = 1]",
                                                  "evaluate [#nr = 1] expressions [ddecimals[ = 4 ]]",
                                                  "intersection [#nr1 = 1] #nr2 [x1 x2] [prec] [iterations] [decimals]",
                                                  "calculate arithmetic expression",
-                                                 "rotate [#nr = 1] angle (in degrees ) x y (center)"
+                                                 "rotate [#nr = 1] angle (in degrees ) x y (center)",
+                                                 "osc_circle [#nr = 1] x"
                                                  });
 
 
@@ -1808,6 +1809,54 @@ void computetangent(std::string sf,const plotobject &f,double x1,double x2,int t
             val::n_expo::setordtype(n_oldordtype);
         }
     }
+    MyThreadEvent event(MY_EVENT,IdRefresh);
+    if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event.Clone() );
+}
+
+
+void computeosccircle(std::string sf, const plotobject &f)
+{
+    double xm, ym, r;
+    if (f.IsFunction()) {
+        val::valfunction y(f.f.getinfixnotation()), y1, y2, x(sf), rf, g("(1+x^2)^(3/2)"), hxm, hym, h("1+x^2");
+        if (!y.isdifferentiable()) return;
+        y1 = y.derive();
+        if (!y1.isdifferentiable()) return;
+        y2 = y1.derive();
+        if (val::abs(y2(x)(0)) < 1e-9) return;
+        rf = g(y1)/y2;
+        rf = rf(x);
+        r = val::abs(rf(0));
+        hxm = x - y1*h(y1)/y2;
+        hxm  = hxm(x);
+        xm = hxm(0);
+        hym = y + h(y1)/y2;
+        hym = hym(x);
+        ym = hym(0);
+    }
+    else if (f.IsParcurve()) {
+        val::valfunction y(f.g.getinfixnotation()), y1, y2, x(f.f.getinfixnotation()), x1, x2, t(sf) ,rf, g("x^(3/2)"), hxm, hym, sqr("x^2"), denum;
+        if (!x.isdifferentiable() || !y.isdifferentiable()) return;
+        y1 = y.derive(); x1 = x.derive();
+        if (!y1.isdifferentiable() || !x1.isdifferentiable()) return;
+        y2 = y1.derive(); x2 = x1.derive();
+        denum = x1*y2 - x2*y1;
+        if (val::abs(denum(t)(0)) < 1e-9) return;
+        rf = g(sqr(x1) + sqr(y1));
+        rf = rf/denum;
+        rf = rf(t);
+        r = val::abs(rf(0));
+        hxm = x - y1*(sqr(x1) + sqr(y1))/denum;
+        hxm = hxm(t);
+        xm = hxm(0);
+        hym = y + x1*(sqr(x1) + sqr(y1))/denum;
+        hym = hym(t);
+        ym = hym(0);
+    }
+    else return;
+
+    fstring += ";\ncircle " + val::ToString(xm) + " " + val::ToString(ym) + " " + val::ToString(r);
+
     MyThreadEvent event(MY_EVENT,IdRefresh);
     if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event.Clone() );
 }

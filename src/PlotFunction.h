@@ -56,7 +56,7 @@ enum val_settings{AXIS_SCALE,AXIS_COLOR,GRID_SCALE,GRID_COLOR,VALUES_NUMBER,AXIS
                     SHOW_Y_SCALE,RESET_COLORS,FONT_SIZE,FUNCTION_COLOR,PANEL_SIZE,AXIS_NAMES,REGRESSION_DEGREE,POINT_DECIMALS,
                     SHOW_FUNCTION,BACKGROND_COLOR,PARAMETER_VALUES,FUNCTION_SIZE,MARGIN,AXIS_FONTSIZE,FUNCTION_SETTINGS,MOVEINC};
 
-enum val_commands{DERIVE,ANALYZE,TANGENT,NORMAL,INTERPOLATION,REGRESSION,TABLE,INTEGRAL,ARCLENGTH,ZERO_ITERATION,MOVE,EVALUATE,INTERSECTION,CALCULATE,ROTATE};
+enum val_commands{DERIVE,ANALYZE,TANGENT,NORMAL,INTERPOLATION,REGRESSION,TABLE,INTEGRAL,ARCLENGTH,ZERO_ITERATION,MOVE,EVALUATE,INTERSECTION,CALCULATE,ROTATE,OSCCIRCLE};
 
 wxDECLARE_EVENT(MY_EVENT, MyThreadEvent);
 
@@ -166,6 +166,8 @@ void computepointstatistics(const plotobject& f, std::string input);
 void analyze_triangle(const plotobject &f, std::string input);
 
 void computetangent(std::string sf,const plotobject& f,double x1,double x2,int tangent=1);
+
+void computeosccircle(std::string sf, const plotobject &f);
 
 template <class T>
 double kepler_simpson_sum(const T& f,const double& a,const double& b,int n);
