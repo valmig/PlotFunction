@@ -284,6 +284,7 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     Menu_Tools->Append(7010,_("Regression \tAlt-A"));
     Menu_Tools->Append(7011,_("Analyze function... \tCtrl-A"));
     Menu_Tools->Append(7012,_("Intersection... \tShift-Ctrl-I"));
+    Menu_Tools->Append(7013,_("Osculating Circle... \tAlt-O"));
 
     MenuBar1->Append(Menu1, _("&File"));
     MenuBar1->Append(viewMenu,_("&View"));
@@ -338,6 +339,7 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuTools,this,7010);      // Regression
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuTools,this,7011);      // Analyze
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuTools,this,7012);      // Intersection
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuTools,this,7013);      // Osculating Circle
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnChangeParmeterMenu,this,5);  // Change Parameter Values
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnChangeParmeterMenu,this,23); // Regression Degree
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnChangeParmeterMenu,this,24); // Round-decimal for points
@@ -2668,6 +2670,7 @@ void PlotFunctionFrame::OnMenuTools(wxCommandEvent &event)
             case 7005 : title = "Arc lenght..." ; break;
             case 7007 : title = "Normal..." ; break;
             case 7008 : title = "Zero iteration..." ; break;
+            case 7013 : title = "Osculating Circle..." ; break;
             default: break;
         }
         val::SingleChoiceDialog dialog(this,"Available functions:",title,List);
@@ -2680,19 +2683,21 @@ void PlotFunctionFrame::OnMenuTools(wxCommandEvent &event)
         else return;
     }
 
-    if (id==7001 || id ==7007) { // Tangente, Normale
+    if (id==7001 || id ==7007 || id == 7013) { // Tangente, Normale, Circulating circle
         std::string type,input;
         if (id==7001) type = "tangent";
-        else {
+        else if (id == 7007){
             type = "normal";
         }
+        else type = "osculating circle";
         MultiLineDialog tangentdialog(this,"","Entry x-value or point",240,-1,"Set Point for " + type,fontsize,1);
 #ifdef __APPLE__
         tangentdialog.Centre();
 #endif // __APPLE__
         if (tangentdialog.ShowModal()==wxID_CANCEL) return;
         input=tangentdialog.GetSettingsText();
-        ExecuteCommand(TANGENT,j,input,id);
+        if (id == 7013) ExecuteCommand(OSCCIRCLE,j,input,id);
+        else ExecuteCommand(TANGENT,j,input,id);
         return;
     }
     else if (id==7002) { // Ableitung
@@ -5358,7 +5363,7 @@ void PlotFunctionFrame::CompareSideTextInput()
     for (const auto &v : words) {
         first_word = val::getfirstwordofstring(v,numsep);
         if ( ((m = first_word.length()) > 0) && first_word[0] == '#') {
-            s_func = val::tailofstring(v,v.length()-m-2);
+            s_func = val::tailofstring(v,v.length()-m-1);
         }
         else s_func = v;
         fstring += s_func + ";\n";

@@ -147,7 +147,7 @@ const val::d_array<wxString> CommandsParList({"derive [#nr = 1]",
                                                  "intersection [#nr1 = 1] #nr2 [x1 x2] [prec] [iterations] [decimals]",
                                                  "calculate arithmetic expression",
                                                  "rotate [#nr = 1] angle (in degrees ) x y (center)",
-                                                 "osc_circle [#nr = 1] x"
+                                                 "osc_circle [#nr = 1] x   <Alt-O>"
                                                  });
 
 
