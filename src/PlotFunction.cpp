@@ -147,7 +147,7 @@ const val::d_array<wxString> CommandsParList({"derive [#nr = 1]",
                                                  "intersection [#nr1 = 1] #nr2 [x1 x2] [prec] [iterations] [decimals]",
                                                  "calculate arithmetic expression",
                                                  "rotate [#nr = 1] angle (in degrees ) x y (center)",
-                                                 "osc_circle [#nr = 1] x   <Alt-O>"
+                                                 "osc_circle [#nr = 1] x    "
                                                  });
 
 
@@ -1878,8 +1878,8 @@ void computeinterpolation(std::string input,std::string &Fstring)
 
 // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-const val::d_array<std::string> plotobject::s_object_type{"line", "text", "circle", "rectangle", "triangle", "fill", "polygon", "points", "histogram"};
-const val::d_array<int> plotobject::defnpoints{5,2,6,4,6,3,2,2,4};
+const val::d_array<std::string> plotobject::s_object_type{"line", "text", "circle", "rectangle", "triangle", "fill", "polygon", "points", "histogram", "bitmap"};
+const val::d_array<int> plotobject::defnpoints{5,2,6,4,6,3,2,2,4,4};
 val::Glist<wxImage> plotobject::image;
 
 //replace std::tring with wxString
