@@ -68,7 +68,7 @@ void set_unity_element(valfunction &f)
 
 namespace hzeros
 {
-val::d_array<std::string> operators({"exp","sin","cos","log","tan","sqrt","arcsin","arccos","arctan"});
+//val::d_array<std::string> operators({"exp","sin","cos","log","tan","sqrt","arcsin","arccos","arctan"});
 
 
 // adds Element of H to G if element in G doesn't exist.
@@ -509,8 +509,8 @@ int partialfraction(const val::valfunction& f, val::rational &cont, val::pol<val
 namespace hintegral
 {
 
-val::d_array<std::string> operators({"exp","sin","cos","log","tan","sqrt","arcsin","arccos","arctan"}), escop({"exp","sin","cos","log"});
-enum ops{EXP,SIN,COS,LOG,TAN,SQRT,ARCSIN,ARCCOS,ARCTAN};
+val::d_array<std::string> operators({"exp","sin","cos","log","tan","sqrt","arcsin","arccos","arctan","sinh","cosh","arsinh","arcosh"}), escop({"exp","sin","cos","log"});
+enum ops{EXP,SIN,COS,LOG,TAN,SQRT,ARCSIN,ARCCOS,ARCTAN,SINH,COSH,ARSINH,ARCOSH};
 
 
 val::valfunction rational_integral(const val::valfunction &f, int k);
@@ -1199,6 +1199,16 @@ val::valfunction integral(const val::valfunction &f, int k)
             return h2/Pg.LC();
         }
         break;
+        case hintegral::SINH: {
+            valfunction c("cosh(x)");
+            return c(g)/Pg.LC();
+        }
+        break;
+        case hintegral::COSH: {
+            valfunction c("sinh(x)");
+            return c(g)/Pg.LC();
+        }
+        break;
         case hintegral::LOG: {
             return (g*f - g)/Pg.LC();
         }
@@ -1592,14 +1602,14 @@ void computezeros(const val::valfunction &f,const double &x1,const double &x2,co
             return;
         }
     }
-    else if (f_oper == "exp") {
+    else if (f_oper == "exp" || f_oper == "cosh") {
         return;
     }
-    else if (f_oper == "sqrt" || f_oper == "/" || f_oper == "abs" || f_oper == "m") {
+    else if (f_oper == "sqrt" || f_oper == "/" || f_oper == "abs" || f_oper == "m" || f_oper == "sinh" || f_oper == "arsinh") {
         computezeros(f.getfirstargument(),x1,x2,epsilon,decimals,iterations,d_zeros,s_zeros);
         return;
     }
-    else if (f_oper == "log") {
+    else if (f_oper == "log" || f_oper == "arcosh") {
         valfunction g = f.getfirstargument() - valfunction("1");
         g.setparameter(f.getparameter());
         computezeros(g, x1, x2, epsilon, decimals, iterations, d_zeros, s_zeros);

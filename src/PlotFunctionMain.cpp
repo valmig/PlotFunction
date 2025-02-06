@@ -3825,12 +3825,12 @@ void PlotFunctionFrame::OnMyEvent(MyThreadEvent& event)
         if (id == IdIntegral) title = "Integral";
         else if (id == IdPointStat) title = "Points Statistic";
         else title = "Calculate";
-        y=y+dy-200;
+        y=y+dy-250;
         Point.x = x; Point.y = y;
         Size.SetWidth(300);
-        Size.SetHeight(200);
+        Size.SetHeight(250);
         if (id == IdPointStat) Size.SetWidth(400);
-        InfoWindow *tablewindow = new InfoWindow(this,nchildwindows,tablestring,wxDefaultPosition,Size,title,fontsize,1,InfoStyle);
+        InfoWindow *tablewindow = new InfoWindow(this,nchildwindows,tablestring,Point,Size,title,fontsize,1,InfoStyle);
         tablewindow->Show();
     }
     else { // zero-iteration:
