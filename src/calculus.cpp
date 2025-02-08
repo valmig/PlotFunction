@@ -1231,6 +1231,18 @@ val::valfunction integral(const val::valfunction &f, int k)
             return hF/Pg.LC();
         }
         break;
+        case hintegral::ARSINH: {
+            valfunction hF("arsinh(x)"), hG("sqrt(x^2 + 1)");
+            hF = g * hF(g) - hG(g);
+            return hF/Pg.LC();
+        }
+        break;
+        case hintegral::ARCOSH: {
+            valfunction hF("arcosh(x)"), hG("sqrt(x^2 - 1)");
+            hF = g * hF(g) - hG(g);
+            return hF/Pg.LC();
+        }
+        break;
         case hintegral::SQRT: {
             if (Pg.degree() == 1) {
                 std::string sf = "(" + g.getinfixnotation() + ")^3";

@@ -92,7 +92,7 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
 #ifdef _WIN32
     plusw = 18;
 #endif
-#ifdef __APPLE_
+#ifdef __APPLE__
     plusw = 16;
 #endif
 
