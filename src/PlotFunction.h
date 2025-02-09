@@ -125,7 +125,7 @@ std::string extractstringfrombrackets(std::string &sf,const char lb, const char 
 std::string getstringfrombrackets(const std::string &sf,const char lb, const char rb);
 
 // Returns color index if specified, -1 else.
-int getfunctionfromstring(std::string &fstring, plotobject &f);
+int getfunctionfromstring(std::string &fstring, plotobject &f, int &style_changed);
 
 val::Glist<double> getdoublevaluesfromstring(const std::string &sf,const val::d_array<char>& separators, int emptystring = 0);
 

@@ -864,12 +864,13 @@ void PlotFunctionFrame::GetSettings()
     s="";
     if (fstring=="") {setfunctionsmenu(); WriteText(); return;}
     val::d_array<char> ignore({'\n'});
-    val::Glist<int> colorindezes;
-    int cindex;
+    val::Glist<int> colorindezes, stylechanged;
+    int cindex, s_changed;
 
     svalues = getwordsfromstring(fstring,separators,0,ignore);
     for (auto& v : svalues) {
-        cindex = getfunctionfromstring(v,f);
+        s_changed = 0;
+        cindex = getfunctionfromstring(v,f,s_changed);
         //f = plotobject(f_s);
         if (f.f.numberofvariables()> 1) {
             val::valfunction g(f.getinfixnotation());
@@ -880,6 +881,7 @@ void PlotFunctionFrame::GetSettings()
             F.push_back(std::move(f));
             //x_range.push_back(xr);
             colorindezes.push_back(cindex);
+            stylechanged.push_back(s_changed);
             N++;
         }
     }
@@ -932,6 +934,7 @@ void PlotFunctionFrame::GetSettings()
                         if (F[i].f.getparameter() == Fold[j].f.getparameter()) remained[i] = j;
                     }
                     else remained[i] = j;
+                    if (remained[i] == j && !stylechanged[i]) F[i].penstyle = Fold[j].penstyle;
                     break;
                 }
             }

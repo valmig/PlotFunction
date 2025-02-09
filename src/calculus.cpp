@@ -1314,6 +1314,18 @@ val::valfunction integral(const val::valfunction &f, int k)
         int g_const = g.isconst(k), h_const = h.isconst(k);
         if (!g_const && !h_const) {
             F = hintegral::integral_product_subst(g,h,k,firstop);
+            if (!F.is_zero() || firstop == "/") return F;
+            std::string g_first = g.getfirstoperator(), h_first = h.getfirstoperator();
+            if (g_first == "+" || g_first == "-") {
+                valfunction g1 = g.getfirstargument(), g2 = g.getsecondargument(), F1 = integral(g1*h,k), F2 = integral(g2*h);
+                if (g_first == "+") F = F1 + F2;
+                else F = F1 - F2;
+            }
+            else if (h_first == "+" || h_first == "-") {
+                valfunction h1 = g.getfirstargument(), h2 = g.getsecondargument(), F1 = integral(g*h1,k), F2 = integral(g*h2);
+                if (h_first == "+") F = F1 + F2;
+                else F = F1 - F2;
+            }
         }
         else if (g_const) {
             if (firstop == "*") return g * integral(h,k);

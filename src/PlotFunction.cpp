@@ -596,7 +596,7 @@ std::string getstringfrombrackets(const std::string &sf, const char lb, const ch
 
 
 
-int getfunctionfromstring(std::string &fstring, plotobject &f)
+int getfunctionfromstring(std::string &fstring, plotobject &f, int &style_changed)
 {
     val::rational factor;
     std::string ns="";
@@ -611,9 +611,11 @@ int getfunctionfromstring(std::string &fstring, plotobject &f)
     if (svalues.length() > 1) {
         style = val::FromString<int>(svalues[1]);
         ns = svalues[0];
+        style_changed = 1;
     }
     else if (svalues.length() == 1 && val::isinteger(svalues[0])) {
         style = val::FromString<int>(svalues[0]);
+        style_changed = 1;
         ns = "";
     }
 
