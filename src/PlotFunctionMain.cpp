@@ -248,7 +248,7 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     hideallmenu= new wxMenuItem(Menu_functions,3001,"Hide All \tAlt-H", wxEmptyString);
     showallmenu= new wxMenuItem(Menu_functions,3002,"Show All \tAlt-S", wxEmptyString);
     deletelastmenu = new wxMenuItem(Menu_functions,3003,"Delete Last \tAlt-Del", wxEmptyString);
-    deleteallmenu = new wxMenuItem(Menu_functions,3004,"Delete All \tCtrl-Del", wxEmptyString);
+    deleteallmenu = new wxMenuItem(Menu_functions,3004,"Delete All \tShift-Alt-Del", wxEmptyString);
     undomenu = new wxMenuItem(Menu_functions,3005,_T("undo \tCtrl-Z"), wxEmptyString);
     redomenu = new wxMenuItem(Menu_functions,3006,_T("redo \tShift-Ctrl-Z"), wxEmptyString);
     //
@@ -451,7 +451,7 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     Accel.push_back(wxAcceleratorEntry(wxACCEL_NORMAL,WXK_F9,7011));
     Accel.push_back(wxAcceleratorEntry(wxACCEL_SHIFT|wxACCEL_CTRL,(int) 'x',6));
     Accel.push_back(wxAcceleratorEntry(wxACCEL_ALT,(int) 'l',5021));
-    Accel.push_back(wxAcceleratorEntry(wxACCEL_SHIFT|wxACCEL_CTRL,WXK_DELETE,3004));
+    //Accel.push_back(wxAcceleratorEntry(wxACCEL_SHIFT|wxACCEL_CTRL,WXK_DELETE,3004));
 
     SetAccelerators(Accel);
 
@@ -2247,6 +2247,7 @@ void PlotFunctionFrame::OnMenunewfunction(wxCommandEvent &event)
     }
     if (id==3000) {   // Add/removeFunction
         std::string input="",output="";
+        wxString value;
         input=fstring;
         int sx = 240, sy = 100;
 #ifdef __APPLE__
@@ -2260,7 +2261,9 @@ void PlotFunctionFrame::OnMenunewfunction(wxCommandEvent &event)
 #endif // __APPLE__
         if (dialog.ShowModal()==wxID_CANCEL) return;
         closebrackets = dialog.GetCloseBrackets();
-        output=dialog.GetValue();
+        value = dialog.GetValue();
+        replacesupscripts(value);
+        output = value;
         if (input==output) return;
         fstring=output;
         refreshfunctionstring();
@@ -2734,13 +2737,16 @@ void PlotFunctionFrame::OnMenuTools(wxCommandEvent &event)
 
         MultiLineDialog integraldialog(this,text,param,240,100,title,fontsize);
 #ifdef __APPLE__
+
         integraldialog.Centre();
 #endif // __APPLE__
 
         integraldialog.SetPosition(wxPoint(Point.x,Point.y+10));
 
         if (integraldialog.ShowModal()==wxID_CANCEL) return;
-        ExecuteCommand(INTEGRAL,j,std::string(integraldialog.GetSettingsText()),id);
+        wxString value = integraldialog.GetSettingsText();
+        replacesupscripts(value);
+        ExecuteCommand(INTEGRAL,j,std::string(value),id);
         return;
     }
     GetSettings();
@@ -2891,7 +2897,12 @@ void PlotFunctionFrame::OnInputDialog(wxCommandEvent&)
     StatusBar1->SetStatusText(_T(""),1);
 
     val::d_array<char> separators({' ', '\n'});
-    std::string svalue(input.GetTextValue()), command;
+    wxString wvalue = input.GetTextValue();
+    std::string svalue, command;
+
+    replacesupscripts(wvalue);
+    svalue = wvalue;
+
     int n = svalue.length();
 
     if (svalue[n-1] == '\n') {
@@ -5352,6 +5363,17 @@ void PlotFunctionFrame::CompareSideTextInput()
 {
     wxString O_Word;
     O_Word = SideText->GetValue();
+    //std::cout << "\n" << O_Word << "  " << wxString(supscripts[2]) << std::endl;
+    // if (!O_Word.IsEmpty()) {
+    //     //wxString from;
+    //     int i = 0;
+    //     for (const auto &v : supscripts) {
+    //         //from = wxString(v);
+    //         O_Word.Replace(wxString(v), wxString("^" + val::ToString(i)));
+    //         ++i;
+    //     }
+    // }
+    replacesupscripts(O_Word);
     if (O_Word == SideText_Word) {
         return;
     }

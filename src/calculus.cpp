@@ -914,8 +914,16 @@ val::valfunction rational_integral(const val::valfunction &f, int k)
         pol<valfunction> q, fnum, fdenom = f_rational_vf.denominator();;
         divrem(f_rational_vf.numerator(),fdenom,q,fnum);
 
-        valfunction c = fnum[0]/fdenom[1];
-        sF = "(" + c.getinfixnotation() + ")*" + "log(abs(" + fdenom(X).getinfixnotation() + "))";
+        valfunction c = fnum[0]/fdenom[1], fd = fdenom(X);
+        if (fd.ispolynomialfunction()) {
+            pol<integer> p;
+            rational cont;
+            primitivpart(fd.getpolynomial(),p,cont);
+            cont *= p[1];
+            c = fnum[0]/valfunction(ToString(cont));
+            fd = valfunction(PolToString(p));
+        }
+        sF = "(" + c.getinfixnotation() + ")*" + "log(abs(" + fd.getinfixnotation() + "))";
         return ::integral(q(X),k) +  valfunction(sF);
     }
 
@@ -1002,8 +1010,8 @@ val::valfunction rational_integral(const val::valfunction &f, int k)
             sF = "(" + PolToString(numpol[i]) + ")/(" + PolToString(denumpol[i]) +")";
             if (e == 1) {
                 //std::cout<<"\nc = "<<c<<" , numpol[i] = "<<PolToString(numpol[i])<<" , denumpol[i] = "<<PolToString(denumpol[i]);
-                sF = sc + "*" + sF;
-                F += rational_integral(valfunction(sF),k);
+                //sF = sc + "*" + sF;
+                F += valfunction(sc) * rational_integral(valfunction(sF),k);
                 //std::cout<<"\n e = 1, F = "<<F.getinfixnotation();
             }
             else if (denumpol[i].degree() == 1 ){

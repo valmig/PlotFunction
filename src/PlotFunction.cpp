@@ -152,12 +152,17 @@ const val::d_array<wxString> CommandsParList({"derive [#nr = 1]",
 
 
 
+
+
 //const val::d_array<std::string> InputDialogList(SettingsList);
 
 const val::trie_type<wxString> WordTree(WordList + defaultcolornames, 58, int('A'));
 
 
 const val::trie_type<wxString> InputDialogTree(WordList + SettingsList + CommandsList + defaultcolornames, 78, int('-'));
+
+
+const val::d_array<std::wstring> supscripts{L"⁰", L"¹", L"²", L"³", L"⁴", L"⁵", L"⁶", L"⁷", L"⁸", L"⁹"};
 
 
 wxDEFINE_EVENT(MY_EVENT,MyThreadEvent);
@@ -319,6 +324,20 @@ std::string delcharfromstring(const std::string& s,const char z)
     }
     return out;
 }
+
+void replacesupscripts(wxString &s)
+{
+    if (!s.IsEmpty()) {
+        //wxString from;
+        int i = 0;
+        for (const auto &v : supscripts) {
+            //from = wxString(v);
+            s.Replace(wxString(v), wxString("^" + val::ToString(i)));
+            ++i;
+        }
+    }
+}
+
 
 val::Glist<char> substitutepar(std::string &s)
 {
@@ -1109,9 +1128,9 @@ void computeevaluation(const plotobject& f, double par)
         }
         precision = val::Min(precision,val::MaxPrec); yprecision = val::Min(yprecision, val::MaxPrec);
         if (g.iscomplex()) {
-            tablestring += "\n\nComplex evaluation:\n f(" + w + ") = " + ToString(h(g(z)));
+            tablestring += "\n\nComplex evaluation:\n f(" + ow + ") = " + ToString(h(g(z)));
         }
-        tablestring += "\n\nDouble evaluation:\n f(" + w + ") = " + ToString(y,yprecision);
+        tablestring += "\n\nDouble evaluation:\n f(" + ow + ") = " + ToString(y,yprecision);
         tablestring += "\nPoint in graph: \n" + ToString(x,precision) + "  " + ToString(y,yprecision) + "\n";
     }
     ansexpr = "(" + h.getinfixnotation() + ")";
@@ -1948,11 +1967,12 @@ void plotobject::setdrawingwords(const wxString &s)
 plotobject::plotobject(const std::string &sf)
 {
     if (sf.empty()) return;
-    int i, n, m;
+    int i = 0, n, m;
     std::string s_f= sf, fw, ns;
     val::rational factor;
 
     islinear = 0;
+
 
     textdata = extractstringfrombrackets(s_f, '{', '}');
     ns = extractstringfrombrackets(s_f, '<', '>');              // get rid of colour defenition.

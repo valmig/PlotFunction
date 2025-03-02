@@ -138,6 +138,8 @@ val::pol<val::rational> interpolation(const std::string &s);
 
 std::string delcharfromstring(const std::string& s,const char z=' ');
 
+void replacesupscripts(wxString &s);
+
 val::Glist<char> substitutepar(std::string &s);
 
 void back_substitutepar(std::string &s, const val::Glist<char> &VarList, int nvariables);
