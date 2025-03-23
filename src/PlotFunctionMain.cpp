@@ -1245,6 +1245,7 @@ void PlotFunctionFrame::plotfunction(wxDC& dc,int colour)
     }
     if (aw<0) aw=0;
     if (ew>sizex) ew=sizex;
+    if (aw > ew) return;
 
     faktor_x=double(points-1)/double(sizex-1);
     faktor_y=double(sizey-1)/(y2-y1);
@@ -1255,6 +1256,10 @@ void PlotFunctionFrame::plotfunction(wxDC& dc,int colour)
         i = aw;
         do {
             index = int (val::round(double(i)*faktor_x,0));
+            if (index < 0  || index >= points) {
+                std::cout << "\n f_nr = " << colour << ". aw = " << aw << ". ew = "<< ew << ".  index = " << index;
+                return;
+            }
             iy0 = yzero-int(val::round(faktor_y * f[index],0));
             ++i;
             if (i>=ew) return;
@@ -1266,6 +1271,10 @@ void PlotFunctionFrame::plotfunction(wxDC& dc,int colour)
         i = ew - 1;
         do {
             index = int (val::round(double(i)*faktor_x,0));
+            if (index < 0  || index >= points) {
+                std::cout << "\n f_nr = " << colour << ". aw = " << aw << ". ew = "<< ew << ".  index = " << index;
+                return;
+            }
             iy1 = yzero-int(val::round(faktor_y * f[index],0));
             --i;
             if (i<aw) return;
