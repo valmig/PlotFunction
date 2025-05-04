@@ -2429,7 +2429,8 @@ void analyzefunction(const plotobject &f,std::string input)
         val::Glist<double> undef_points;
         analyze_output[0]+= "\n f not  defined at:\n";
 
-        xmin = val::Min(xmin, intervals[0].x); xmax = val::Max(xmax, intervals[intervals.length()-1].y);
+        if (intervals[0].x != -val::Inf) xmin = val::Min(xmin, intervals[0].x);
+        if (intervals[intervals.length()-1].y != val::Inf) xmax = val::Max(xmax, intervals[intervals.length()-1].y);
         for (const auto& P : intervals) {
             critx.push_back(P.x);
             if (val::abs(P.x-P.y)<epsilon) {
@@ -2512,6 +2513,7 @@ void analyzefunction(const plotobject &f,std::string input)
     }
     else analyze_output[1] += "\nNo real zeros.";
     analyze_output[1]+="\n";
+    //std::cout << "\n xmin = " << xmin << "; xmax = " << xmax;
     //
 
     // Extrema:

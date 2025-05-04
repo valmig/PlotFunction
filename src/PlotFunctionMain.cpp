@@ -485,6 +485,7 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
             sidemenuview->Check(true);
             SideText->Show();
             SideText->SetFocus();
+            lastfocusedwindow = 0;
         }
         if (notebook_isshown) {
             clientsize_x += widthNoteBookPanel + plusw;
@@ -512,9 +513,9 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     DrawPanel->Bind(wxEVT_PAINT,&PlotFunctionFrame::OnDrawPanelPaint,this);
     DrawPanel->Bind(wxEVT_SIZE,&PlotFunctionFrame::OnDrawPanelResize,this);
 
-    DrawPanel->Bind(wxEVT_SET_FOCUS,&PlotFunctionFrame::OnLostFocus,this);
-    SideText->Bind(wxEVT_SET_FOCUS,&PlotFunctionFrame::OnLostFocus,this);
-    notebook->Bind(wxEVT_SET_FOCUS,&PlotFunctionFrame::OnLostFocus,this);
+    DrawPanel->Bind(wxEVT_SET_FOCUS,&PlotFunctionFrame::OnFocusChanged,this);
+    SideText->Bind(wxEVT_SET_FOCUS,&PlotFunctionFrame::OnFocusChanged,this);
+    notebook->Bind(wxEVT_SET_FOCUS,&PlotFunctionFrame::OnFocusChanged,this);
 }
 
 
@@ -708,24 +709,24 @@ void PlotFunctionFrame::GetSizeSettings()
     std::string line;
     settings=1;
     file>>Posx>>Posy>>clientsize_x>>clientsize_y>>fontsize>>axis_fontsize;
-	if (clientsize_x == 0) clientsize_x = 400;
-	if (clientsize_y == 0) clientsize_y = 400;
-	if (fontsize < 8) fontsize = 8;
+    if (clientsize_x == 0) clientsize_x = 400;
+    if (clientsize_y == 0) clientsize_y = 400;
+    if (fontsize < 8) fontsize = 8;
     sfontsize = val::ToString(fontsize);
     saxis_fontsize = val::ToString(axis_fontsize);
-	file.clear();
-	file.seekg(0,std::ios::beg);
-	while (file && i<=5) {
+    file.clear();
+    file.seekg(0,std::ios::beg);
+    while (file && i<=5) {
         getline(file,line);
         ++i;
-	}
-	if (file) {getline(file,line);filedir=line;}
-	if (file) {getline(file,line);openfiledir=line;}
-	if (file) {getline(file,line);savefiledir=line;}
-	if (file) {getline(file,line);defaultFont.SetNativeFontInfoUserDesc(wxString(line));}
-	if (file) {getline(file,line);SideText_isshown = val::FromString<int>(line);}
-	if (file) {getline(file,line);widthSideText = val::FromString<int>(line);}
-	if (file) {getline(file,line);notebook_isshown = val::FromString<int>(line);}
+    }
+    if (file) {getline(file,line);filedir=line;}
+    if (file) {getline(file,line);openfiledir=line;}
+    if (file) {getline(file,line);savefiledir=line;}
+    if (file) {getline(file,line);defaultFont.SetNativeFontInfoUserDesc(wxString(line));}
+    if (file) {getline(file,line);SideText_isshown = val::FromString<int>(line);}
+    if (file) {getline(file,line);widthSideText = val::FromString<int>(line);}
+    if (file) {getline(file,line);notebook_isshown = val::FromString<int>(line);}
     file.close();
 
     if (widthSideText > 500) widthSideText = 500;
@@ -1013,7 +1014,7 @@ void PlotFunctionFrame::GetSettings()
         else fstring+=";\n";
     }
     setfunctionsmenu();
-    WriteText();
+    //WriteText();
 }
 
 
@@ -2099,8 +2100,7 @@ void PlotFunctionFrame::OnDrawPanelPaint(wxPaintEvent &event)
 
 void PlotFunctionFrame::OnDrawPanelResize(wxSizeEvent &event)
 {
-    //event.Skip();
-    if (!ispainted || iscomputing) return;
+    //event.Skip(); (!ispainted || iscomputing) return;
 #ifdef _WIN32
     iscomputing=1;
     Paint();
@@ -2111,6 +2111,7 @@ void PlotFunctionFrame::OnDrawPanelResize(wxSizeEvent &event)
 void PlotFunctionFrame::Compute(int i, int comppoints)
 {
     iscomputing=1;
+    WriteText();
     std::thread t(computepoints,std::ref(F),points,std::cref(x1),std::cref(x2),std::ref(ymax),std::ref(ymin),i,comppoints);
     t.detach();
 }
@@ -2985,6 +2986,7 @@ void PlotFunctionFrame::OnInputDialog(wxCommandEvent&)
 
 void PlotFunctionFrame::ChangeSettings(int command, const std::string &svalue, int id)
 {
+    //WriteText();
     switch (command)
     {
     case val_settings::PANEL_SIZE:
@@ -3145,7 +3147,7 @@ void PlotFunctionFrame::ChangeSettings(int command, const std::string &svalue, i
             xstring = val::ToString(x1) + ";" + val::ToString(x2);
             ystring = val::ToString(y1) + ";" + val::ToString(y2);
             Compute();
-
+            return;
         }
         break;
     case val_settings::AXIS_SCALE:
@@ -3377,6 +3379,7 @@ void PlotFunctionFrame::ChangeSettings(int command, const std::string &svalue, i
 
 void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string &svalue, int id)
 {
+    //WriteText();
     //if ((command != REGRESSION && command != INTERPOLATION && command != CALCULATE)  && (f_nr < 0 || f_nr >= N)) return;
     switch (command)
     {
@@ -3583,11 +3586,11 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
         }
         break;
     case val_commands::CALCULATE:
-    	{
+        {
             std::thread t(calculate,svalue);
             t.detach();
             return;
-    	}
+        }
         break;
     case val_commands::INTEGRAL: case val_commands::ARCLENGTH: case val_commands::ZERO_ITERATION:
         {
@@ -3685,7 +3688,7 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
                 ++i;
             }
             refreshfunctionstring();
-            WriteText();
+            // WriteText();
             // Change menu-text
             {
                 std::string tf = "", tc = "", s = F[f_nr].getinfixnotation();
@@ -5418,8 +5421,14 @@ void PlotFunctionFrame::OnSideBarEvaluate(wxCommandEvent &event)
 }
 
 
-void PlotFunctionFrame::OnLostFocus(wxFocusEvent &event)
+void PlotFunctionFrame::OnFocusChanged(wxFocusEvent &event)
 {
+    int newfocus = 0;
+    if (SideText->HasFocus()) newfocus = 0;
+    else if (DrawPanel->HasFocus()) newfocus = 1;
+    else newfocus = 2;
+    if (lastfocusedwindow == newfocus) return;
+    lastfocusedwindow = newfocus;
     CompareSideTextInput();
     event.Skip();
 }
