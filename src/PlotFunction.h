@@ -20,6 +20,9 @@
 #include <trie.h>
 
 
+#define getwordsfromstring val::getwordsfromstring<char, val::d_array, val::Glist>
+
+
 class MyThreadEvent;
 //class myfunction;
 struct plotobject;
@@ -49,13 +52,15 @@ extern const val::d_array<wxString> WordList;
 extern const val::trie_type<wxString> WordTree;
 extern const val::trie_type<wxString> InputDialogTree;
 
-
+// match with defaultcolors, defaultcolornames
 enum val_colors{BLUE,RED,GREEN,LBLUE,ORANGE,VIOLET,GREY,WHITE,BlACK,LGREY,YELLOW,DGREEN,BEIGE,BROWN,DBLUE,PINK,SKYBLUE,LGREEN,MAGENTA,OLIVE,PURPLE,GOLD,CYAN};
 
+// match with SettingsList, SettingsParList
 enum val_settings{AXIS_SCALE,AXIS_COLOR,GRID_SCALE,GRID_COLOR,VALUES_NUMBER,AXIS_RANGE,SHOW_X_AXIS,SHOW_Y_AXIS,SHOW_GRID,SHOW_X_SCALE,
                     SHOW_Y_SCALE,RESET_COLORS,FONT_SIZE,FUNCTION_COLOR,PANEL_SIZE,AXIS_NAMES,REGRESSION_DEGREE,POINT_DECIMALS,
                     SHOW_FUNCTION,BACKGROND_COLOR,PARAMETER_VALUES,FUNCTION_SIZE,MARGIN,AXIS_FONTSIZE,FUNCTION_SETTINGS,MOVEINC};
 
+// match with CommandsList, CommandsParList
 enum val_commands{DERIVE,ANALYZE,TANGENT,NORMAL,INTERPOLATION,REGRESSION,TABLE,INTEGRAL,ARCLENGTH,ZERO_ITERATION,MOVE,EVALUATE,INTERSECTION,CALCULATE,ROTATE,OSCCIRCLE};
 
 wxDECLARE_EVENT(MY_EVENT, MyThreadEvent);
@@ -129,10 +134,10 @@ int getfunctionfromstring(std::string &fstring, plotobject &f, int &style_change
 
 val::Glist<double> getdoublevaluesfromstring(const std::string &sf,const val::d_array<char>& separators, int emptystring = 0);
 
-val::Glist<std::string> getwordsfromstring(const std::string &sf,const val::d_array<char>& separators, int emptywords = 0,
-                                           const val::d_array<char> &ignore = val::d_array<char>());
+// val::Glist<std::string> getwordsfromstring(const std::string &sf,const val::d_array<char>& separators, int emptywords = 0,
+//                                            const val::d_array<char> &ignore = val::d_array<char>());
 
-val::matrix<val::rational> set_les(const std::string &s);
+val::matrix<val::rational> set_interpolation_les(const std::string &s);
 
 val::pol<val::rational> interpolation(const std::string &s);
 

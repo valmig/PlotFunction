@@ -178,4 +178,24 @@ private:
 };
 
 
+// -------------------------------------------------------------------------------
+class DLL_PUBLIC ListDialog : public wxDialog
+{
+public:
+    ListDialog(wxWindow* parent,const val::Glist<std::string> &Choices=val::Glist<std::string>(),const std::string &title="",const std::string &Entry="",
+               int sx=240,int sy=100,int fontsize=10, long style = 0, int max_choices = -1);
+    virtual ~ListDialog();
+    std::string GetText() const;
+    int GetSelection() const;
+    void SetSelection(int n) {if (listbox != nullptr) listbox->SetSelection(n);}
+    val::d_array<int> GetSelections() const {if (listbox != nullptr) return listbox->GetSelections(); else return val::d_array<int>();}
+	template <template <typename> class C> void SetSelections(const C<int> &List) {if (listbox!= nullptr) listbox->SetSelections(List);}
+private:
+    val::ListBox *listbox=nullptr;
+    wxTextCtrl *TextCtrl1=nullptr;
+    wxButton *CancelButton=nullptr,*OKButton=nullptr;
+    void OnButtonClick(wxCommandEvent& event);
+    void OnListBoxEvent(wxCommandEvent&);
+};
+
 #endif

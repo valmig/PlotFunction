@@ -53,8 +53,8 @@ class PlotFunctionFrame: public wxFrame
 
         //(*Identifiers(PlotFunctionFrame)
         static const long ID_PANEL1;
-        static const long idMenuQuit;
-        static const long ID_MENUITEM4;
+        //static const long idMenuQuit;
+        //static const long ID_MENUITEM4;
         static const long ID_MENUITEM1;
         static const long ID_MENUITEM2;
         static const long ID_MENUITEM3;
@@ -66,18 +66,17 @@ class PlotFunctionFrame: public wxFrame
         //*)
 
         //(*Declarations(PlotFunctionFrame)
-        wxMenu* Menu3;
-        wxMenu* submenuaxis;
-        wxMenuItem* MenuItem3;
-        wxMenuItem* MenuItem4;
-        wxMenuItem* MenuSave;
-        wxMenuItem* MenuSize;
+        //wxMenu* MenuSettings;
+        //wxMenu* submenuaxis;
+        //wxMenuItem* MenuItem4;
+        //wxMenuItem* MenuSave;
+        //wxMenuItem* MenuSize;
         wxMenuItem* Menu_xAxis;
         wxMenuItem* Menu_yAxis;
         wxPanel* DrawPanel;
         wxStatusBar* StatusBar1;
         //*)
-        wxBoxSizer *BoxSizer1, *BoxSizer2;
+        wxBoxSizer *BoxSizer1; // *BoxSizer2;
         val::CompleteTextCtrl *SideText = nullptr;
 
         wxMenu *Menu_functions,*colorsubmenu,*rightclickmenu, *rightclickfunctionsmenu;
@@ -209,7 +208,7 @@ class PlotFunctionFrame: public wxFrame
         void OnDrawPanelResize(wxSizeEvent& event);
         void OnAllSettingsSelected(wxCommandEvent& event);
         void OnMenu_xAxisSelected(wxCommandEvent& event);
-        void OnMenuSaveSelected(wxCommandEvent& event);
+        void OnMenuExportSelected(wxCommandEvent& event);
         void OnMenuSizeSelected(wxCommandEvent& event);
         void OnMenuFontSize(wxCommandEvent& event);
         void OnFileMenu(wxCommandEvent &event);

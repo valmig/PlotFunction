@@ -680,7 +680,7 @@ val::Glist<double> getdoublevaluesfromstring(const std::string &sf,const val::d_
     return values;
 }
 
-
+/*
 val::Glist<std::string> getwordsfromstring(const std::string &sf,const val::d_array<char>& separators,int emptywords,
                                            const val::d_array<char> &ignore)
 {
@@ -702,7 +702,7 @@ val::Glist<std::string> getwordsfromstring(const std::string &sf,const val::d_ar
 
     return values;
 }
-
+*/
 
 
 int isderived(const std::string &sf)
@@ -773,7 +773,7 @@ val::rationalfunction derive(const val::rationalfunction &f)
 }
 
 
-val::matrix<val::rational> set_les(const std::string &s)
+val::matrix<val::rational> set_interpolation_les(const std::string &s)
 {
     int n=s.length(),i=0,j,k=0,n1=0,n2=0,l;
     val::matrix<val::rational> A;
@@ -853,7 +853,7 @@ val::matrix<val::rational> set_les(const std::string &s)
 
 val::pol<val::rational> interpolation(const std::string &s)
 {
-    val::matrix<val::rational> X,A=set_les(s);
+    val::matrix<val::rational> X,A=set_interpolation_les(s);
     val::pol<val::rational> f;
     val::rational det;
     int dim;
@@ -1145,59 +1145,12 @@ void calculate(std::string s)
     //int i, n = WordList.length(), found = 0, j = 1; //nvar = 0;
     val::Glist<char> VarList;
 
-    /*
-    for (i = 0; i < n; ++i) {
-        rw = "#" + val::ToString(i);
-        if (val::replace(s, std::string(WordList[i]), rw)) found = 1;
-    }
-
-    n = s.length();
-    for (i = 0; i < n; ++i) {
-        if ((s[i] >= 65 && s[i] <= 90) || (s[i] >= 97 && s[i] <= 122 && s[i] != 'i' && s[i] != 'e')) {
-            if (!val::isinContainer(s[i], VarList)) VarList.sinsert(s[i]);
-        }
-    }
-
-    for (const auto &v : VarList) {
-        rw = "A" + val::ToString(j);
-        rs = v;
-        ++j;
-        val::replace(s, rs, rw);
-        n = s.length();
-    }
-
-    //std::cout << "\n s = " << s;
-    n = WordList.length();
-    for (i = n-1; found && i >= 0; --i) {
-        rw = "#" + val::ToString(i);
-        val::replace(s, rw, std::string(WordList[i]));
-    }
-
-    val::replace(s, std::string("A"), std::string("x"));
-    // std::cout << "\n s = " << s;
-    */
     VarList = substitutepar(s);
 
     val::valfunction f(s);
     s = f.getinfixnotation();
 
     back_substitutepar(s, VarList, f.numberofvariables());
-
-    /*
-    for (i  = 0; i < VarList.length();++i) {
-        rw = "x" + val::ToString(i+1);
-        rs = VarList[i];
-        if (f.numberofvariables() <= 3) {
-            if (i + 1 == 1) rw = "x";
-            if (i + 1 == 2) rw = "y";
-            if (i + 1 == 3) rw = "z";
-        }
-        // std::cout << "\n rw = " << rw << " , rs  = " << rs;
-        val::replace(s, rw, rs);
-    }
-    */
-
-    //
 
     tablestring = "Evaluation of:\n" + os +": \nSymbolic:\n" + s;
     if (f.iscomplex()) {
@@ -1209,6 +1162,7 @@ void calculate(std::string s)
     MyThreadEvent event(MY_EVENT,IdCalculate);
     if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event.Clone() );
 }
+
 
 void computezeroiteration(const plotobject&F,double x1,double x2,double eps,int n,int dez)
 {
@@ -1274,7 +1228,6 @@ void computerotation(const val::d_array<plotobject*> F,std::string input)
     if (n > 2) y0 = val::FromString<double>(values[2]);
     if (n > 3) x1 = values[3];
     if (n > 4) x2 = values[4];
-
 
     A=val::rotationmatrix(val::PI*alpha/180.0);
 

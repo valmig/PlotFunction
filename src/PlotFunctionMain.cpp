@@ -44,8 +44,8 @@
 
 //*IdInit(PlotFunctionFrame)
 const long PlotFunctionFrame::ID_PANEL1 = 30001;//wxNewId();
-const long PlotFunctionFrame::idMenuQuit = 30002;//wxNewId();
-const long PlotFunctionFrame::ID_MENUITEM4 = 30003;//wxNewId();
+//const long PlotFunctionFrame::idMenuQuit = 30002;//wxNewId();
+//const long PlotFunctionFrame::ID_MENUITEM4 = 30003;//wxNewId();
 const long PlotFunctionFrame::ID_MENUITEM1 = 30004;//wxNewId();
 const long PlotFunctionFrame::ID_MENUITEM2 = 30005;//wxNewId();
 const long PlotFunctionFrame::ID_MENUITEM3 = 30006;//wxNewId();
@@ -80,11 +80,10 @@ struct quadruple
 
 PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
 {
-    wxMenu* Menu1;
-    wxMenu* Menu2;
-    wxMenuBar* MenuBar1;
-    wxMenuItem* MenuItem1;
-    wxMenuItem* MenuItem2;
+    //wxMenu* MenuHelp;
+    //wxMenuBar* MenuBar1;
+    //wxMenuItem* MenuItem1;
+    //wxMenuItem* MenuItem2;
 
     Create(parent, id,Program_Name, wxDefaultPosition, wxDefaultSize, wxDEFAULT_FRAME_STYLE, _T("id"));
     val::SetErrorMessage(custom_error);
@@ -107,97 +106,53 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
         SetIcon(FrameIcon);
     }
     //
-    BoxSizer1 = new wxBoxSizer(wxVERTICAL);
-    BoxSizer2 = new wxBoxSizer(wxHORIZONTAL);
-    DrawPanel = new wxPanel(this, ID_PANEL1, wxDefaultPosition, wxSize(400,300), wxTAB_TRAVERSAL, _T("ID_PANEL1"));
-    DrawPanel->SetMinSize(wxSize(-1,-1));
-    DrawPanel->SetMaxSize(wxSize(-1,-1));
-    DrawPanel->SetForegroundColour(wxColour(255,255,255));
-    DrawPanel->SetBackgroundColour(wxColour(255,255,255));
-
-    SideText = new val::CompleteTextCtrl(this,3102,WordTree,wxEmptyString,wxSize(widthSideText,-1),wxDefaultPosition,wxTE_MULTILINE|wxVSCROLL|wxHSCROLL|wxTE_RICH);
-    notebook = new wxNotebook(this,3100);
-
-    BoxSizer2->Add(SideText, 0, wxALL|wxEXPAND, 5);
-    BoxSizer2->Add(DrawPanel, 1, wxALL|wxEXPAND, 5);
-    BoxSizer2->Add(notebook, 0, wxALL|wxEXPAND, 5);
-
-    BoxSizer1->Add(BoxSizer2, 1, wxALL|wxEXPAND, 5);
-    SetSizer(BoxSizer1);
+    // Statusbar:
+    StatusBar1 = new wxStatusBar(this, ID_STATUSBAR1, 0, _T("ID_STATUSBAR1"));
+    int __wxStatusBarWidths_1[2] = { -3,-1 };
+    StatusBar1->SetFieldsCount(2,__wxStatusBarWidths_1);
+    SetStatusBar(StatusBar1);
     //
-    MenuBar1 = new wxMenuBar();
-    Menu1 = new wxMenu();
+    // Menues:----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    // File Menu:
+    wxMenu *MenuFile = new wxMenu();
 #ifdef __APPLE__
-    Menu1->Append(101,_("New\tRawCtrl-N"));
+    MenuFile->Append(101,_("New\tRawCtrl-N"));
 #else
-    Menu1->Append(101,_("New\tCtrl-N"));
+    MenuFile->Append(101,_("New\tCtrl-N"));
 #endif // __APPLE__
-    Menu1->Append(102,_("Open file...\tCtrl-O"));
+    MenuFile->Append(102,_("Open file...\tCtrl-O"));
     MenuRecentfiles = new wxMenu();
     MenuRecentfiles->AppendSeparator();
     MenuRecentfiles->Append(601,_("Clear history"));
-    Menu1->Append(600,_("Recent files"),MenuRecentfiles);
-    Menu1->Append(103,_("Save file\tCtrl-S"));
-    Menu1->Append(104,_("Save file as...\tCtrl-Shift-S"));
-    MenuSave = new wxMenuItem(Menu1, ID_MENUITEM4, _("Export Graphic as...\tCtrl-E"), wxEmptyString, wxITEM_NORMAL);
-    Menu1->Append(MenuSave);
+    MenuFile->Append(600,_("Recent files"),MenuRecentfiles);
+    MenuFile->Append(103,_("Save file\tCtrl-S"));
+    MenuFile->Append(104,_("Save file as...\tCtrl-Shift-S"));
+    MenuFile->Append(105, _("Export Graphic as...\tCtrl-E"));
+    //MenuSave = new wxMenuItem(MenuFile, ID_MENUITEM4, _("Export Graphic as...\tCtrl-E"), wxEmptyString, wxITEM_NORMAL);
+    //MenuFile->Append(MenuSave);
 #ifdef __APPLE__
-    MenuItem1 = new wxMenuItem(Menu1, idMenuQuit, _("Quit\tCtrl-Q"), _("Quit the application"), wxITEM_NORMAL);
+    MenuFile->Append(106,_("Quit\tCtrl-Q"), _("Quit the application"));
 #else
-    MenuItem1 = new wxMenuItem(Menu1, idMenuQuit, _("Quit\tAlt-F4"), _("Quit the application"), wxITEM_NORMAL);
+    MenuFile->Append(106,_("Quit\tAlt-F4"), _("Quit the application"));
 #endif
-    Menu1->Append(MenuItem1);
-    Menu3 = new wxMenu();
-    MenuItem3 = new wxMenuItem(Menu3, ID_MENUITEM1, _("Main Settings...\tAlt-M"), wxEmptyString, wxITEM_NORMAL);
-    Menu3->Append(MenuItem3);
-    submenuaxis = new wxMenu();
+    //
+    // Settings Menu:
+    wxMenu *MenuSettings = new wxMenu();
+    MenuSettings->Append(ID_MENUITEM1, _("Main Settings...\tAlt-M"));
+
+    wxMenu *submenuaxis = new wxMenu();
+
     Menu_xAxis = new wxMenuItem(submenuaxis, ID_MENUITEM2, _("x-Axis\tAlt-X"), wxEmptyString, wxITEM_CHECK);
     submenuaxis->Append(Menu_xAxis);
     Menu_xAxis->Check(true);
     Menu_yAxis = new wxMenuItem(submenuaxis, ID_MENUITEM3, _("y-Axis\tAlt-Y"), wxEmptyString, wxITEM_CHECK);
     submenuaxis->Append(Menu_yAxis);
     Menu_yAxis->Check(true);
-    Menu3->AppendSubMenu(submenuaxis, _("Axis"));
-    MenuSize = new wxMenuItem(Menu3, ID_MENUITEM5, _("Size for png-Graphic"), wxEmptyString, wxITEM_NORMAL);
-    Menu3->Append(MenuSize);
-    MenuItem4 = new wxMenuItem(Menu3, ID_MENUITEM6, _("Font Size\tCtrl-F"), wxEmptyString, wxITEM_NORMAL);
-    Menu3->Append(MenuItem4);
-    wxMenu* viewMenu = new wxMenu();
-    Menu2 = new wxMenu();
-    MenuItem2 = new wxMenuItem(Menu2, idMenuAbout, _("About\tF1"), _("Show info about this application"), wxITEM_NORMAL);
-    Menu2->Append(MenuItem2);
-    SetMenuBar(MenuBar1);
-    //
-    wxMenuItem *sidemenuview =  new wxMenuItem(viewMenu,30101,_("Side Panel \tF2"),wxEmptyString,wxITEM_CHECK);
-    viewMenu->Append(sidemenuview);
-    wxMenuItem *notebookmenuview = new wxMenuItem(viewMenu,30102,_("Tools Panel \tF3"),wxEmptyString,wxITEM_CHECK);
-    viewMenu->Append(notebookmenuview);
-#ifdef __APPLE__
-    viewMenu->Append(5011,_("Command Line \tAlt-SPACE"));
-#else
-    viewMenu->Append(5011,_("Command Line \tCtrl-SPACE"));
-#endif
-    sidemenuview->Check(false);
-    notebookmenuview->Check(false);
-    //
-    StatusBar1 = new wxStatusBar(this, ID_STATUSBAR1, 0, _T("ID_STATUSBAR1"));
-    int __wxStatusBarWidths_1[2] = { -3,-1 };
-    StatusBar1->SetFieldsCount(2,__wxStatusBarWidths_1);
-    SetStatusBar(StatusBar1);
-
-    SideText->Hide();
-
-    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnQuit,this,idMenuQuit);
-    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuSaveSelected,this,ID_MENUITEM4);
-    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnAllSettingsSelected,this,ID_MENUITEM1);
-    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenu_xAxisSelected,this,ID_MENUITEM2);
-    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenu_xAxisSelected,this,ID_MENUITEM3);
-    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuSizeSelected,this,ID_MENUITEM5);
-    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFontSize,this,ID_MENUITEM6);
-    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnAbout,this,idMenuAbout);
-    //*)
-    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnSideBarCheck,this,30101);
-    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnSideBarCheck,this,30102);
+    MenuSettings->AppendSubMenu(submenuaxis, _("Axis"));
+    MenuSettings->Append(ID_MENUITEM5, _("Size for png-Graphic"));
+    //MenuItem4 = new wxMenuItem(MenuSettings, ID_MENUITEM6, _("Font Size\tCtrl-F"), wxEmptyString, wxITEM_NORMAL);
+    //MenuSettings->Append(MenuItem4);
+    MenuSettings->Append(ID_MENUITEM6, _("Font Size\tCtrl-F"));
     //
     colorsubmenu = new wxMenu();
     multicolormenu = new wxMenuItem(colorsubmenu,111,"Multiple Colors \tAlt-C",wxEmptyString,wxITEM_CHECK);
@@ -208,19 +163,19 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     colorsubmenu->Append(4402,_T("Grid Color...\tCtrl-Shift-G"));
     colorsubmenu->Append(4403,_T("Default Function Color...\tAlt-Shift-C"));
     colorsubmenu->AppendSeparator();
-    Menu3->Insert(3,3,"Colors",colorsubmenu);
-    wxMenuItem *resetcoloursmenu=new wxMenuItem(Menu3,4,"Reset Colours \tCtrl-Alt-R", wxEmptyString);
-    Menu3->Insert(4,resetcoloursmenu);
+    MenuSettings->Insert(3,3,"Colors",colorsubmenu);
+    wxMenuItem *resetcoloursmenu=new wxMenuItem(MenuSettings,4,"Reset Colours \tCtrl-Alt-R", wxEmptyString);
+    MenuSettings->Insert(4,resetcoloursmenu);
     //
-    wxMenuItem *ChangeParameterMenu= new wxMenuItem(Menu3,5,"Change Parameter Values...\tCtrl-P",wxEmptyString);
-    Menu3->Insert(3,ChangeParameterMenu);
-    wxMenuItem *DefaultFontSetting= new wxMenuItem(Menu3,21,"Default Draw Text Settings...\tCtrl-Alt-F");
-    Menu3->Append(DefaultFontSetting);
-    wxMenuItem *SetCSize= new wxMenuItem(Menu3,22,"Set Panel Size...\tF8");
-    Menu3->Append(SetCSize);
-    Menu3->Append(23,_T("Regression Degree...\tShift-Alt-A"));
-    Menu3->Append(24,_T("Round-decimals for points...\tCtrl-D"));
-    Menu3->Append(25,_T("Move Increments...\tCtrl-M"));
+    wxMenuItem *ChangeParameterMenu= new wxMenuItem(MenuSettings,5,"Change Parameter Values...\tCtrl-P",wxEmptyString);
+    MenuSettings->Insert(3,ChangeParameterMenu);
+    wxMenuItem *DefaultFontSetting= new wxMenuItem(MenuSettings,21,"Default Draw Text Settings...\tCtrl-Alt-F");
+    MenuSettings->Append(DefaultFontSetting);
+    wxMenuItem *SetCSize= new wxMenuItem(MenuSettings,22,"Set Panel Size...\tF8");
+    MenuSettings->Append(SetCSize);
+    MenuSettings->Append(23,_T("Regression Degree...\tShift-Alt-A"));
+    MenuSettings->Append(24,_T("Round-decimals for points...\tCtrl-D"));
+    MenuSettings->Append(25,_T("Move Increments...\tCtrl-M"));
     //
     wxMenuItem *xrangemenu=new wxMenuItem(submenuaxis,6,"x-Axis Range...\tCtrl-X",wxEmptyString);
     wxMenuItem *yrangemenu=new wxMenuItem(submenuaxis,7,"y-Axis Range...\tCtrl-Y",wxEmptyString);
@@ -240,13 +195,34 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     submenuaxis->Append(axisfontmenu);
     x_scaleactiv->Check(); y_scaleactiv->Check();
     //
+    wxMenu *MenuHelp = new wxMenu();
+    //MenuItem2 = new wxMenuItem(MenuHelp, idMenuAbout, _("About\tF1"), _("Show info about this application"), wxITEM_NORMAL);
+    //MenuHelp->Append(MenuItem2);
+    MenuHelp->Append(idMenuAbout, _("About\tF1"), _("Show info about this application"));
+    // View Menu:
+    wxMenu* viewMenu = new wxMenu();
+    //
+    wxMenuItem *sidemenuview =  new wxMenuItem(viewMenu,30101,_("Side Panel \tF2"),wxEmptyString,wxITEM_CHECK);
+    viewMenu->Append(sidemenuview);
+    wxMenuItem *notebookmenuview = new wxMenuItem(viewMenu,30102,_("Tools Panel \tF3"),wxEmptyString,wxITEM_CHECK);
+    viewMenu->Append(notebookmenuview);
 #ifdef __APPLE__
-    addfunction=new wxMenuItem(Menu_functions,3000,"Add/Remove new functions...\tCtrl-N", wxEmptyString);
+    viewMenu->Append(5011,_("Command Line \tAlt-SPACE"));
 #else
-    addfunction=new wxMenuItem(Menu_functions,3000,"Add/Remove new functions...\tAlt-N", wxEmptyString);
+    viewMenu->Append(5011,_("Command Line \tCtrl-SPACE"));
+#endif
+    sidemenuview->Check(false);
+    notebookmenuview->Check(false);
+    //
+    //
+    // Functions Menu
+#ifdef __APPLE__
+    addfunction = new wxMenuItem(Menu_functions,3000,"Add/Remove new functions...\tCtrl-N", wxEmptyString);
+#else
+    addfunction = new wxMenuItem(Menu_functions,3000,"Add/Remove new functions...\tAlt-N", wxEmptyString);
 #endif // __APPLE__
-    hideallmenu= new wxMenuItem(Menu_functions,3001,"Hide All \tAlt-H", wxEmptyString);
-    showallmenu= new wxMenuItem(Menu_functions,3002,"Show All \tAlt-S", wxEmptyString);
+    hideallmenu = new wxMenuItem(Menu_functions,3001,"Hide All \tAlt-H", wxEmptyString);
+    showallmenu = new wxMenuItem(Menu_functions,3002,"Show All \tAlt-S", wxEmptyString);
     deletelastmenu = new wxMenuItem(Menu_functions,3003,"Delete Last \tAlt-Del", wxEmptyString);
     deleteallmenu = new wxMenuItem(Menu_functions,3004,"Delete All \tShift-Alt-Del", wxEmptyString);
     undomenu = new wxMenuItem(Menu_functions,3005,_T("undo \tCtrl-Z"), wxEmptyString);
@@ -262,6 +238,7 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     Menu_functions->Append(deletelastmenu);
     Menu_functions->Append(deleteallmenu);
     //
+    // Tools Menu
     wxMenu *Menu_Tools=new wxMenu();
     wxMenuItem *Menuparameter = new wxMenuItem(Menu_Tools,7000,"Parameter Values...\tAlt-P",wxEmptyString);
     wxMenuItem *Menutangent = new wxMenuItem(Menu_Tools,7001,"Tangent...\tAlt-T",wxEmptyString);
@@ -285,14 +262,18 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     Menu_Tools->Append(7011,_("Analyze function... \tCtrl-A"));
     Menu_Tools->Append(7012,_("Intersection... \tShift-Ctrl-I"));
     Menu_Tools->Append(7013,_("Osculating Circle... \tAlt-O"));
-
-    MenuBar1->Append(Menu1, _("&File"));
+    //
+    //
+    wxMenuBar *MenuBar1 = new wxMenuBar();
+    SetMenuBar(MenuBar1);
+    MenuBar1->Append(MenuFile, _("&File"));
     MenuBar1->Append(viewMenu,_("&View"));
-    MenuBar1->Append(Menu3, _("Settings"));
+    MenuBar1->Append(MenuSettings, _("Settings"));
     MenuBar1->Append(Menu_functions, _("Functions"));
     MenuBar1->Append(Menu_Tools,"Tools");
-    MenuBar1->Append(Menu2, _("Help"));
+    MenuBar1->Append(MenuHelp, _("Help"));
     //
+    // Right.click Menu:
     rightclickmenu = new wxMenu();
     rightclickmenu->Append(1101,_T("Fill Area"));
     rightclickmenu->Append(1102,_T("Choose Color and Fill Area..."));
@@ -318,6 +299,95 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     //
     rightclickfunctionsmenu = new wxMenu();
     rightclickfunctionsmenu->Append(7101,_T("Change Settings"));
+    // --------------------------------------------------------------------------------------- End of menu defintions -------------------------------------------------
+    //
+    // Build basic components:
+    DrawPanel = new wxPanel(this, ID_PANEL1, wxDefaultPosition, wxSize(400,300), wxTAB_TRAVERSAL, _T("ID_PANEL1"));
+    DrawPanel->SetMinSize(wxSize(-1,-1));
+    DrawPanel->SetMaxSize(wxSize(-1,-1));
+    DrawPanel->SetForegroundColour(wxColour(255,255,255));
+    DrawPanel->SetBackgroundColour(wxColour(255,255,255));
+
+    SideText = new val::CompleteTextCtrl(this,3102,WordTree,wxEmptyString,wxSize(widthSideText,-1),wxDefaultPosition,wxTE_MULTILINE|wxVSCROLL|wxHSCROLL|wxTE_RICH);
+    SideText->SetCloseBrackets(true);
+    notebook = new wxNotebook(this,3100);
+    //
+    // Add Components in horizontal box sizer
+    BoxSizer1 = new wxBoxSizer(wxHORIZONTAL);
+    BoxSizer1->Add(SideText, 0, wxALL|wxEXPAND, 5);
+    BoxSizer1->Add(DrawPanel, 1, wxALL|wxEXPAND, 5);
+    BoxSizer1->Add(notebook, 0, wxALL|wxEXPAND, 5);
+
+    SetSizer(BoxSizer1);
+    BoxSizer1->SetSizeHints(this);
+
+    // Start-Settings:
+    SideText->Hide();
+    //
+    DrawPanel->SetMinSize(wxSize(100,50));
+
+    CreateNoteBook();
+    notebook->Hide();
+
+#ifdef __APPLE__
+    InfoStyle = wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER;
+#endif
+    //
+    defaultFont=this->GetFont();
+    Color.resize(7);
+
+    GetSizeSettings();
+    if (settings) {
+        wxSize TextSize = SideText->GetSize();
+        TextSize.x = widthSideText;
+        SideText->SetSize(TextSize);
+        TextSize.y = 10;
+        SideText->SetMinSize(TextSize);
+
+        clientsize_x += 10;
+        clientsize_y += 10;
+        if (SideText_isshown) {
+            clientsize_x +=  widthSideText + 10;
+            sidemenuview->Check(true);
+            SideText->Show();
+            SideText->SetFocus();
+            lastfocusedwindow = 0;
+        }
+        if (notebook_isshown) {
+            clientsize_x += widthNoteBookPanel + plusw;
+            notebookmenuview->Check(true);
+            notebook->Show();
+        }
+        Move(wxPoint(Posx,Posy));
+    }
+    else {
+        clientsize_x = clientsize_y = 500;
+    }
+
+    BoxSizer1->Fit(this);
+    SetClientSize(wxSize(clientsize_x,clientsize_y));
+    SetMinClientSize(wxSize(-1,80));
+    actualPanelsize = DrawPanel->GetSize();
+    MyFrame=this;
+    DrawPanel->SetCursor(wxCursor (wxCURSOR_HAND));
+    ResetColours();
+    GetSettings();
+    Compute();
+    Text_Editrefresh();
+
+    //
+    // Bind Events:
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnQuit,this, 106);
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuExportSelected,this, 105);
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnAllSettingsSelected,this,ID_MENUITEM1);
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenu_xAxisSelected,this,ID_MENUITEM2);
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenu_xAxisSelected,this,ID_MENUITEM3);
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuSizeSelected,this,ID_MENUITEM5);
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFontSize,this,ID_MENUITEM6);
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnAbout,this,idMenuAbout);
+    //*)
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnSideBarCheck,this,30101);
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnSideBarCheck,this,30102);
     //
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnFileMenu,this,101);          // New
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnFileMenu,this,102);          // Open
@@ -410,6 +480,16 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuButton,this,7201);
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuButton,this,7202);
     //
+    // Post-Bindings:
+    DrawPanel->Bind(wxEVT_PAINT,&PlotFunctionFrame::OnDrawPanelPaint,this);
+    DrawPanel->Bind(wxEVT_SIZE,&PlotFunctionFrame::OnDrawPanelResize,this);
+
+    DrawPanel->Bind(wxEVT_SET_FOCUS,&PlotFunctionFrame::OnFocusChanged,this);
+    SideText->Bind(wxEVT_SET_FOCUS,&PlotFunctionFrame::OnFocusChanged,this);
+    notebook->Bind(wxEVT_SET_FOCUS,&PlotFunctionFrame::OnFocusChanged,this);
+    //
+    //
+    // Accelerators:
     val::Glist<wxAcceleratorEntry> Accel;
 
     Accel.push_back(wxAcceleratorEntry(wxACCEL_CTRL, (int) '+',20001));
@@ -454,68 +534,8 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     //Accel.push_back(wxAcceleratorEntry(wxACCEL_SHIFT|wxACCEL_CTRL,WXK_DELETE,3004));
 
     SetAccelerators(Accel);
+    //
 
-
-    defaultFont=this->GetFont();
-    Color.resize(7);
-
-    DrawPanel->SetMinSize(wxSize(100,50));
-
-    SideText->SetCloseBrackets(true);
-
-    CreateNoteBook();
-    notebook->Hide();
-
-#ifdef __APPLE__
-    InfoStyle = wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER;
-#endif
-
-    GetSizeSettings();
-    if (settings) {
-        wxSize TextSize = SideText->GetSize();
-        TextSize.x = widthSideText;
-        SideText->SetSize(TextSize);
-        TextSize.y = 10;
-        SideText->SetMinSize(TextSize);
-
-        clientsize_x += 20;
-        clientsize_y += 20;
-        if (SideText_isshown) {
-            clientsize_x +=  widthSideText + 10;
-            sidemenuview->Check(true);
-            SideText->Show();
-            SideText->SetFocus();
-            lastfocusedwindow = 0;
-        }
-        if (notebook_isshown) {
-            clientsize_x += widthNoteBookPanel + plusw;
-            notebookmenuview->Check(true);
-            notebook->Show();
-        }
-        Move(wxPoint(Posx,Posy));
-    }
-    else {
-        clientsize_x = clientsize_y = 500;
-    }
-
-    BoxSizer1->Fit(this);
-    BoxSizer1->SetSizeHints(this);
-    SetClientSize(wxSize(clientsize_x,clientsize_y));
-    SetMinClientSize(wxSize(-1,80));
-    actualPanelsize = DrawPanel->GetSize();
-    MyFrame=this;
-    DrawPanel->SetCursor(wxCursor (wxCURSOR_HAND));
-    ResetColours();
-    GetSettings();
-    Compute();
-    Text_Editrefresh();
-
-    DrawPanel->Bind(wxEVT_PAINT,&PlotFunctionFrame::OnDrawPanelPaint,this);
-    DrawPanel->Bind(wxEVT_SIZE,&PlotFunctionFrame::OnDrawPanelResize,this);
-
-    DrawPanel->Bind(wxEVT_SET_FOCUS,&PlotFunctionFrame::OnFocusChanged,this);
-    SideText->Bind(wxEVT_SET_FOCUS,&PlotFunctionFrame::OnFocusChanged,this);
-    notebook->Bind(wxEVT_SET_FOCUS,&PlotFunctionFrame::OnFocusChanged,this);
 }
 
 
@@ -2175,7 +2195,7 @@ void PlotFunctionFrame::OnMenu_xAxisSelected(wxCommandEvent& event)
 }
 
 
-void PlotFunctionFrame::OnMenuSaveSelected(wxCommandEvent& event)
+void PlotFunctionFrame::OnMenuExportSelected(wxCommandEvent& event)
 {
     if (!ispainted) return;
 #ifdef _WIN32
@@ -2876,9 +2896,9 @@ void PlotFunctionFrame::OnInputDialog(wxCommandEvent&)
 
     wxPoint point = GetPosition();
     point.y += 60;
-    point.x += 10;
+    point.x += 5;
     size.y = -1;//30;
-    size.x -= 20;
+    size.x -= 10;
 
 #ifdef __APPLE__
     point.y -= 30;
@@ -3007,7 +3027,7 @@ void PlotFunctionFrame::ChangeSettings(int command, const std::string &svalue, i
              else y = x;
 
              if (id == 22) {
-                x +=  20; y+= 20;
+                x +=  10; y+= 10;
                 if (x < 50) x = 50;
                 if (y < 50) y = 50;
                 if (SideText_isshown) x += widthSideText + 10;
@@ -4151,6 +4171,7 @@ void PlotFunctionFrame::savefile(const std::string &dirname,const std::string &f
         for (i=0;i<N;++i) {
             file<<Color[i].GetRGB()<<std::endl;
         }
+        // Fonts:
         m=Font.length();
         file<<m<<std::endl;
 #ifndef __LINUX__
@@ -4163,7 +4184,7 @@ void PlotFunctionFrame::savefile(const std::string &dirname,const std::string &f
         }
 #endif // __LINUX__
         //
-
+        // bitmap-backgroung
         if (bitmapbackground) {
             file<<1<<std::endl;
             std::string nfilename = dirname + filesep +filename;
@@ -4232,6 +4253,7 @@ void PlotFunctionFrame::openfile(const std::string &dirname,const std::string &f
     for (i=0;i<N;++i) {
         file>>iwert; Color[i].SetRGB(iwert);
     }
+    // Fonts:
     file>>m;
     std::getline(file,line);
     Font.resize(m);
@@ -4242,6 +4264,7 @@ void PlotFunctionFrame::openfile(const std::string &dirname,const std::string &f
         Font[i].SetNativeFontInfoUserDesc(wxString(line));
     }
 
+    // bitmap-background:
     bitmapbackground = 0;
 
     int bm=0;
@@ -4257,6 +4280,7 @@ void PlotFunctionFrame::openfile(const std::string &dirname,const std::string &f
         }
         else wxMessageBox("Cannot load Background!");
     }
+    // Parameters:
     {
         int npar = 0, value;
         file >> npar;
@@ -4270,7 +4294,7 @@ void PlotFunctionFrame::openfile(const std::string &dirname,const std::string &f
 
 
     file.close();
-    xsize +=  20; ysize += 20;
+    xsize +=  10; ysize += 10;
     if (xsize < 50) xsize = 50;
     if (ysize < 50) ysize = 50;
     if (SideText_isshown) xsize += widthSideText + 10;
@@ -5100,12 +5124,12 @@ void PlotFunctionFrame::OnMove(wxCommandEvent &event)
         SideText->SetMinSize(TextSize);
 
         widthSideText = SideText->GetSize().x;
-        Size.x += 30 + widthSideText;
+        Size.x += 20 + widthSideText;
         if (notebook_isshown) Size.x += widthNoteBookPanel + plusw;
-        Size.y += 20;
+        Size.y += 10;
 
-        BoxSizer1->Fit(this);
-        BoxSizer1->SetSizeHints(this);
+        //BoxSizer1->Fit(this);
+        //BoxSizer1->SetSizeHints(this);
         SetClientSize(Size);
 
         return;
@@ -5113,8 +5137,8 @@ void PlotFunctionFrame::OnMove(wxCommandEvent &event)
 
     if (!yset) return;
 
-    switch (id)
-    {
+
+    switch (id) {
     case 20003 : {movex += movedx;} break;
     case 20004 : {movex -= movedx;} break;
     case 20005 : {movey += movedy;} break;
@@ -5438,8 +5462,8 @@ void PlotFunctionFrame::OnSideBarCheck(wxCommandEvent &event)
     wxSize Size = DrawPanel->GetSize();
     int id = event.GetId();
 
-    Size.x += 20;
-    Size.y += 20;
+    Size.x += 10;
+    Size.y += 10;
 
     if (id == 30101) {
         if (notebook_isshown) Size.x += widthNoteBookPanel + plusw;
@@ -5479,8 +5503,8 @@ void PlotFunctionFrame::OnSideBarCheck(wxCommandEvent &event)
             Size.x += widthNoteBookPanel + plusw;
         }
     }
-    BoxSizer1->Fit(this);
-    BoxSizer1->SetSizeHints(this);
+    //BoxSizer1->Fit(this);
+    //BoxSizer1->SetSizeHints(this);
     SetClientSize(Size);
 #ifdef _WIN32
     DrawPanel->SetMinSize(wxSize(80,80));

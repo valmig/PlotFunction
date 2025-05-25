@@ -9,8 +9,8 @@
 namespace val
 {
 
-enum {BaseDialog_Esc_Id=32600, BaseDialog_Return_Id, MultiLineDialog_OK_Id, MultiLineDialog_Cancel_Id,
-        InfoWindow_Esc_Id, ListDialog_OK_Id, ListDialog_Cancel_Id};
+enum {BaseDialog_Esc_Id=32600, BaseDialog_Return_Id, MultiLineDialog_OK_Id, MultiLineDialog_Cancel_Id, InfoWindow_Esc_Id};
+	//ListDialog_OK_Id, ListDialog_Cancel_Id};
 
 // ----------------------------------------------------------------------------------------------------------------------------
 
@@ -276,111 +276,6 @@ d_array<int> ListBox::GetSelections() const
     return sel;
 }
 // --------------------------------------------------------------------------------------------------------------------------------------------------
-
-
-ListDialog::ListDialog(wxWindow* parent,const val::Glist<std::string> &Choices,const std::string &title,const std::string &Entry,
-                       int sx,int sy,int fontsize, long style, int max_choices)
-{
-	if (sx<100) sx=100;
-	if (sx>400) sx=400;
-	if (sy<10) sy=10;
-	if (sy>300) sy=300;
-	//*Initialize(MultiLineDialog)
-	wxBoxSizer* BoxSizer1;
-	wxBoxSizer* BoxSizer2;
-	wxBoxSizer* BoxSizer3;
-	wxBoxSizer* BoxSizer4;
-	wxBoxSizer* BoxSizer41;
-	wxBoxSizer* BoxSizer5;
-
-	Create(parent, wxID_ANY, title,wxDefaultPosition, wxDefaultSize, wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER, _T("wxID_ANY"));
-	BoxSizer1 = new wxBoxSizer(wxVERTICAL);
-
-	if (!Choices.isempty()) {
-        BoxSizer2 = new wxBoxSizer(wxHORIZONTAL);
-        wxStaticText *StaticText1 = new wxStaticText(this,41,_T("Select Function:"), wxDefaultPosition, wxDefaultSize, 0, _T("ID_STATICTEXT1"));
-        BoxSizer2->Add(StaticText1, 1, wxALL|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
-        BoxSizer1->Add(BoxSizer2, 0, wxALL|wxALIGN_LEFT, 5);
-        listbox = new ListBox(this,30,Choices,style,max_choices);
-        BoxSizer3 = new wxBoxSizer(wxHORIZONTAL);
-        //BoxSizer3->Add(listbox,1,wxALL|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL,5);
-        BoxSizer3->Add(listbox,1,wxALL|wxEXPAND,5);
-        BoxSizer1->Add(BoxSizer3,1,wxALL|wxEXPAND,5);
-	}
-    BoxSizer41 = new wxBoxSizer(wxHORIZONTAL);
-    wxStaticText *StaticText2 = new wxStaticText(this,42,_T("Set Interval/Precision/Iterations/Decimals:"), wxDefaultPosition, wxDefaultSize, 0, _T("ID_STATICTEXT2"));
-    BoxSizer41->Add(StaticText2, 1, wxALL|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
-    BoxSizer1->Add(BoxSizer41, 0, wxALL|wxALIGN_LEFT, 5);
-
-	TextCtrl1 = new wxTextCtrl(this,20,Entry,wxDefaultPosition, wxSize(sx,sy), wxTE_MULTILINE|wxVSCROLL|wxHSCROLL);
-	BoxSizer4 = new wxBoxSizer(wxHORIZONTAL);
-	BoxSizer4->Add(TextCtrl1,1,wxALL|wxEXPAND,5);
-	BoxSizer1->Add(BoxSizer4,1,wxALL|wxEXPAND,5);
-	BoxSizer5 = new wxBoxSizer(wxHORIZONTAL);
-	CancelButton = new wxButton(this,ListDialog_Cancel_Id, _("Cancel"));
-	BoxSizer5->Add(CancelButton, 1, wxALL|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
-	OKButton = new wxButton(this,ListDialog_OK_Id, _("OK"));
-	BoxSizer5->Add(OKButton, 1, wxALL|wxALIGN_CENTER_HORIZONTAL|wxALIGN_CENTER_VERTICAL, 5);
-	BoxSizer1->Add(BoxSizer5, 0, wxALL|wxALIGN_RIGHT, 5);
-	SetSizer(BoxSizer1);
-	BoxSizer1->Fit(this);
-	BoxSizer1->SetSizeHints(this);
-
-	Bind(wxEVT_COMMAND_BUTTON_CLICKED,&ListDialog::OnButtonClick,this,ListDialog_OK_Id);
-	Bind(wxEVT_COMMAND_BUTTON_CLICKED,&ListDialog::OnButtonClick,this,ListDialog_Cancel_Id);
-	Bind(wxEVT_LISTBOX_DCLICK,&ListDialog::OnListBoxEvent,this,30);
-
-
-    wxAcceleratorEntry entries[3];
-    entries[0].Set(wxACCEL_CTRL, (int) 'O',ListDialog_OK_Id);
-    //entries[1].Set(wxACCEL_CTRL, (int) 'C',ID_BUTTON1);
-    entries[1].Set(wxACCEL_NORMAL,WXK_ESCAPE,ListDialog_Cancel_Id);
-    entries[2].Set(wxACCEL_CTRL,WXK_RETURN,ListDialog_OK_Id);
-    wxAcceleratorTable accel(3,entries);
-    SetAcceleratorTable(accel);
-
-    {
-        wxFont myfont(TextCtrl1->GetFont());
-        if (fontsize<10) fontsize=10;
-        if (fontsize>16) fontsize=16;
-        myfont.SetPointSize(fontsize);
-        TextCtrl1->SetFont(myfont);
-        listbox->SetFont(myfont);
-        //StaticText1->SetFont(myfont);
-    }
-}
-
-
-ListDialog::~ListDialog()
-{
-
-}
-
-std::string ListDialog::GetText() const
-{
-    return std::string(TextCtrl1->GetValue());
-    //return std::string();
-}
-
-int ListDialog::GetSelection() const
-{
-    if (listbox!=nullptr) return listbox->GetSelection();
-    else return -1;
-    //return 0;
-}
-
-
-
-void ListDialog::OnButtonClick(wxCommandEvent& event)
-{
-    if (event.GetId()==ListDialog_OK_Id) EndModal(wxID_OK);
-    else EndModal(wxID_CANCEL);
-}
-
-void ListDialog::OnListBoxEvent(wxCommandEvent&)
-{
-    EndModal(wxID_OK);
-}
 
 
 
