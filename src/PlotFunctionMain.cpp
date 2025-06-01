@@ -80,11 +80,6 @@ struct quadruple
 
 PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
 {
-    //wxMenu* MenuHelp;
-    //wxMenuBar* MenuBar1;
-    //wxMenuItem* MenuItem1;
-    //wxMenuItem* MenuItem2;
-
     Create(parent, id,Program_Name, wxDefaultPosition, wxDefaultSize, wxDEFAULT_FRAME_STYLE, _T("id"));
     val::SetErrorMessage(custom_error);
 
@@ -216,19 +211,19 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     //
     //
     // Functions Menu
-#ifdef __APPLE__
-    addfunction = new wxMenuItem(Menu_functions,3000,"Add/Remove new functions...\tCtrl-N", wxEmptyString);
-#else
-    addfunction = new wxMenuItem(Menu_functions,3000,"Add/Remove new functions...\tAlt-N", wxEmptyString);
-#endif // __APPLE__
-    hideallmenu = new wxMenuItem(Menu_functions,3001,"Hide All \tAlt-H", wxEmptyString);
-    showallmenu = new wxMenuItem(Menu_functions,3002,"Show All \tAlt-S", wxEmptyString);
-    deletelastmenu = new wxMenuItem(Menu_functions,3003,"Delete Last \tAlt-Del", wxEmptyString);
-    deleteallmenu = new wxMenuItem(Menu_functions,3004,"Delete All \tShift-Alt-Del", wxEmptyString);
-    undomenu = new wxMenuItem(Menu_functions,3005,_T("undo \tCtrl-Z"), wxEmptyString);
-    redomenu = new wxMenuItem(Menu_functions,3006,_T("redo \tShift-Ctrl-Z"), wxEmptyString);
-    //
     Menu_functions= new wxMenu();
+#ifdef __APPLE__
+    addfunction = new wxMenuItem(Menu_functions,3000,"Add/Remove new functions...\tCtrl-N");
+#else
+    addfunction = new wxMenuItem(Menu_functions,3000,"Add/Remove new functions...\tAlt-N");
+#endif // __APPLE__
+    hideallmenu = new wxMenuItem(Menu_functions,3001,"Hide All \tAlt-H");
+    showallmenu = new wxMenuItem(Menu_functions,3002,"Show All \tAlt-S");
+    deletelastmenu = new wxMenuItem(Menu_functions,3003,"Delete Last \tAlt-Del");
+    deleteallmenu = new wxMenuItem(Menu_functions,3004,"Delete All \tShift-Alt-Del");
+    undomenu = new wxMenuItem(Menu_functions,3005,_T("undo \tCtrl-Z"));
+    redomenu = new wxMenuItem(Menu_functions,3006,_T("redo \tShift-Ctrl-Z"));
+    //
     Menu_functions->AppendSeparator();
     Menu_functions->Append(addfunction);
     Menu_functions->Append(undomenu);
@@ -5503,8 +5498,8 @@ void PlotFunctionFrame::OnSideBarCheck(wxCommandEvent &event)
             Size.x += widthNoteBookPanel + plusw;
         }
     }
-    //BoxSizer1->Fit(this);
-    //BoxSizer1->SetSizeHints(this);
+    BoxSizer1->Fit(this);
+    BoxSizer1->SetSizeHints(this);
     SetClientSize(Size);
 #ifdef _WIN32
     DrawPanel->SetMinSize(wxSize(80,80));
@@ -5519,7 +5514,7 @@ void PlotFunctionFrame::CreateNoteBook()
     wxPanel *panel1 = new wxPanel(notebook,8001,wxDefaultPosition,wxSize(widthNoteBookPanel,100)),
         *panel2 = new wxPanel(notebook,8002,wxDefaultPosition,wxSize(widthNoteBookPanel,100)),
         *panel3 = new wxPanel(notebook,8003,wxDefaultPosition,wxSize(widthNoteBookPanel,100));
-    int i, n_view = 5,viewf_size = 12, viewdy = viewf_size + 30, y, rows = 4, columns = 3, n_tools = rows*columns, b_xsize = 50;
+    int i, n_view = 5,viewf_size = 12, viewdy = viewf_size + 30, y, rows = 4, columns = 3, b_xsize = 50;
 
 
     panel1->SetBackgroundColour(panel1->GetBackgroundColour());
@@ -5549,20 +5544,25 @@ void PlotFunctionFrame::CreateNoteBook()
     }
 
     // Add items to Tools-Panel:
-    int x, b_ysize = 30, dy = b_ysize + 20;
+    int x, b_ysize = 30, dy = b_ysize + 20, n_tools;
     b_xsize = 80;
     y = 50;
-    val::d_array<wxButton*> ToolButtons{nullptr,n_tools};
-    val::d_array<std::string> button_names{"Analyze", "Table", "Tangent", "Normal", "Derive", "Integral", "ArcLen", "PolInt", "Regress", "Intersec", "Zero", "Rotate" };
+    val::d_array<std::string> button_names{"Analyze", "Table", "Tangent", "Normal", "Derive", "Integral", "ArcLen", "PolInt", "Regress", "Intersec", "Zero", "Rotate" , "Osc-circle"};
     val::d_array<std::string> button_tips{"Analyze Function  \tCtrl-A", "Table of values \tCtrl-T", "Tangent to function \tAlt-T", "Normal to function \tShift-Alt-N",
                                           "Derive function \tAlt-D", "Compute Integral \tAlt-I", "Arclength of function \tShift-Alt-I", "Polynomial Interpolation \tCtrl-I",
                                           "Polynomial Regression of set regressiondegree \tAlt-A", "Intersection points of two functions \tShift-Ctrl-I",
-                                          "Computation of a root in an interval \tAlt-Z", "Rotate geometric element \tAlt-R"};
+                                          "Computation of a root in an interval \tAlt-Z", "Rotate geometric element \tAlt-R",
+                                          "Computation of middle point and radius of the osculating circle at a given point \tAlt-O"};
+    n_tools = val::Min(button_names.length(), button_tips.length());
+    val::d_array<wxButton*> ToolButtons{nullptr,n_tools};
     i = 0;
-    rows = 6; columns = 2;
+
+    columns = 2;
+    rows = n_tools/2;
+    if (n_tools%2) ++rows;
     for (int r = 0; r < rows; ++r, y += dy ) {
         x = 15;
-        for (int c = 0; c < columns; ++c, x += b_xsize + 10, ++i) {
+        for (int c = 0; c < columns && i < n_tools; ++c, x += b_xsize + 10, ++i) {
             ToolButtons[i] = new wxButton(panel2,8200+i,button_names[i],wxPoint(x,y),wxSize(b_xsize,b_ysize));
             ToolButtons[i]->SetToolTip(button_tips[i]);
         }
@@ -5629,6 +5629,7 @@ void PlotFunctionFrame::OnNoteBookButtons(wxCommandEvent &event)
         case 9: bevent.SetId(7012); break;        // Intersection
         case 10: bevent.SetId(7008); break;       // Zero-Iteration
         case 11: bevent.SetId(7009); break;       // Rotation
+        case 12: bevent.SetId(7013); break;       // Osc-circle
     }
     ProcessEvent(bevent);
 }
