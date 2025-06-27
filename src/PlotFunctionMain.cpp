@@ -3940,9 +3940,19 @@ void PlotFunctionFrame::OnMenuFill(wxCommandEvent &event)
                 }
                 else {
                     plotobject::image.push_back(actualBitmapBackground.ConvertToImage());
-                    int pos = plotobject::image.length() ,sx = actualBitmapBackground.GetWidth(), sy = actualBitmapBackground.GetHeight();
+                    int pos = plotobject::image.length() ,sx = actualBitmapBackground.GetWidth(), sy = actualBitmapBackground.GetHeight(), minsize = val::Min(sizex, sizey);
+                    double ratio = double(sx) / double(sy);
                     x=(x2-x1)*double(mouse_x1-abst) / double (sizex -1) + x1;
                     y=double(yzero-mouse_y1)*(y2-y1)/double(sizey -1);
+                    minsize /= 5;
+                    if (ratio > 1.0) {
+                        sx = minsize;
+                        sy = int(double(minsize)/ratio);
+                    }
+                    else {
+                        sy = minsize;
+                        sx = int(double(minsize)*ratio);
+                    }
                     fstring += ";\nbitmap_" + val::ToString(pos) + " " + val::ToString(x) + " " + val::ToString(y) + " " + val::ToString(sx) + " " + val::ToString(sy);
                     refreshfunctionstring();
                     GetSettings();

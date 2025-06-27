@@ -657,6 +657,80 @@ val::fraction<val::pol<val::valfunction>> getrationalfunction(const val::valfunc
     else return (power(getrationalfunction(f.getfirstargument(),k),FromString<int>(f.getsecondargument().getinfixnotation())));
 }
 
+// check if h = d*op(ax +b) + c, if op = exp it returns 1, if op = sqrt it returns 2, else it returns 0. z = ax + b.
+int denum_is_op_linear(const val::valfunction &h, val::valfunction &d,val::valfunction &z, val::valfunction &a, val::valfunction &c, int k)
+{
+    std::string firstop = h.getfirstoperator();
+    d = val::valfunction("1");
+    val::valfunction hh = h;
+    if (firstop == "*") {
+        d = hh.getfirstargument();
+        if (!d.isconst(k)) return 0;
+        hh = h.getsecondargument();
+        firstop = hh.getfirstoperator();
+        if (firstop != "sqrt") return 0;
+    }
+    if (firstop == "sqrt") {
+        val::valfunction h1 = hh.getfirstargument();
+        if (!is_polynomial(h1,k)) return 0;
+        val::pol<val::valfunction> p = getpolynomial(h1,k);
+        if (p.degree() != 1) return 0;
+        z = h1;
+        a = p.LC();
+        c = val::valfunction();
+        return 2;   // 2 = sqrt
+    }
+    if (firstop != "+" && firstop != "-") return 0;
+    // std::cout << "\nHere" << std::endl; //
+    val::valfunction h1 = hh.getfirstargument(), h2 = hh.getsecondargument();
+    if (!h1.isconst(k) && !h2.isconst(k)) return 0;
+    if (h2.isconst(k)) {
+        val::swap(h1, h2);
+    }
+    std::string op = h2.getfirstoperator();
+    if (op == "*") {
+        d = h2.getfirstargument();
+        if (!d.isconst(k)) return 0;
+        h2 = h2.getsecondargument();
+        op = h2.getfirstoperator();
+    }
+    if (op != "exp" && op != "sqrt") return 0;
+    c = std::move(h1);
+    if (firstop == "-") c = -c;
+    h1 = h2.getfirstargument();
+    if (!is_polynomial(h1,k)) return 0;
+    val::pol<val::valfunction> p = getpolynomial(h1,k);
+    if (p.degree() != 1) return 0;
+    z = h1;
+    a = p.LC();
+    // std::cout << "\n z = " << z << "; a = " << a << "; c = " << c << "; op = " << op << std::endl;
+    if (op == "exp") return 1; // 1 = exp
+    else return 2;   // 2 = sqrt
+}
+
+// substitutes xk with g in f
+void substitute(val::valfunction &f, const val::valfunction &g, int k)
+{
+    if (f.is_zero()) return;
+    if (k == 1) {
+        // std::cout << "\n subst: g = " << g.getinfixnotation();
+        // std::cout << "\n subst: f = " << f.getinfixnotation();
+        f = f(g);
+        return;
+    }
+    std:: string sf = f.getinfixnotation(), sg = "(" + g.getinfixnotation() + ")" , var;
+    if (k == 2) {
+        var = "y";
+        val::replace(sf, var, sg);
+    }
+    if (k == 3) {
+        var = "z";
+        val::replace(sf, var, sg);
+    }
+    var = "x" + val::ToString(k);
+    val::replace(sf, var, g.getinfixnotation());
+    f = val::valfunction(sf);
+}
 
 //
 /*
@@ -957,8 +1031,10 @@ val::valfunction rational_integral(const val::valfunction &f, int k)
             d.changesign(); // => d = a^2 - 4b > 0
             if (isquadratic(d,rd)) sF1 = ToString(rd);
             else sF1 = "sqrt(" + ToString(d) + ")";
-            std::string sF2 = "(2x + " + ToString(a) + " - " + sF1 + ")/(2x + " + ToString(a) + " + " + sF1 + ")";
-            sF = "(" + ToString(cont) + ")*(1/" + sF1 + ")*log(abs(" + sF2 + "))";
+            // std::string sF2 = "(2x + " + ToString(a) + " - " + sF1 + ")/(2x + " + ToString(a) + " + " + sF1 + ")";
+            // sF = "(" + ToString(cont) + ")*(1/" + sF1 + ")*log(abs(" + sF2 + "))";
+            std::string sF2 = "(x + (" + ToString(a) + " - " + sF1 + ")/2)", SF3 = "(x + (" + ToString(a) + " + " + sF1 + ")/2)";
+            sF = "(" + ToString(cont) + ")*(1/" + sF1 + ") *(log(abs(" + sF2 + ")) - log(abs(" + SF3 + ")))";
             F = ffnum * valfunction(sF)(X);
             return F;
         }
@@ -1305,6 +1381,7 @@ val::valfunction integral(const val::valfunction &f, int k)
         else if (firstop == "*") {
             valfunction h = f.getsecondargument();
             //std::cout << "\n g.nvar = " << g.numberofvariables();
+            if (g.isconst(k)) return (g * integral(h,k));
             if (!g.isconst(k) && !h.isconst(k)) F = hintegral::integral_product_subst(g,h,k);
         }
     }
@@ -1337,6 +1414,34 @@ val::valfunction integral(const val::valfunction &f, int k)
         }
         else if (g_const) {
             if (firstop == "*") return g * integral(h,k);
+            valfunction a, z, c, d;
+            int op;
+            if ((op = hintegral::denum_is_op_linear(h, d, z, a, c, k))) {
+                valfunction x("x" + val::ToString(k)), factor = g;
+                if (op == 1) { // operator = exp
+                    val::valfunction f_exp("exp(x)");
+                    z = f_exp(z);
+                    factor /= (a * x);
+                }
+                else {         // operator = sqrt
+                    val::valfunction f_sqrt("sqrt(x)");
+                    z = f_sqrt(z);
+                    factor *= val::valfunction("2") * x;
+                    factor /= a;
+                }
+                x *= d;
+                x += c;
+                x = val::valfunction("1") / x;
+                x *= factor;
+                // std::cout << "\n subst = " << x << std::endl;
+                F = integral(x, k);
+                // std::cout << "\n Before substitution , F = " << F;
+                if (F.is_zero()) return  F;
+                else {
+                    hintegral::substitute(F, z, k);
+                    return  F;
+                }
+            }
         }
         else if (h_const) {
             if (firstop == "*") return h * integral(g,k);
