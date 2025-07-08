@@ -275,9 +275,20 @@ int NewtonIteration(const T& f, const T &f1, double &x, const double& eps, int n
 struct plotobject
 {
     enum modetype {LINE,TEXT,CIRCLE,RECTANGLE,TRIANGLE,FILL,POLYGON,POINTS,HISTOGRAM,BITMAP,PARCURVE,ALGCURVE,FUNCTION};
+    //enum latexsize {tiny, script, footnote, small, normal, large, Large, LARGE, huge, HUGE};
+    //
+    struct latex_element
+    {
+        wxColour color;
+        int fontsize;
+        wxString text;
+        wxBitmap bitmap;
+        latex_element() = default;
+        int create_latex_element(const wxColour &col, int f_size, const wxString &ltext);
+    };
     //
     val::valfunction f,g,x1,x2;
-    wxBitmap bitmap;
+    wxBitmap bitmap, *latexbitmap = nullptr;
     val::d_array<double> farray, critx;
     val::d_array<val::d_array<double> > curvearray;
     val::Glist<val::GPair<double>> critpoints;//,undef_intervals;
@@ -287,14 +298,23 @@ struct plotobject
     val::GPair<double> x_range{0.0,0.0};
     int objectype = FUNCTION, islinear = 0;
     wxPenStyle penstyle = wxPENSTYLE_SOLID;
+    int text_has_latex = 0;
     //
     static const val::d_array<std::string> s_object_type;
     static const val::d_array<int> defnpoints;               // default number number of points for each objectype
-    static val::Glist<wxImage> image;           // replace myimage with wxImage
+    static val::Glist<wxImage> image;
+    //static const val::d_array<std::string> latex_string_size;
+    static val::Glist<latex_element> latexbitmap_list;
+    static int latexavailable;
+    static std::string tempdir, tempfile, tempfile_tex , createdvifile, createpngfile, removetempfiles,
+                       latex_doc_beg, latex_doc_end, tempfile_png;
     //
     // Constructors:
     plotobject() = default;
     explicit plotobject(const std::string &);
+    //
+    void assign_latexbimap(int fontsize, const wxColour &col);
+    int clean_latexbitmap_list(const val::Glist<plotobject> &F);
     //
     const std::string& getinfixnotation() const {return s_infix;}
     int is_empty() const {return s_infix == "";}
@@ -312,10 +332,14 @@ struct plotobject
     int IsParcurve() const {return objectype==PARCURVE;}
     int IsFunction() const {return objectype==FUNCTION;}
     int IsAlgCurve() const {return objectype==ALGCURVE;}
+    int IsBitmap() const {return objectype==BITMAP;}
+    int has_latex_script();
     //
     val::pol<double> getpol(const double& x) const;
     //
     void setdrawingwords(const wxString &s);    // replace std::string with wxString
+    //
+    void changebitmapsize(int size_x, int size_y);
 };
 
 

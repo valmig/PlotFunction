@@ -331,6 +331,26 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     defaultFont=this->GetFont();
     Color.resize(7);
 
+    // Check if latex is available on system:
+    {
+        plotobject::latexavailable = 1;
+        if (val::system("which latex") || val::system("which dvipng")) plotobject::latexavailable = 0;
+        if (plotobject::latexavailable) {
+            if (val::DirExists("/dev/shm")) plotobject::tempdir = "/dev/shm";
+            plotobject::tempfile_tex = plotobject::tempdir + filesep + plotobject::tempfile + ".tex";
+            plotobject::tempfile_png = plotobject::tempdir + filesep + plotobject::tempfile + ".png";
+            std::string tfiledvi = plotobject::tempdir + filesep + plotobject::tempfile + ".dvi";
+            std::string tfileout = plotobject::tempdir + filesep + plotobject::tempfile + ".png";
+            plotobject::createdvifile = "latex -halt-on-error -output-directory=" + plotobject::tempdir + " " + plotobject::tempfile_tex;
+            // std::cout << "\ncreatetexfile-command = " << plotobject::createdvifile;
+            plotobject::createpngfile = "dvipng -bg 'Transparent' " + tfiledvi + " -o " + tfileout;
+            // std::cout << "\ncreatepngfile-command = " << plotobject::createpngfile;
+            plotobject::removetempfiles = "rm " + plotobject::tempdir + filesep + plotobject::tempfile + "*";
+            // std::cout << "\nremovetempfiles-command = " << plotobject::removetempfiles;
+        }
+        // std::cout << "\n latexavailable = " << plotobject::latexavailable << std::endl;
+    }
+
     GetSizeSettings();
     if (settings) {
         wxSize TextSize = SideText->GetSize();
@@ -584,6 +604,8 @@ PlotFunctionFrame::~PlotFunctionFrame()
     }
     if (SideText->IsShown()) SideText->Hide();
     if (notebook->IsShown()) notebook->Hide();
+
+    if (plotobject::latexavailable) val::system(plotobject::removetempfiles);
 
     //(*Destroy(PlotFunctionFrame)
     //*)
@@ -936,8 +958,8 @@ void PlotFunctionFrame::GetSettings()
         for (i=l;i<N;++i) {
             pen[i] = 2;
         }
-
     }
+
     {
         val::d_array<int> remained(-1,N);
         auto Fontold = Font;
@@ -961,7 +983,25 @@ void PlotFunctionFrame::GetSettings()
                 Font[i] = Fontold[remained[i]];
                 pen[i] = penold[remained[i]];
             }
+            if (!F[i].text_has_latex) continue;
+            F[i].assign_latexbimap(Font[i].GetPointSize(), Color[i]);
+            // found = 0;
+            // for (auto &v : plotobject::latexbitmap_list) {
+            //     //if (!F[i].IsText()) continue;
+            //     if (v.color != Color[i]) continue;
+            //     if (v.fontsize != Font[i].GetPointSize()) continue;
+            //     if (v.text != F[i].textdata) continue;
+            //     F[i].latexbitmap = &(v.bitmap);
+            //     found = 1;
+            //     break;
+            // }
+            // if (!found) {
+            //     plotobject::latexbitmap_list.push_back(plotobject::latex_element(Color[i],Font[i].GetPointSize(),F[i].textdata));
+            //     llatexbitmaplist = plotobject::latexbitmap_list.length();
+            //     F[i].latexbitmap = &(plotobject::latexbitmap_list[llatexbitmaplist-1].bitmap);
+            // }
         }
+        // std::cout << "\nlength latexbitmap_list: " << plotobject::latexbitmap_list.length() << std::endl;
         // std::cout << std::endl;
         // for (int i = 0; i < N; ++i) std::cout << remained[i] << " ";
         // std::cout << std::endl;
@@ -1726,8 +1766,24 @@ void PlotFunctionFrame::plottext(wxDC& dc,int colour)
 {
     if (!yset) return;
     const val::d_array<double> &f = F[colour].farray;
-    if (f[0]<x1 || f[0]>x2 || f[1]<y1 || f[1]>y2) return;
 
+    if (F[colour].latexbitmap != nullptr) {
+        int ix0,iy0;
+        wxBitmap *bitmap = F[colour].latexbitmap;
+        ix0 = abst+int(double(sizex-1)*((f[0]-x1)/(x2-x1)));
+        iy0 = yzero -int((double(sizey-1)/double(y2-y1)) * f[1]);
+        dc.DrawBitmap(*bitmap,ix0,iy0);
+        if (active_function == colour) {
+            wxBrush brush;
+            brush.SetStyle(wxBrushStyle::wxBRUSHSTYLE_TRANSPARENT);
+            dc.SetBrush(brush);
+            dc.SetPen(wxPen(Color[colour],2));
+            dc.DrawRectangle(ix0-4,iy0-4,bitmap->GetWidth() + 4,bitmap->GetHeight() + 4);
+        }
+        return;
+    }
+
+    if (f[0]<x1 || f[0]>x2 || f[1]<y1 || f[1]>y2) return;
     wxFont or_font(dc.GetFont()), font(Font[colour]);
     int f_size = 10;
     wxSize tsize;
@@ -2064,6 +2120,34 @@ void PlotFunctionFrame::Paint()
     Text_Editrefresh();
 }
 
+void PlotFunctionFrame::render(wxDC &dc1)
+{
+    std::lock_guard<std::mutex> lock(compute_mutex);
+    if (!ispainted) return;
+
+    ispainted=0;
+
+    wxBitmap paper = wxBitmap(DrawPanel->GetSize());
+
+    cpaper = &paper;
+
+    // Create a memory Device Context
+    wxMemoryDC dc;
+    // Tell memDC to write on “paper”.
+    dc.SelectObject( paper );
+    plottomemoryDc(dc);
+
+    // this frees up "paper" so that it can write itself to a file.
+    dc.SelectObject( wxNullBitmap );
+    dc1.DrawBitmap(paper,0,0);
+    cpaper = nullptr;
+
+    ispainted=1;
+    iscomputing=0;
+    Text_Editrefresh();
+}
+
+
 
 void PlotFunctionFrame::plottomemoryDc(wxMemoryDC &memDC)
 {
@@ -2108,7 +2192,9 @@ void PlotFunctionFrame::OnDrawPanelPaint(wxPaintEvent &event)
     if (!ispainted || iscomputing) return;
 #ifndef _WIN32
     iscomputing=1;
-    Paint();
+    wxPaintDC dc(DrawPanel);
+    render(dc);
+    //Paint();
 #endif // _WIN32
 }
 
@@ -2438,6 +2524,7 @@ void PlotFunctionFrame::changefunctionsettings(int i)
         if (Dialog.ShowModal()==wxID_OK) {
             Font[i]=Dialog.GetFont();
             Color[i]= Dialog.GetColor();
+            if (F[i].text_has_latex) F[i].assign_latexbimap(Font[i].GetPointSize(), Color[i]);
             Paint();
             WriteText();
         }
@@ -3944,14 +4031,16 @@ void PlotFunctionFrame::OnMenuFill(wxCommandEvent &event)
                     double ratio = double(sx) / double(sy);
                     x=(x2-x1)*double(mouse_x1-abst) / double (sizex -1) + x1;
                     y=double(yzero-mouse_y1)*(y2-y1)/double(sizey -1);
-                    minsize /= 5;
-                    if (ratio > 1.0) {
-                        sx = minsize;
-                        sy = int(double(minsize)/ratio);
-                    }
-                    else {
-                        sy = minsize;
-                        sx = int(double(minsize)*ratio);
+                    minsize /= 2;
+                    if (sx > minsize || sy > minsize) {
+                        if (ratio > 1.0) {
+                            sx = minsize;
+                            sy = int(double(minsize)/ratio);
+                        }
+                        else {
+                            sy = minsize;
+                            sx = int(double(minsize)*ratio);
+                        }
                     }
                     fstring += ";\nbitmap_" + val::ToString(pos) + " " + val::ToString(x) + " " + val::ToString(y) + " " + val::ToString(sx) + " " + val::ToString(sy);
                     refreshfunctionstring();
@@ -4701,6 +4790,9 @@ void PlotFunctionFrame::OnLostMouse(wxMouseCaptureLostEvent &event)
 {
 
 }
+
+
+
 void PlotFunctionFrame::displacefunction(int i,const std::string &dx1,const std::string &dy1)
 {
     if (i<0 || i>=N) return;
@@ -4752,7 +4844,9 @@ void PlotFunctionFrame::displacefunction(int i,const std::string &dx1,const std:
                 }
                 */
                 nf += " " + val::ToString(F[i].farray[0] + dx) + " " + val::ToString(F[i].farray[1] + dy);
+                wxBitmap *bitmap = F[i].latexbitmap;
                 F[i] = plotobject(nf);
+                F[i].latexbitmap = bitmap;
             }
             break;
         case plotobject::BITMAP :
@@ -5092,6 +5186,18 @@ void PlotFunctionFrame::OnZoom(wxCommandEvent &event)
             if (fs < 0) fs = 0;
             if (fs >100) fs = 100;
             Font[active_function].SetPointSize(fs);
+            if (F[active_function].text_has_latex) F[active_function].assign_latexbimap(fs, Color[active_function]);
+        }
+        if (F[active_function].IsBitmap()) {
+            plotobject *f = &(F[active_function]);
+            if (f->farray.length() < 4) return;
+            int size_x = f->farray[2], size_y = f->farray[3];
+            double factor;
+            if (id == 20001) factor = 1.1;
+            else factor = 0.9;
+            size_x = int(double(size_x)*factor);
+            size_y = int(double(size_y)*factor);
+            f->changebitmapsize(size_x, size_y);
         }
         iscomputing = 1;
         Paint();

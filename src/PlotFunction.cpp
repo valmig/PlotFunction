@@ -13,6 +13,7 @@
 #include <analysis.h>
 #include <complex.h>
 #include <pol_arithmetic.h>
+#include <fstream>
 
 
 wxFrame *MyFrame=nullptr;
@@ -1855,6 +1856,48 @@ void computeinterpolation(std::string input,std::string &Fstring)
 const val::d_array<std::string> plotobject::s_object_type{"line", "text", "circle", "rectangle", "triangle", "fill", "polygon", "points", "histogram", "bitmap"};
 const val::d_array<int> plotobject::defnpoints{5,2,6,4,6,3,2,2,4,4};
 val::Glist<wxImage> plotobject::image;
+//const val::d_array<std::string> plotobject::latex_string_size{"\\tiny", "\\scriptsize", "\\footnotesize", "\\small", "\\normalsize", "\\large", "\\Large", "\\LARGE", "\\huge", "\\Huge"};
+val::Glist<plotobject::latex_element> plotobject::latexbitmap_list;
+int plotobject::latexavailable = 0;
+std::string plotobject::tempdir, plotobject::tempfile = "vallatex0001", plotobject::createdvifile,
+            plotobject::createpngfile, plotobject::removetempfiles, plotobject::tempfile_tex, plotobject::tempfile_png;
+std::string plotobject::latex_doc_beg = "\\documentclass[preview]{standalone} \n"
+                                        "\\usepackage{xcolor} \n"
+                                        "\\usepackage [fleqn]{amsmath} \n"
+                                        "\\usepackage{anyfontsize} \n"
+                                        "\\begin{document} \n"
+                                        "\\definecolor{mycolor}{RGB}";
+std::string plotobject::latex_doc_end = "\\end{document}";
+
+
+int plotobject::latex_element::create_latex_element(const wxColour &col, int f_size, const wxString &ltext)
+{
+    color = col; fontsize = f_size; text = ltext;
+    std::string text = latex_doc_beg;
+    text += "{" + val::ToString(int(col.Red())) + "," + val::ToString(int(col.Green())) +  "," + val::ToString(int(col.Blue()))
+        + "}\n\\color{mycolor}\n{\\fontsize{" + val::ToString(f_size) + "}{" + val::ToString(f_size)
+        + "}\\selectfont\n" + std::string(ltext) + "}\n" + latex_doc_end;
+
+    // Create tex-file:
+    std::fstream file(tempfile_tex, std::ios::out | std::ios::trunc);
+    if (!file) return 0;
+    file << text;
+    file.close();
+    if (val::system(createdvifile)) {
+        wxMessageBox("Cannot create dvi file!");
+        //std::cout << "\nCannot create dvi file!" << std::endl;
+        return 0;
+    }
+    if (val::system(createpngfile)) {
+        wxMessageBox("Cannot create png file!");
+        return 0;
+    }
+
+    bitmap.LoadFile(wxString(tempfile_png));
+    return 1;
+}
+
+
 
 //replace std::tring with wxString
 void plotobject::setdrawingwords(const wxString &s)
@@ -1914,6 +1957,25 @@ void plotobject::setdrawingwords(const wxString &s)
     return;
 }
 
+int plotobject::has_latex_script()
+{
+    if (!latexavailable) return 0;
+    int i, n = textdata.length();
+    // for (int i = 0; i < n; ++i) {
+    //     if (textdata[i] == '$') {
+    //         if (i == 0) return 1;
+    //         if (textdata[i-1] != '\\') return 1;
+    //     }
+    // }
+    // wxString w1 = "\\begin{equation*}", w2 = "\\begin{alignat*}";
+    // if (textdata.find(w1) || textdata.find(w2)) return 1;
+    for (i = 0; i < n; ++i) {
+        if (textdata[i] != ' ' && textdata[i] != '\n') break;
+    }
+    if (i >= n-1) return 0;
+    if (textdata[i] == '\\' && textdata[i+1] == 'l') return 1;
+    return 0;
+}
 
 
 
@@ -2101,13 +2163,70 @@ plotobject::plotobject(const std::string &sf)
         default: break;
     }
     if (objectype == TEXT) {
+        if (latexavailable && has_latex_script()) {
+            text_has_latex = 1;
+            textdata.Replace("\\l", "", false);
+            // std::cout << "\n textdata = " << textdata << std::endl;
+            return;
+        }
         // replace greek letters..
         for (int i = 0; i < greek_literals.length(); ++i) {
             textdata.Replace(greek_literals[i], greek_letters[i]);
         }
+        textdata.Replace("\\$", "$");
         setdrawingwords(textdata);
     }
 }
+
+void plotobject::assign_latexbimap(int fontsize, const wxColour &col)
+{
+    if (!text_has_latex) return;
+    int found = 0, n = 0;
+    for (auto &v : plotobject::latexbitmap_list) {
+        //if (!F[i].IsText()) continue;
+        if (v.color !=col) continue;
+        if (v.fontsize != fontsize) continue;
+        if (v.text != textdata) continue;
+        latexbitmap = &(v.bitmap);
+        found = 1;
+        break;
+    }
+    if (!found) {
+        plotobject::latex_element lelem;
+        if (!lelem.create_latex_element(col, fontsize, textdata)) {
+            text_has_latex = 0;
+            setdrawingwords(textdata);
+            return;
+        }
+        latexbitmap_list.push_back(std::move(lelem));
+        //plotobject::latexbitmap_list.push_back(plotobject::latex_element(col, fontsize, textdata));
+        n = plotobject::latexbitmap_list.length();
+        latexbitmap = &(plotobject::latexbitmap_list[n-1].bitmap);
+    }
+}
+
+
+int plotobject::clean_latexbitmap_list(const val::Glist<plotobject> &F)
+{
+    int anz = 0, n = latexbitmap_list.length(), found;
+    for (int i = 0; i < n; ) {
+        found = 0;
+        for (const auto &v : F) {
+            if (!v.text_has_latex) continue;
+            if (v.latexbitmap == &(latexbitmap_list[i].bitmap)) {
+                found = 1;
+                break;
+            }
+        }
+        if (!found) {
+            latexbitmap_list.delelement(i);
+            --n; ++anz;
+        }
+        else ++i;
+    }
+    return anz;
+}
+
 
 
 int plotobject::iswithparameter() const
@@ -2140,4 +2259,29 @@ val::pol<double> plotobject::getpol(const double& x) const
     val::valfunction g(sf,0);
     val::pol<double> p = val::ToDoublePolynom(g.getpolynomial());
     return p;
+}
+
+
+void plotobject::changebitmapsize(int size_x, int size_y)
+{
+    if (size_x <= 0 || size_y <= 0) return;
+    if (objectype != BITMAP) return;
+    std::string fw = val::getfirstwordofstring<val::d_array>(s_infix), s_pos = "";
+    if (farray.length() >= 4) {
+        if (farray[2] == size_x && farray[3] == size_y) return;
+        farray[2] = size_x; farray[3] = size_y;
+    }
+
+    if (fw.find("bitmap") != std::string::npos) {
+        if (image.isempty()) return;
+        int pos = 1, l = fw.length();
+        for (int i = 7; i < l; ++i) s_pos += fw[i];
+        if (s_pos != "") pos = val::FromString<int>(s_pos);
+        if (pos < 1 || pos > image.length()) return;
+        wxImage s_image = image[pos-1].Scale(size_x,size_y);
+        bitmap = wxBitmap(s_image);
+        s_infix = "bitmap_" + val::ToString(pos);
+        for (const auto &v: farray) s_infix += " " + val::ToString(v);
+        return;
+    }
 }

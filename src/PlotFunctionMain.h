@@ -142,6 +142,7 @@ class PlotFunctionFrame: public wxFrame
         void SendNotification(const std::string& s);
         //
         void Paint();
+        void render(wxDC &);
         void Compute(int i=-1, int computepoints = 1);
         void ResetColours();
         void GetSettings();

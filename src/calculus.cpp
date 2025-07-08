@@ -509,8 +509,8 @@ int partialfraction(const val::valfunction& f, val::rational &cont, val::pol<val
 namespace hintegral
 {
 
-val::d_array<std::string> operators({"exp","sin","cos","log","tan","sqrt","arcsin","arccos","arctan","sinh","cosh","arsinh","arcosh"}), escop({"exp","sin","cos","log"});
-enum ops{EXP,SIN,COS,LOG,TAN,SQRT,ARCSIN,ARCCOS,ARCTAN,SINH,COSH,ARSINH,ARCOSH};
+val::d_array<std::string> operators({"exp","sin","cos","log","tan","sqrt","arcsin","arccos","arctan","sinh","cosh","arsinh","arcosh", "artanh"}), escop({"exp","sin","cos","log"});
+enum ops{EXP,SIN,COS,LOG,TAN,SQRT,ARCSIN,ARCCOS,ARCTAN,SINH,COSH,ARSINH,ARCOSH, ARTANH};
 
 
 val::valfunction rational_integral(const val::valfunction &f, int k);
@@ -1324,6 +1324,12 @@ val::valfunction integral(const val::valfunction &f, int k)
         case hintegral::ARCOSH: {
             valfunction hF("arcosh(x)"), hG("sqrt(x^2 - 1)");
             hF = g * hF(g) - hG(g);
+            return hF/Pg.LC();
+        }
+        break;
+        case hintegral::ARTANH: {
+            valfunction hF("artanh(x)"), hG("(1/2)log(1 - x^2)");
+            hF = g * hF(g) + hG(g);
             return hF/Pg.LC();
         }
         break;
