@@ -14,6 +14,7 @@
   - [[#export-graphic][Export graphic]]
   - [[#import-graphic][Import graphic]]
   - [[#high-customization][High customization]]
+  - [[#support-for-latex][Support for Latex]]
 
 * Required C++ libraries
 ** wxWidgets libraries
@@ -38,3 +39,5 @@ you can export your graphic as a png file, or copy/paste it directly into your d
 you can copy png pictures to the coordinate system.
 ** High customization
 Great variability for graph colors/width, axis colors, axis range, axis scale, etc..
+** Support for Latex
+(On Gnu-Linux-systems if ~latex~ and ~dvipng~ are installed.)

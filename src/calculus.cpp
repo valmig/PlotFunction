@@ -989,7 +989,7 @@ val::valfunction rational_integral(const val::valfunction &f, int k)
         divrem(f_rational_vf.numerator(),fdenom,q,fnum);
 
         valfunction c = fnum[0]/fdenom[1], fd = fdenom(X);
-        if (fd.ispolynomialfunction()) {
+        if (fd.numberofvariables() == 1 && fd.ispolynomialfunction()) {
             pol<integer> p;
             rational cont;
             primitivpart(fd.getpolynomial(),p,cont);

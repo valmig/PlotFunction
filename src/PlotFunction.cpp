@@ -48,6 +48,7 @@ std::string filesep="/",filedir=val::CurrentHomeDir(), valdir= val::CurrentHomeD
 
 std::string RecentFilesPath = settingsdir + filesep + "recentfiles.txt";
 std::string RecentCommandsPath = settingsdir + filesep + "recentcommands.txt";
+std::string latexdefinitionsfile = settingsdir + filesep + "latexdefs.txt";
 
 std::mutex compute_mutex;
 //std::atomic<int> iscomputing(0);
@@ -79,7 +80,7 @@ const val::d_array<wxString> WordList{"PI", "exp", "log", "line",  "sqrt", "circ
 
 /*
 val::d_array<std::string> sfunctionlist({"sqrt", "exp", "log", "abs", "sinh", "cosh", "tanh", "arsinh", "arcosh", "artanh",
-										"sin", "cos", "tan", "arcsin", "arccos", "arctan", "inf", "PI", "line", });
+                                        "sin", "cos", "tan", "arcsin", "arccos", "arctan", "inf", "PI", "line", });
 */
 /*
 val::d_array<val::GPair<std::string,val::d_function*>>
@@ -100,21 +101,21 @@ const val::d_array<wxString> defaultcolornames{"blue", "red", "green", "lblue", 
 const val::d_array<wxString> SettingsList({"axis-scale", "axis-color", "grid-scale", "grid-color", "values-number", "axis-range", "show-x-axis",
                                 "show-y-axis", "show-grid" , "show-x-scale", "show-y-scale" , "reset-colors", "font-size", "function-color", "panel-size", "axis-names", "regression-degree",
                                 "point-decimals", "show-function", "background-color", "parameter-values", "function-size", "margin",
-                                "axis-fontsize", "function-settings", "move-increment" });
+                                "axis-fontsize", "function-settings", "move-increment"});
 
-const val::d_array<wxString> SettingsParList({"axis-scale sx [sy]	<Shift-Alt-S>",
-                                              "axis-color def. color / Red Green Blue	<Shift-Ctrl-A>",
-                                              "grid-scale sx [sy]	<Ctrl-G>",
-                                              "grid-color def. color / Red Green Blue	<Shift-Ctrl-G>",
+const val::d_array<wxString> SettingsParList({"axis-scale sx [sy]   <Shift-Alt-S>",
+                                              "axis-color def. color / Red Green Blue   <Shift-Ctrl-A>",
+                                              "grid-scale sx [sy]   <Ctrl-G>",
+                                              "grid-color def. color / Red Green Blue   <Shift-Ctrl-G>",
                                               "values-number unsigned int",
-                                              "axis-range x1 x2 [: y1 y2]		<Ctrl-X>/<Ctrl-Y>",
-                                              "show-x-axis 0/1	<Alt-X>",
-                                              "show-y-axis 0/1	<Alt-Y>",
-                                              "show-grid 0/1	<Alt-G>",
-                                              "show-x-scale 0/1		<Shift-Alt-X>",
-                                              "show-y-scale 0/1		<Shift-Alt-Y",
-                                              "reset-colors		<Ctrl-Alt-R>",
-                                              "font-size unsigned int	<Ctrl-F>",
+                                              "axis-range x1 x2 [: y1 y2]       <Ctrl-X>/<Ctrl-Y>",
+                                              "show-x-axis 0/1  <Alt-X>",
+                                              "show-y-axis 0/1  <Alt-Y>",
+                                              "show-grid 0/1    <Alt-G>",
+                                              "show-x-scale 0/1         <Shift-Alt-X>",
+                                              "show-y-scale 0/1         <Shift-Alt-Y",
+                                              "reset-colors         <Ctrl-Alt-R>",
+                                              "font-size unsigned int   <Ctrl-F>",
                                               "function-color [#nr = 1] def. color / Red Green Blue    <Ctrl-nr>",
                                               "panel-size sx [sy]    <F8>",
                                               "axis-names string string    <Shift-Alt-S>",
@@ -126,12 +127,12 @@ const val::d_array<wxString> SettingsParList({"axis-scale sx [sy]	<Shift-Alt-S>"
                                               "function-size [#nr = 1] unsigned int    <Ctrl-nr>",
                                               "margin unsigned int    <Shift-Alt-S>",
                                               "axis-fontsize unsigned int    <Shift-Ctrl-F>",
-                                              "function-settings [nr=1]",
+                                              "function-settings [#nr=1]",
                                               "move-increment dx [dy=dx] (p for pixels)    <Ctrl-M>"
                                              });
 
 const val::d_array<wxString> CommandsList({"derive", "analyze", "tangent", "normal", "interpolation", "regression", "table", "integral",
-                                             "arclength", "zero-iteration", "move", "evaluate", "intersection", "calculate", "rotate", "osc_circle" });
+                                             "arclength", "zero-iteration", "move", "evaluate", "intersection", "calculate", "rotate", "osc_circle", "latex-string"});
 
 const val::d_array<wxString> CommandsParList({"derive [#nr = 1]",
                                                  "analyze [#nr = 1] [x1 x2] [prec = 1e-09] [iterations] [decimals]    <Ctrl-A>",
@@ -148,7 +149,8 @@ const val::d_array<wxString> CommandsParList({"derive [#nr = 1]",
                                                  "intersection [#nr1 = 1] #nr2 [x1 x2] [prec] [iterations] [decimals]",
                                                  "calculate arithmetic expression",
                                                  "rotate [#nr = 1] angle (in degrees ) x y (center)",
-                                                 "osc_circle [#nr = 1] x    "
+                                                 "osc_circle [#nr = 1] x    ",
+                                                 "latex-string [#nr = 1]"
                                                  });
 
 
@@ -396,6 +398,74 @@ void back_substitutepar(std::string &s, const val::Glist<char> &VarList, int nva
 }
 
 
+// Recursive function to translate the infix function name of a valfunction object into a latex-string.
+std::string valfunction_to_latex(const val::valfunction &f, int cdot)
+{
+    std::string ls, op = f.getfirstoperator();
+    const val::d_array<std::string> Uni_op_func{"log", "sqrt", "sin", "cos", "tan", "arcsin", "arccos", "arctan", "sinh", "cosh",
+                                                "tanh", "arsinh", "arcosh", "artanh"};
+    val::valfunction g = f.getfirstargument();
+
+    if (val::isinContainer(op, Uni_op_func)) {
+        if (op == "log") op = "ln";
+        ls = "\\" + op + "\\left( " + valfunction_to_latex(g, cdot) + " \\right)";
+    }
+    else if (op == "exp") {
+        ls = "e^{ " + valfunction_to_latex(g, cdot) + " }";
+    }
+    else if (op == "abs") {
+        ls = "\\left| " + valfunction_to_latex(g, cdot) + " \\right|";
+    }
+    else if (op == "m") {
+        ls = "-" + valfunction_to_latex(g, cdot);
+    }
+    else if (op == "*" || op == "^")  {
+        if (op == "*") {
+            if (cdot) op = " \\cdot ";
+            else op = " ";
+        }
+        val::valfunction h = f.getsecondargument();
+        std::string gop = g.getfirstoperator(), hop = h.getfirstoperator(), rpar = "" , lpar = "";
+        if (gop == "+"  || gop == "-" || gop == "m") {
+            lpar = "\\left( ";
+            rpar = " \\right)";
+        }
+        ls = lpar + valfunction_to_latex(g, cdot) + rpar + op;
+        lpar = ""; rpar = "";
+        if (hop == "+"  || hop == "-") {
+            lpar = "\\left( ";
+            rpar = " \\right)";
+        }
+        if (op == "^") ls += "{" + valfunction_to_latex(h, cdot) + "}";
+        else ls += lpar + valfunction_to_latex(h, cdot) + rpar;
+    }
+    else if (op == "/") {
+        val::valfunction h = f.getsecondargument();
+        ls = "\\frac{ " + valfunction_to_latex(g, cdot) + " }{ " + valfunction_to_latex(h, cdot) + " }";
+    }
+    else if (op == "+" || op == "-") {
+        val::valfunction h = f.getsecondargument();
+        ls = valfunction_to_latex(g, cdot) + op + valfunction_to_latex(h, cdot);
+    }
+    else {
+        std::string x = "x", var, subst;
+        int i, n = f.numberofvariables();
+        ls = f.getinfixnotation();
+        if (n > 1) {
+            for (i = 1; i <= n; ++i) {
+                var = x + val::ToString(i);
+                subst = x + "_" + val::ToString(i);
+                val::replace(ls, var, subst);
+            }
+        }
+        val::replace<char>(ls, ".", ",");
+        val::replace<char>(ls, "PI", "\\pi");
+        val::replace<char>(ls, "(", "\\left(");
+        val::replace<char>(ls, ")", "\\right)");
+    }
+
+    return ls;
+}
 
 double squaredistance(const wxPoint& l1, const wxPoint &l2, const wxPoint &p)
 {
@@ -1850,6 +1920,14 @@ void computeinterpolation(std::string input,std::string &Fstring)
 }
 
 
+void computetolatexstring(const plotobject& f)
+{
+    if(f.getmode() != plotobject::ALGCURVE && f.getmode() != plotobject::FUNCTION) return;
+    tablestring = valfunction_to_latex(f.f);
+    if (f.getmode() == plotobject::ALGCURVE) tablestring += " = 0";
+    MyThreadEvent event(MY_EVENT, IdToLatexString);
+    if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event.Clone() );
+}
 
 // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -1859,14 +1937,15 @@ val::Glist<wxImage> plotobject::image;
 //const val::d_array<std::string> plotobject::latex_string_size{"\\tiny", "\\scriptsize", "\\footnotesize", "\\small", "\\normalsize", "\\large", "\\Large", "\\LARGE", "\\huge", "\\Huge"};
 val::Glist<plotobject::latex_element> plotobject::latexbitmap_list;
 int plotobject::latexavailable = 0;
+int plotobject::tempfilesused = 0;
 std::string plotobject::tempdir, plotobject::tempfile = "vallatex0001", plotobject::createdvifile,
             plotobject::createpngfile, plotobject::removetempfiles, plotobject::tempfile_tex, plotobject::tempfile_png;
+std::string plotobject::latex_doc_defs = "\\newcommand{\\DS}{\\displaystyle} \n"
+                                         "\\newcommand{\\BS}[1]{\\boldsymbol{#1}} \n";
 std::string plotobject::latex_doc_beg = "\\documentclass[preview]{standalone} \n"
                                         "\\usepackage{xcolor} \n"
                                         "\\usepackage [fleqn]{amsmath} \n"
-                                        "\\usepackage{anyfontsize} \n"
-                                        "\\begin{document} \n"
-                                        "\\definecolor{mycolor}{RGB}";
+                                        "\\usepackage{anyfontsize} \n";
 std::string plotobject::latex_doc_end = "\\end{document}";
 
 
@@ -1883,6 +1962,7 @@ int plotobject::latex_element::create_latex_element(const wxColour &col, int f_s
     if (!file) return 0;
     file << text;
     file.close();
+    tempfilesused = 1;
     if (val::system(createdvifile)) {
         wxMessageBox("Cannot create dvi file!");
         //std::cout << "\nCannot create dvi file!" << std::endl;
@@ -1898,6 +1978,26 @@ int plotobject::latex_element::create_latex_element(const wxColour &col, int f_s
 }
 
 
+int plotobject::checkiflatexisavailable()
+{
+    latexavailable = 1;
+    if (val::system("which latex") || val::system("which dvipng")) latexavailable = 0;
+    if (latexavailable) {
+        if (val::DirExists("/dev/shm")) plotobject::tempdir = "/dev/shm";
+        tempfile_tex = tempdir + filesep + tempfile + ".tex";
+        tempfile_png = tempdir + filesep + tempfile + ".png";
+        std::string tfiledvi = tempdir + filesep + tempfile + ".dvi";
+        std::string tfileout = tempdir + filesep + tempfile + ".png";
+        createdvifile = "latex -halt-on-error -output-directory=" + tempdir + " " + tempfile_tex;
+        // std::cout << "\ncreatetexfile-command = " << plotobject::createdvifile;
+        createpngfile = "dvipng -bg 'Transparent' " + tfiledvi + " -o " + tfileout;
+        // std::cout << "\ncreatepngfile-command = " << plotobject::createpngfile;
+        removetempfiles = "rm " + tempdir + filesep + tempfile + "*";
+        // std::cout << "\nremovetempfiles-command = " <<
+        // plotobject::removetempfiles;
+    }
+    return latexavailable;
+}
 
 //replace std::tring with wxString
 void plotobject::setdrawingwords(const wxString &s)
@@ -2173,7 +2273,7 @@ plotobject::plotobject(const std::string &sf)
         for (int i = 0; i < greek_literals.length(); ++i) {
             textdata.Replace(greek_literals[i], greek_letters[i]);
         }
-        textdata.Replace("\\$", "$");
+        //textdata.Replace("\\$", "$");
         setdrawingwords(textdata);
     }
 }
@@ -2208,7 +2308,7 @@ void plotobject::assign_latexbimap(int fontsize, const wxColour &col)
 
 int plotobject::clean_latexbitmap_list(const val::Glist<plotobject> &F)
 {
-    int anz = 0, n = latexbitmap_list.length(), found;
+    int anz = 0, n = latexbitmap_list.length(), maxdeletions = n/2, found;
     for (int i = 0; i < n; ) {
         found = 0;
         for (const auto &v : F) {
@@ -2221,6 +2321,7 @@ int plotobject::clean_latexbitmap_list(const val::Glist<plotobject> &F)
         if (!found) {
             latexbitmap_list.delelement(i);
             --n; ++anz;
+            if (anz >= maxdeletions) return anz;
         }
         else ++i;
     }

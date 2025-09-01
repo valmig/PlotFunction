@@ -31,7 +31,8 @@ struct plotobject;
 extern wxFrame *MyFrame;
 extern wxString tablestring;
 extern std::string fstring,xstring,ystring,filesep,filedir,sizestring,settingsfile,settingsdir,valdir,iconpath,savefiledir,
-                   openfiledir,handcursor,RecentFilesPath,alticonpath, RecentCommandsPath, errorfile, ansexpr;
+                   openfiledir,handcursor,RecentFilesPath,alticonpath, RecentCommandsPath, errorfile, ansexpr,
+                   latexdefinitionsfile;
 
 extern std::mutex compute_mutex;
 extern plotobject global_function;
@@ -61,7 +62,7 @@ enum val_settings{AXIS_SCALE,AXIS_COLOR,GRID_SCALE,GRID_COLOR,VALUES_NUMBER,AXIS
                     SHOW_FUNCTION,BACKGROND_COLOR,PARAMETER_VALUES,FUNCTION_SIZE,MARGIN,AXIS_FONTSIZE,FUNCTION_SETTINGS,MOVEINC};
 
 // match with CommandsList, CommandsParList
-enum val_commands{DERIVE,ANALYZE,TANGENT,NORMAL,INTERPOLATION,REGRESSION,TABLE,INTEGRAL,ARCLENGTH,ZERO_ITERATION,MOVE,EVALUATE,INTERSECTION,CALCULATE,ROTATE,OSCCIRCLE};
+enum val_commands{DERIVE,ANALYZE,TANGENT,NORMAL,INTERPOLATION,REGRESSION,TABLE,INTEGRAL,ARCLENGTH,ZERO_ITERATION,MOVE,EVALUATE,INTERSECTION,CALCULATE,ROTATE,OSCCIRCLE,TOLATEXSTRING};
 
 wxDECLARE_EVENT(MY_EVENT, MyThreadEvent);
 
@@ -84,7 +85,7 @@ private:
         std::string message;
 };
 
-enum myevent_id{IdPaint,IdTable,IdIntegral,IdRefresh,IdIteration,IdAnalyze,IdInfo,IdEval, IdIntersection, IdCalculate, IdPointStat, IdTriangle};
+enum myevent_id{IdPaint,IdTable,IdIntegral,IdRefresh,IdIteration,IdAnalyze,IdInfo,IdEval, IdIntersection, IdCalculate, IdPointStat, IdTriangle, IdToLatexString};
 
 
 void inserttocand(val::Glist<val::GPair<int>> &cand,const val::GPair<int> &q,int y);
@@ -149,6 +150,8 @@ val::Glist<char> substitutepar(std::string &s);
 
 void back_substitutepar(std::string &s, const val::Glist<char> &VarList, int nvariables);
 
+// Recursive function to translate the infix function name of a valfunction object into a latex-string.
+std::string valfunction_to_latex(const val::valfunction &f, int cdot = 0);
 
 void computepoints(val::Glist<plotobject> &F, int points,const double &x1,const double &x2,double &ymax,double &ymin,int activef,int comppoints);
 
@@ -175,6 +178,8 @@ void analyze_triangle(const plotobject &f, std::string input);
 void computetangent(std::string sf,const plotobject& f,double x1,double x2,int tangent=1);
 
 void computeosccircle(std::string sf, const plotobject &f);
+
+void computetolatexstring(const plotobject& f);
 
 template <class T>
 double kepler_simpson_sum(const T& f,const double& a,const double& b,int n);
@@ -305,16 +310,18 @@ struct plotobject
     static val::Glist<wxImage> image;
     //static const val::d_array<std::string> latex_string_size;
     static val::Glist<latex_element> latexbitmap_list;
-    static int latexavailable;
+    static int latexavailable, tempfilesused;
     static std::string tempdir, tempfile, tempfile_tex , createdvifile, createpngfile, removetempfiles,
-                       latex_doc_beg, latex_doc_end, tempfile_png;
+                       latex_doc_beg, latex_doc_defs , latex_doc_end, tempfile_png;
     //
     // Constructors:
     plotobject() = default;
     explicit plotobject(const std::string &);
     //
     void assign_latexbimap(int fontsize, const wxColour &col);
-    int clean_latexbitmap_list(const val::Glist<plotobject> &F);
+    //
+    static int clean_latexbitmap_list(const val::Glist<plotobject> &F);
+    static int checkiflatexisavailable();
     //
     const std::string& getinfixnotation() const {return s_infix;}
     int is_empty() const {return s_infix == "";}

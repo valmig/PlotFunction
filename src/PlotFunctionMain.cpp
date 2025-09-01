@@ -332,24 +332,7 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     Color.resize(7);
 
     // Check if latex is available on system:
-    {
-        plotobject::latexavailable = 1;
-        if (val::system("which latex") || val::system("which dvipng")) plotobject::latexavailable = 0;
-        if (plotobject::latexavailable) {
-            if (val::DirExists("/dev/shm")) plotobject::tempdir = "/dev/shm";
-            plotobject::tempfile_tex = plotobject::tempdir + filesep + plotobject::tempfile + ".tex";
-            plotobject::tempfile_png = plotobject::tempdir + filesep + plotobject::tempfile + ".png";
-            std::string tfiledvi = plotobject::tempdir + filesep + plotobject::tempfile + ".dvi";
-            std::string tfileout = plotobject::tempdir + filesep + plotobject::tempfile + ".png";
-            plotobject::createdvifile = "latex -halt-on-error -output-directory=" + plotobject::tempdir + " " + plotobject::tempfile_tex;
-            // std::cout << "\ncreatetexfile-command = " << plotobject::createdvifile;
-            plotobject::createpngfile = "dvipng -bg 'Transparent' " + tfiledvi + " -o " + tfileout;
-            // std::cout << "\ncreatepngfile-command = " << plotobject::createpngfile;
-            plotobject::removetempfiles = "rm " + plotobject::tempdir + filesep + plotobject::tempfile + "*";
-            // std::cout << "\nremovetempfiles-command = " << plotobject::removetempfiles;
-        }
-        // std::cout << "\n latexavailable = " << plotobject::latexavailable << std::endl;
-    }
+    plotobject::checkiflatexisavailable();
 
     GetSizeSettings();
     if (settings) {
@@ -378,6 +361,11 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     else {
         clientsize_x = clientsize_y = 500;
     }
+    if (plotobject::latexavailable) {
+        plotobject::latex_doc_beg += plotobject::latex_doc_defs +  "\\begin{document} \n\\definecolor{mycolor}{RGB}";
+        // std::cout << "\n latex_doc_beg = \n" << plotobject::latex_doc_beg << std::endl;
+    }
+
 
     BoxSizer1->Fit(this);
     SetClientSize(wxSize(clientsize_x,clientsize_y));
@@ -605,7 +593,12 @@ PlotFunctionFrame::~PlotFunctionFrame()
     if (SideText->IsShown()) SideText->Hide();
     if (notebook->IsShown()) notebook->Hide();
 
-    if (plotobject::latexavailable) val::system(plotobject::removetempfiles);
+    if (plotobject::latexavailable){
+        if (plotobject::tempfilesused) val::system(plotobject::removetempfiles);
+        std::ofstream file(latexdefinitionsfile, std::ios::out | std::ios::trunc);
+        if (file) file << plotobject::latex_doc_defs;
+        file.close();
+    }
 
     //(*Destroy(PlotFunctionFrame)
     //*)
@@ -794,6 +787,18 @@ void PlotFunctionFrame::GetSizeSettings()
         else recentcommands.push_back(line);
     }
     file2.close();
+
+    if (plotobject::latexavailable) {
+        line = "";
+        std::fstream file3(latexdefinitionsfile,std::ios::in);
+        if (file3) plotobject::latex_doc_defs = "";
+        while (file3) {
+            getline(file3, line);
+            if (line == "") break;
+            else plotobject::latex_doc_defs += line + "\n";
+        }
+        file3.close();
+    }
 }
 
 
@@ -1001,6 +1006,7 @@ void PlotFunctionFrame::GetSettings()
             //     F[i].latexbitmap = &(plotobject::latexbitmap_list[llatexbitmaplist-1].bitmap);
             // }
         }
+        if (plotobject::latexbitmap_list.length() > 100) plotobject::clean_latexbitmap_list(F);
         // std::cout << "\nlength latexbitmap_list: " << plotobject::latexbitmap_list.length() << std::endl;
         // std::cout << std::endl;
         // for (int i = 0; i < N; ++i) std::cout << remained[i] << " ";
@@ -3832,6 +3838,14 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
             return;
         }
         break;
+    case val_commands::TOLATEXSTRING :
+        {
+            if (f_nr < 0 || f_nr >= N) return;
+            std::thread t(computetolatexstring, std::cref(F[f_nr]));
+            t.detach();
+            return;
+        }
+        break;
     default:
         break;
     }
@@ -3888,6 +3902,18 @@ void PlotFunctionFrame::OnMyEvent(MyThreadEvent& event)
         refreshfunctionstring();
         GetSettings();
         Compute();
+        return;
+    }
+    if (id == IdToLatexString) {
+        std::string title = "Latex-String", info = "Copy to Clipboard with OK!";
+        val::MultiLineDialog ltostrdialog(this,tablestring,info,240,-1,title,fontsize,1,wxTE_RIGHT);
+
+        if (ltostrdialog.ShowModal() == wxID_CANCEL) return;
+        tablestring = ltostrdialog.GetSettingsText();
+        if (wxTheClipboard->Open()) {
+            wxTheClipboard->SetData( new wxTextDataObject(tablestring) );
+            wxTheClipboard->Close();
+        }
         return;
     }
 
