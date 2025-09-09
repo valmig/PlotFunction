@@ -534,7 +534,7 @@ int is_polynomial(const val::valfunction &f, int k = 1)
     std::string oper = f.getfirstoperator();
     val::valfunction g,h;
 
-    if (val::isinContainer(oper,operators)) {
+    if (val::isinContainer(oper,operators) || oper == "abs") {
         if (!f.getfirstargument().isconst(k)) return 0;
         else return 1;
     }
