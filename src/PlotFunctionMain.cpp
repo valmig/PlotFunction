@@ -303,7 +303,7 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     DrawPanel->SetForegroundColour(wxColour(255,255,255));
     DrawPanel->SetBackgroundColour(wxColour(255,255,255));
 
-    SideText = new val::CompleteTextCtrl(this,3102,WordTree,wxEmptyString,wxSize(widthSideText,-1),wxDefaultPosition,wxTE_MULTILINE|wxVSCROLL|wxHSCROLL|wxTE_RICH);
+    SideText = new val::CompleteTextCtrl(this,3102, &SideTextWordList, wxEmptyString,wxSize(widthSideText,-1),wxDefaultPosition,wxTE_MULTILINE|wxVSCROLL|wxHSCROLL|wxTE_RICH);
     SideText->SetCloseBrackets(true);
     notebook = new wxNotebook(this,3100);
     //
@@ -2100,8 +2100,17 @@ void PlotFunctionFrame::plotallfunctions(wxMemoryDC& dc)
 
 void PlotFunctionFrame::Paint()
 {
+#ifdef __LINUX__
+    //For Compatibility with wayland:
+    ispainted=1;
+    iscomputing=0;
+    DrawPanel->Refresh();
+    DrawPanel->Update();
+    // -----------------------------
+#else
     std::lock_guard<std::mutex> lock(compute_mutex);
     if (!ispainted) return;
+
 
     ispainted=0;
     wxClientDC dc1(DrawPanel);
@@ -2124,6 +2133,7 @@ void PlotFunctionFrame::Paint()
     ispainted=1;
     iscomputing=0;
     Text_Editrefresh();
+#endif
 }
 
 void PlotFunctionFrame::render(wxDC &dc1)
@@ -2985,7 +2995,7 @@ void PlotFunctionFrame::OnInputDialog(wxCommandEvent&)
     wxPoint point = GetPosition();
     point.y += 60;
     point.x += 5;
-    size.y = -1;//30;
+    size.y = -1; //fontsize + 20;//-1;//30;
     size.x -= 10;
 
 #ifdef __APPLE__
@@ -2999,7 +3009,7 @@ void PlotFunctionFrame::OnInputDialog(wxCommandEvent&)
         point.x += widthSideText +10;
     }
 
-    InputDialog input(this,1,InputDialogTree,"",size,point,fontsize);
+    InputDialog input(this,1,&InputDialogList,"",size,point,fontsize);
     input.SetComLists(CommandsList,CommandsParList);
     input.SetParLists(SettingsList,SettingsParList, SettingsCurrent);
     input.SetHistory(recentcommands);

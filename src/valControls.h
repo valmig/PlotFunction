@@ -20,7 +20,7 @@ DLL_PUBLIC wxDECLARE_EVENT(val_EVENT_SLIDER,wxCommandEvent);
 
 DLL_PUBLIC wxDECLARE_EVENT(val_EVENT_SWITCH,wxCommandEvent);
 
-wxDECLARE_EVENT(val_EVENT_COMPLETE,wxCommandEvent);
+DLL_PUBLIC wxDECLARE_EVENT(val_EVENT_COMPLETE,wxCommandEvent);
 
 
 /*
@@ -77,6 +77,7 @@ private:
     void SetSliderValues();
     void OnSliderEvent(wxCommandEvent&);
     void Paint();
+    void render();
     void OnDrawPanelPaint(wxPaintEvent&);
     void OnDrawPanelResize(wxSizeEvent&);
     void SendEvent();
@@ -115,6 +116,7 @@ private:
 
     void plotbar(wxDC &dc);
     void Paint();
+    void render();
     void OnDrawPanelPaint(wxPaintEvent& event);
     void OnDrawPanelResize(wxSizeEvent&);
     void OnSpinCtrl(wxSpinEvent &event);
@@ -150,6 +152,7 @@ private:
     wxString checkmark = L"\u2714", xmark = "x";
 
     void Paint();
+    void render();
     void OnDrawPanelPaint(wxPaintEvent&);
     void OnMouseClicked(wxMouseEvent&);
     void SendEvent();
@@ -219,6 +222,8 @@ public:
 
     CompleteTextCtrl(wxWindow *parent,wxWindowID id,const val::trie_type<wxString> &list,const wxString &value = "",const wxSize &size = wxDefaultSize,
                     const wxPoint &pos = wxDefaultPosition,long style = 0);
+    CompleteTextCtrl(wxWindow *parent,wxWindowID id,const val::d_array<wxString> *list,const wxString &value = "",const wxSize &size = wxDefaultSize,
+                    const wxPoint &pos = wxDefaultPosition,long style = 0);
     ~CompleteTextCtrl();
     bool SetFont(const wxFont& font);
     void SetCloseBrackets(bool v = true) {closebrackets = v;}
@@ -232,19 +237,21 @@ private:
     wxMemoryDC dc;
     val::d_array<wxString> CandList;
     val::trie_type<wxString> WordList;
-    const val::d_array<wxChar> o_brackets{'(', '{', '[', '"'}, c_brackets{')', '}', ']', '"'};
+    const val::d_array<wxString> *PWordlist = nullptr;
+    static const val::d_array<wxChar> o_brackets, c_brackets;
     char beg = 65, end = 122;
     const val::trie_type<wxString> *WordListPointer = nullptr;
     wxString actualword;
     wxString s_text;
     long from = 0, to = 0;
-    int selection = 0, isactiv=0, n_candidates = 0, fontsize, actuallength = 0, formerlength=0, textisselected = 0;
+    int selection = 0, isactiv=0, n_candidates = 0, fontsize, actuallength = 0, formerlength=0, textisselected = 0, Position = 0, bracketsset = 0;
     bool closebrackets = false, enablecomplete = true;
     wxString bracket = ")";
     wxAcceleratorTable *parenttable = nullptr, *accel = nullptr, *taccel = nullptr;
     void BuildObject();
     int isalphabetical(wxChar s) const;
     wxString findword(const wxString &s, int pos) const;
+    void GetCandList();
     void OnInputChanged(wxCommandEvent &event);
     void OnListBoxSelected(wxCommandEvent &event);
     void OnCompleteBrackets(wxCommandEvent &);

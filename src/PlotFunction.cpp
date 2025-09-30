@@ -163,7 +163,8 @@ const val::trie_type<wxString> WordTree(WordList + defaultcolornames, 58, int('A
 
 
 const val::trie_type<wxString> InputDialogTree(WordList + SettingsList + CommandsList + defaultcolornames, 78, int('-'));
-
+const val::d_array<wxString> InputDialogList(WordList + SettingsList + CommandsList + defaultcolornames);
+const val::d_array<wxString> SideTextWordList(WordList + defaultcolornames);
 
 const val::d_array<std::wstring> supscripts{L"⁰", L"¹", L"²", L"³", L"⁴", L"⁵", L"⁶", L"⁷", L"⁸", L"⁹"};
 

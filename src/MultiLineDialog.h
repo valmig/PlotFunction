@@ -148,7 +148,9 @@ private:
 class InputDialog : public wxDialog
 {
 public:
-    InputDialog(wxWindow *parent,wxWindowID id,const val::trie_type<wxString> &list,const wxString &value = "",const wxSize &size = wxDefaultSize,
+    // InputDialog(wxWindow *parent,wxWindowID id,const val::trie_type<wxString> &list,const wxString &value = "",const wxSize &size = wxDefaultSize,
+    //                 const wxPoint &pos = wxDefaultPosition, int fonts = 10);
+    InputDialog(wxWindow *parent,wxWindowID id,const val::d_array<wxString> *list,const wxString &value = "",const wxSize &size = wxDefaultSize,
                     const wxPoint &pos = wxDefaultPosition, int fonts = 10);
     ~InputDialog() {}
     void Clear() {input->Clear();}

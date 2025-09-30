@@ -536,14 +536,16 @@ void InputFunctionDialog::Build(const wxString& s_text, int fonts)
 
 
 
-InputDialog::InputDialog(wxWindow *parent, wxWindowID id, const val::trie_type<wxString> &list, const wxString& value,
+// InputDialog::InputDialog(wxWindow *parent, wxWindowID id, const val::trie_type<wxString> &list, const wxString& value,
+//                          const wxSize &size, const wxPoint& pos, int fonts) : wxDialog(parent,id,"",wxDefaultPosition,wxDefaultSize,wxBORDER_RAISED)
+InputDialog::InputDialog(wxWindow *parent, wxWindowID id, const val::d_array<wxString> *list, const wxString& value,
                          const wxSize &size, const wxPoint& pos, int fonts) : wxDialog(parent,id,"",wxDefaultPosition,wxDefaultSize,wxBORDER_RAISED)
 {
     Move(pos);
 #ifdef _WIN32
-    input = new val::CompleteTextCtrl(this,101,list,value,size,wxDefaultPosition,wxTE_MULTILINE|wxTE_PROCESS_ENTER); // _WIN32
+   input = new val::CompleteTextCtrl(this,101,list,value,size,wxDefaultPosition,wxTE_MULTILINE|wxTE_PROCESS_ENTER); // _WIN32
 #else
-    input = new val::CompleteTextCtrl(this,101,list,value,size,wxDefaultPosition,wxTE_PROCESS_ENTER);
+   input = new val::CompleteTextCtrl(this,101,list,value,size,wxDefaultPosition,wxTE_PROCESS_ENTER);
 #endif // _WIN32
 
     input->SetCloseBrackets(true);

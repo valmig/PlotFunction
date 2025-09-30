@@ -18,6 +18,37 @@ enum {IntervalSlider_UP_Id = 32500, IntervalSlider_DOWN_Id, IntervalSlider_ALTUP
         IntervalSlider_CTRLUP_Id, IntervalSlider_CTRLDOWN_Id, CompleteCtrl_UP_Id, CompleteCtrl_DOWN_Id,
         CompleteCtrl_RETURN_Id, CompleteCtrl_ESCAPE_Id, CompleteCtrl_TAB_Id, CompleteCtrl_BRACKETS_Id};
 
+
+val::d_array<char> leftbrackets{'(', '{', '['}, rightbrackets{')', '}', ']'};
+
+
+int isbetweenbrackets(int pos, wxString word)
+{
+    int n = word.length(), i, rbracket = -1, j;
+
+    if (n == 0) return 0;
+
+
+    for (i = pos; i < n; ++i) {
+        for (j = 0; j < rightbrackets.length(); ++j) {
+            if (char(word[i]) == rightbrackets[j]) {
+                rbracket = j;
+                break;
+            }
+        }
+        if (rbracket != -1) break;
+    }
+    if (rbracket == -1) return 0;
+
+
+    for (i = pos-1; i >= 0; --i) {
+        if (char(word[i]) == leftbrackets[rbracket]) return 1;
+    }
+
+    return 0;
+}
+
+
 int isdarkcolor(const wxColour& color)
 {
     double r = color.Red(), g = color.Green(), b = color.Blue(), hsp;
@@ -190,10 +221,16 @@ void Slider::OnSliderEvent(wxCommandEvent&)
 
 }
 
-
 void Slider::Paint()
 {
-    wxClientDC dc(DrawPanel);
+    DrawPanel->Refresh();
+    DrawPanel->Update();
+}
+
+
+void Slider::render()
+{
+    wxPaintDC dc(DrawPanel);
     std::string text(val::ToString(value));
     //int x = int(val::round(double(sizex)*double(svalue)/double(range),0));
     if (Style & wxHORIZONTAL) {
@@ -226,7 +263,7 @@ void Slider::Paint()
 
 void Slider::OnDrawPanelPaint(wxPaintEvent&)
 {
-    Paint();
+    render();
 }
 
 void Slider::OnDrawPanelResize(wxSizeEvent&)
@@ -403,9 +440,15 @@ void IntervalSlider::plotbar(wxDC &dc)
 
 void IntervalSlider::Paint()
 {
+    DrawPanel->Refresh();
+    DrawPanel->Update();
+}
+
+void IntervalSlider::render()
+{
     if (!ispainted) return;
     ispainted=0;
-    wxClientDC dc1(DrawPanel);
+    wxPaintDC dc1(DrawPanel);
 
 
     wxBitmap paper = wxBitmap(DrawPanel->GetSize());
@@ -463,24 +506,24 @@ void IntervalSlider::OnArrowsPressed(wxCommandEvent &event)
             RSpin->SetValue(rightvalue);
         }
         break;
-	case IntervalSlider_CTRLUP_Id:
-		{
-			rightvalue++;
-			leftvalue--;
-			if (rightvalue > uvalue) rightvalue = uvalue;
-			if (leftvalue < lvalue) leftvalue = lvalue;
-			RSpin->SetValue(rightvalue);
-			LSpin->SetValue(leftvalue);
-		}
-		break;
-	case IntervalSlider_CTRLDOWN_Id:
-		{
-			if (rightvalue == leftvalue) break;
-			rightvalue--;
-			leftvalue++;
-			RSpin->SetValue(rightvalue);
-			LSpin->SetValue(leftvalue);
-		}
+    case IntervalSlider_CTRLUP_Id:
+        {
+            rightvalue++;
+            leftvalue--;
+            if (rightvalue > uvalue) rightvalue = uvalue;
+            if (leftvalue < lvalue) leftvalue = lvalue;
+            RSpin->SetValue(rightvalue);
+            LSpin->SetValue(leftvalue);
+        }
+        break;
+    case IntervalSlider_CTRLDOWN_Id:
+        {
+            if (rightvalue == leftvalue) break;
+            rightvalue--;
+            leftvalue++;
+            RSpin->SetValue(rightvalue);
+            LSpin->SetValue(leftvalue);
+        }
         break;
     default:
         break;
@@ -564,9 +607,9 @@ void IntervalSlider::OnMouseMoved(wxMouseEvent& event)
         x1=x;
         if (x1<dx) x1=dx;
         if (x1>x2) {
-			x1 = x2;
-			leftvalue=rightvalue;
-		}
+            x1 = x2;
+            leftvalue=rightvalue;
+        }
         else leftvalue = int(val::round(double((x1-dx)*(uvalue-lvalue))/double(barwidth),0)) + lvalue;
         LSpin->SetValue(leftvalue);
     }
@@ -574,9 +617,9 @@ void IntervalSlider::OnMouseMoved(wxMouseEvent& event)
         x2=x;
         if (x2>dx+barwidth) x2=dx + barwidth;
         if (x2 < x1) {
-			x2 = x1;
-			rightvalue=leftvalue;
-		}
+            x2 = x1;
+            rightvalue=leftvalue;
+        }
         else rightvalue = int(val::round(double((x2-dx)*(uvalue-lvalue))/double(barwidth),0)) + lvalue;
         RSpin->SetValue(rightvalue);
     }
@@ -597,7 +640,7 @@ void IntervalSlider::OnDrawPanelPaint(wxPaintEvent &event)
     //StatusBar1->SetStatusText(val::ToString(npainted));
 #ifndef _WIN32
     //wxPaintDC dummy(DrawPanel);
-    Paint();
+    render();
 #endif // _WIN32
 }
 
@@ -677,11 +720,15 @@ void SwitchCtrl::ChangeValue(bool value)
 }
 
 
-
-
 void SwitchCtrl::Paint()
 {
-    wxClientDC dc1(DrawPanel);
+    DrawPanel->Refresh();
+    DrawPanel->Update();
+}
+
+void SwitchCtrl::render()
+{
+    wxPaintDC dc1(DrawPanel);
 
 
     wxBitmap paper = wxBitmap(DrawPanel->GetSize());
@@ -749,7 +796,7 @@ void SwitchCtrl::SendEvent()
 
 void SwitchCtrl::OnDrawPanelPaint(wxPaintEvent& event)
 {
-    Paint();
+    render();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------------
@@ -831,11 +878,11 @@ void CompleteCtrl::OnInputChanged(wxCommandEvent &)
 
     if (closebrackets && word[n] == '(' && actuallength > formerlength) {
         actualword = "";
-		//if (n!=m && word[m+1] == ')') return;
-		wxCommandEvent event(val_EVENT_COMPLETE,0);
-		wxPostEvent(this,event);
-		return;
-	}
+        //if (n!=m && word[m+1] == ')') return;
+        wxCommandEvent event(val_EVENT_COMPLETE,0);
+        wxPostEvent(this,event);
+        return;
+    }
 
 
     //if (m!=n-1) wxMessageBox(findword(word,m-1,startpos));
@@ -948,11 +995,16 @@ void CompleteCtrl::UnbindAll()
 
 // ------------------------------------------------------------------------------------------------------------------------------------------
 
+const d_array<wxChar> CompleteTextCtrl::o_brackets{'(', '{', '[', '"'};
+const d_array<wxChar> CompleteTextCtrl::c_brackets{')', '}', ']', '"'};
+
+
+
 
 CompleteTextCtrl::CompleteTextCtrl(wxWindow *parent, wxWindowID id,const val::d_array<wxString> &list,const wxString &value, const wxSize &size,
                                    const wxPoint &pos,long style) : wxTextCtrl(parent,id,value,pos,size,style), Parent(parent), identity(id), WordList(list,58,int('A'))
 {
-	BuildObject();
+    BuildObject();
 }
 
 
@@ -960,7 +1012,13 @@ CompleteTextCtrl::CompleteTextCtrl(wxWindow *parent, wxWindowID id,const val::tr
                                    const wxPoint &pos,long style) : wxTextCtrl(parent,id,value,pos,size,style), Parent(parent), identity(id),
                                    beg(list.first_valid_char()), end(list.last_valid_char()), WordListPointer(&list)
 {
-	BuildObject();
+    BuildObject();
+}
+
+CompleteTextCtrl::CompleteTextCtrl(wxWindow *parent,wxWindowID id,const val::d_array<wxString> *list,const wxString &value,const wxSize &size,
+                    const wxPoint &pos, long style) : wxTextCtrl(parent,id,value,pos,size,style), Parent(parent), identity(id), PWordlist(list)
+{
+    BuildObject();
 }
 
 
@@ -1027,6 +1085,27 @@ wxString CompleteTextCtrl::findword(const wxString& input,int pos) const
 }
 
 
+void CompleteTextCtrl::GetCandList()
+{
+    int n = actualword.length(), pos;
+    val::d_array<wxString> PostList;
+
+    CandList.del();
+
+    CandList.reserve(PWordlist->length());
+    PostList.reserve(PWordlist->length());
+
+    for (const auto &s : *PWordlist) {
+        pos = s.Find(actualword);
+        if (pos == wxNOT_FOUND) continue;
+        if (pos == 0) CandList.push_back(s);
+        else if (n >= 3) PostList.push_back(s);
+    }
+    CandList.sort();
+    PostList.sort();
+    if (!PostList.isempty()) CandList.append(std::move(PostList));
+}
+
 
 bool CompleteTextCtrl::SetFont(const wxFont& font)
 {
@@ -1050,6 +1129,11 @@ CompleteTextCtrl::~CompleteTextCtrl()
 void CompleteTextCtrl::OnInputChanged(wxCommandEvent &tevent)
 {
     //tevent.Skip();
+    if(bracketsset) {
+        // std::cout << "bracketsset" << std::endl;
+        bracketsset = 0;
+        if (IsSingleLine()) return;
+    }
     UnbindAll();
     listbox->Show(false);
     listbox->Clear();
@@ -1059,6 +1143,11 @@ void CompleteTextCtrl::OnInputChanged(wxCommandEvent &tevent)
     wxString word = GetValue();
     int n = GetInsertionPoint();
     if (!IsSingleLine()) --n;
+    if (IsSingleLine() && isbetweenbrackets(n, word)){
+        --n;
+        if (n < 0) n = 0;
+        Position = n;
+    }
     //wxMessageBox(word + " , = " +val::ToString(n));
     if (n<0) n = 0;
 
@@ -1077,15 +1166,24 @@ void CompleteTextCtrl::OnInputChanged(wxCommandEvent &tevent)
     }
     if (n<0) n = 0;
 #endif // _WIN32
+       //
+    Position = n;
+
 
     if (closebrackets && (word[n] == '(' || word[n] == '{' || word[n] == '[') && actuallength > formerlength) {
         if (word[n] == '(') bracket = ")";
         else if (word[n] == '[') bracket = "]";
         else bracket = "}";
-        actualword = "";
+
+        // std::cout << "bracket at " << n << "  " << actuallength << std::endl;
+        //actualword = "";
         //if (n!=m && word[m+1] == ')') return;
-        wxCommandEvent event(val_EVENT_COMPLETE,0);
-        wxPostEvent(this,event);
+
+         // wxCommandEvent event(val_EVENT_COMPLETE,0);
+         // wxPostEvent(this,event);
+        bracketsset = 1;
+        Replace(n+1, n+1, bracket);
+        SetInsertionPoint(n+1);
         if (Parent != nullptr) {
             wxCommandEvent pevent(wxEVT_TEXT,identity);
             wxPostEvent(Parent,pevent);
@@ -1093,15 +1191,18 @@ void CompleteTextCtrl::OnInputChanged(wxCommandEvent &tevent)
         return;
     }
 
+
     //if (m!=n-1) wxMessageBox(findword(word,m-1,startpos));
     //if (word[n] >= 97 && word[n] <= 122) {
+    // std::cout << char(word[n]) << " " << n << std::endl;
 
     if (enablecomplete && isalphabetical(word[n])) {
         //actualword += word[n-1];
         actualword = findword(word,n);
         //std::cout << "\n" << actualword << std::endl;
         //CandList = getlist_of_starts_with(WordList,actualword);
-        if (WordListPointer == nullptr) CandList = WordList.getmatchingprefix<d_array>(actualword);
+        if (PWordlist != nullptr) GetCandList();
+        else if (WordListPointer == nullptr) CandList = WordList.getmatchingprefix<d_array>(actualword);
         else CandList = WordListPointer->getmatchingprefix<d_array>(actualword);
         n_candidates = CandList.length();
         if (CandList.isempty()) return;
@@ -1136,13 +1237,13 @@ void CompleteTextCtrl::OnInputChanged(wxCommandEvent &tevent)
         if (line && n>0 && word[n-1] == '\n') pos = PositionToCoords(n+line);
 #endif // _WIN32
         if (IsSingleLine()) {
-			pos.y = 5;
-		}
+            pos.y = 5;
+        }
         //listbox->SetFont(input->GetFont());
         //fontsize = input->GetFont().GetPointSize();
         int ps = 15;
         if (anz < 2) ps = 20;
-        listbox->Move(screenpos.x+pos.x,screenpos.y+pos.y+20);
+        listbox->Move(screenpos.x+pos.x,screenpos.y+pos.y + fontsize + 10);
         listbox->SetSize(200,anz * (fontsize + ps));
         listbox->SetSelection(selection);
         listbox->Show(true);
@@ -1197,7 +1298,7 @@ void CompleteTextCtrl::OnShortCuts(wxCommandEvent &event)
         else closebrackets = true;
     }
     else if (id == 102) {
-    	DuplicateLine();
+        DuplicateLine();
     }
 }
 
@@ -1253,11 +1354,25 @@ void CompleteTextCtrl::OnListBoxSelected(wxCommandEvent &evt)
 
 void CompleteTextCtrl::CompleteWord()
 {
-    wxString &fullword = CandList[selection],suffix;
-    int i,m = actualword.length(), n = fullword.length();
+    wxString &fullword = CandList[selection]; //suffix;
+    //int i,m = actualword.length(), n = fullword.length();
 
-    for (i = m; i < n ; ++i) suffix += fullword[i];
-    WriteText(suffix);
+    //for (i = m; i < n ; ++i) suffix += fullword[i];
+
+    int pos = Position - 1;
+
+
+    for (; pos >= 0; --pos) {
+        //if (input[start_position]<97 || input[start_position] > 122) break;
+        if (!(isalphabetical(GetValue()[pos]))) {
+            ++pos;
+            break;
+        }
+    }
+    if (pos < 0) pos = 0;
+    //std::cout << Position << " " << pos << " " << pos + actualword.length() << std::endl;
+    //WriteText(suffix);
+    Replace(pos, pos+actualword.length(), fullword);
     actualword = "";
 }
 

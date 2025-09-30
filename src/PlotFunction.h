@@ -51,7 +51,9 @@ extern const val::d_array<wxString> CommandsParList;
 extern val::Glist<wxString> recentcommands;
 extern const val::d_array<wxString> WordList;
 extern const val::trie_type<wxString> WordTree;
+extern const val::d_array<wxString> SideTextWordList;
 extern const val::trie_type<wxString> InputDialogTree;
+extern const val::d_array<wxString> InputDialogList;
 
 // match with defaultcolors, defaultcolornames
 enum val_colors{BLUE,RED,GREEN,LBLUE,ORANGE,VIOLET,GREY,WHITE,BlACK,LGREY,YELLOW,DGREEN,BEIGE,BROWN,DBLUE,PINK,SKYBLUE,LGREEN,MAGENTA,OLIVE,PURPLE,GOLD,CYAN};
