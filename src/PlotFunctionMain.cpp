@@ -3981,6 +3981,9 @@ void PlotFunctionFrame::OnMyEvent(MyThreadEvent& event)
             x-=maxx-(x+sx+23);
         }
         Point.x = x; Point.y = y;
+        for (auto & v : analyze_output) {
+            v.Replace("PI", L"\u03C0");
+        }
         AnalysisDialog *adialog = new AnalysisDialog(this,nanalyzewindows,analyze_output,Points,wxSize(sx,sy),Point,fontsize,title,dtype);
         adialog->Show();
     }

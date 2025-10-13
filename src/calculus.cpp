@@ -66,6 +66,8 @@ void set_unity_element(valfunction &f)
 } // end namespace val
 
 
+
+
 namespace hzeros
 {
 //val::d_array<std::string> operators({"exp","sin","cos","log","tan","sqrt","arcsin","arccos","arctan"});
@@ -192,6 +194,10 @@ int sqrt_dis(const val::valfunction &dis, val::valfunction &res)
         return 1;
     }
 }
+
+// Computes zeros of sin(ax +b) + c or cos(ax+b) + c or tan(ax +b)
+// f_var is trigonometric function f_const = c;
+
 
 } // end namespace hzeros
 
@@ -1627,6 +1633,124 @@ std::string compute_partialfraction(const val::valfunction &f)
 }
 
 
+namespace  hzeros
+{
+// Computes zeros of sin(ax +b) + c or cos(ax+b) + c or tan(ax +b)
+// f_var is trigonometric function f_const = c;
+int trigolinzeros(const val::valfunction &f_var, const double &x1, const double &x2, val::Glist<double> &d_zeros,
+                  val::Glist<val::valfunction> &s_zeros, const double &eps = 1e-9, const val::valfunction &f_const = val::valfunction(""))
+{
+    using namespace val;
+    d_zeros.dellist(); s_zeros.dellist();
+
+    std::string f_oper = f_var.getfirstoperator();
+
+    if (f_oper != "sin" && f_oper != "cos" && f_oper != "tan") return 0;
+
+    valfunction g = f_var.getfirstargument();
+    if (!hintegral::is_polynomial(g)) return 0;
+    pol<valfunction> pG = hintegral::getpolynomial(g);
+    if (pG.degree() > 1) return 0;
+    double a = pG[1](0), b = pG[0](0), k, t = f_var.getparameter();
+
+    // provisional
+    //
+    if (f_oper == "tan" && f_const.is_zero()) f_oper = "sin";
+    if (f_oper == "tan") return 0;
+    if (abs(f_const(0)) > 1.0) return 1; // No zeros!
+
+    d_array<valfunction> values{valfunction("0"), valfunction("1/2"), valfunction("sqrt(2)/2"), valfunction("sqrt(3)/2"), valfunction("1")};
+    d_array<valfunction> arcsinval{valfunction("0"), valfunction("PI/6"), valfunction("PI/4"), valfunction("PI/3"), valfunction("PI/2")};
+    d_array<valfunction> arccosval{valfunction("PI/2"), valfunction("PI/3"), valfunction("PI/4"), valfunction("PI/6"), valfunction("0")};
+    double c = f_const(0);
+    valfunction c_func;
+    int j = -1;
+
+    if (c < 0) c_func = -f_const;
+    else c_func = f_const;
+
+    for (int i = 0; i < values.length(); ++i) {
+        if (values[i] == c_func) {
+            j = i;
+            break;
+        }
+    }
+    if (j == -1) return 0;
+    valfunction arcsinc = arcsinval[j], arccosc = arccosval[j], arcusf, h;
+    if (c < 0) arcsinc = -arcsinc;
+    double asinc = arcsinc(0), acosc = arccosc(0), arcusc, plus;
+    int k1l, k1r, k2l, k2r, plusi;
+
+    if (f_oper == "sin") {
+        arcusc = asinc;
+        arcusf = arcsinc;
+        plus = 0.0;
+        plusi = 1;
+    }
+    else {
+        arcusc = acosc;
+        arcusf = arccosc;
+        plus = 0.5;
+        plusi = 2;
+    }
+    if (a > 0) {
+        k = (a*x1 + b - arcusc)/(2*PI);
+        k1l = int(k);
+        if (k > double(k1l)) ++k1l;
+        k = (a * x1 + b + arcusc) / (2 * PI) - 0.5 - plus;
+        k2l = int(k);
+        if (k > double(k2l)) ++k2l;
+        k1r = int((a * x2 + b - arcusc) / (2 * PI));
+        k2r = int((a * x2 + b + arcusc) / (2 * PI) - 0.5 - plus);
+    }
+    else {
+        k = (a*x2 + b - arcusc)/(2*PI);
+        k1l = int(k);
+        if (k > double(k1l)) ++k1l;
+        k = (a*x2 + b + arcusc)/(2*PI) - 0.5 - plus;
+        k2l = int(k);
+        if (k > double(k2l)) ++k2l;
+        k1r = int((a*x1 + b - arcusc)/(2*PI));
+        k2r = int((a*x1 + b + arcusc)/(2*PI) - 0.5 - plus);
+    }
+    val::d_array<double> pdzeros;
+    val::d_array<valfunction> pszeros;
+    for (int i = k1l; i <= k1r; ++i) {
+        h = (arcusf - pG[0] + valfunction( ToString(2*i) + " PI") ) / pG[1];
+        h.setparameter(t);
+        k = h(0);
+        if (k >= x1 && k <= x2) {
+            pdzeros.push_back(k);
+            pszeros.push_back(h);
+        }
+    }
+    for (int i = k2l; i <= k2r; ++i) {
+        h = (valfunction( ToString(2*i + plusi) + " PI") - arcusf - pG[0]) / pG[1];
+        h.setparameter(t);
+        k = h(0);
+        if (k >= x1 && k <= x2) {
+            pdzeros.push_back(k);
+            pszeros.push_back(h);
+        }
+    }
+    pdzeros.sort();
+    if (!pdzeros.isempty()) d_zeros.push_back(pdzeros[0]);
+    for (int i = 1; i < pdzeros.length(); ++i) {
+        if (pdzeros[i-1] != pdzeros[i]) d_zeros.push_back(pdzeros[i]);
+    }
+    for (int i = 0; i < d_zeros.length(); ++i) {
+        for (const auto &v : pszeros) {
+            if (v(0) == d_zeros[i]) {
+                s_zeros.push_back(v);
+                break;
+            }
+        }
+    }
+    return 1;
+}
+
+} // end namespace hzeros
+
 
 void computezeros(const val::valfunction &f,const double &x1,const double &x2,const double &epsilon,int decimals,int iterations,
                   val::Glist<double> &d_zeros, val::Glist<val::valfunction> &s_zeros)
@@ -1745,6 +1869,7 @@ void computezeros(const val::valfunction &f,const double &x1,const double &x2,co
             return;
         }
     }
+    else if (hzeros::trigolinzeros(f, x1, x2, d_zeros, s_zeros,epsilon)) return;
     else if (f_oper == "exp" || f_oper == "cosh") {
         return;
     }
@@ -1834,15 +1959,8 @@ void computezeros(const val::valfunction &f,const double &x1,const double &x2,co
             computezeros(g, x1, x2, epsilon, decimals, iterations, d_zeros, s_zeros);
             return;
         }
-        /*    evtl. sin, cos:
-        double r_val = f_const(0);
-        if ((f_oper == "sin"  || f_oper == "cos" ) && !has_parameter(f_const.getinfixnotation()) && !has_parameter(g.getinfixnotation()) && abs(r_val) <= 1) {
-            pol<valfunction> p_g;
-            if (is_polynomial(g) && (p_g = getpolynomial(g)).degree() <= 1) {
-                std::cout << "\nHier!" << std::endl;
-            }
-        }
-        */
+        // some sin, cos with specific constant value and linear argument:
+        if (hzeros::trigolinzeros(f_var, x1, x2, d_zeros, s_zeros,epsilon, f_const)) return;
     }
     // else :
     d_zeros = f.double_roots(x1,x2,iterations,epsilon);

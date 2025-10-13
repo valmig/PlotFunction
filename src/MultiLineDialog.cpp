@@ -539,7 +539,7 @@ void InputFunctionDialog::Build(const wxString& s_text, int fonts)
 // InputDialog::InputDialog(wxWindow *parent, wxWindowID id, const val::trie_type<wxString> &list, const wxString& value,
 //                          const wxSize &size, const wxPoint& pos, int fonts) : wxDialog(parent,id,"",wxDefaultPosition,wxDefaultSize,wxBORDER_RAISED)
 InputDialog::InputDialog(wxWindow *parent, wxWindowID id, const val::d_array<wxString> *list, const wxString& value,
-                         const wxSize &size, const wxPoint& pos, int fonts) : wxDialog(parent,id,"",wxDefaultPosition,wxDefaultSize,wxBORDER_RAISED)
+                         const wxSize &size, const wxPoint& pos, int fonts) : wxDialog(parent,id,"",wxDefaultPosition,wxDefaultSize,wxNO_BORDER)
 {
     Move(pos);
 #ifdef _WIN32
