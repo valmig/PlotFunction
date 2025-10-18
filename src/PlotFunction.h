@@ -64,7 +64,8 @@ enum val_settings{AXIS_SCALE,AXIS_COLOR,GRID_SCALE,GRID_COLOR,VALUES_NUMBER,AXIS
                     SHOW_FUNCTION,BACKGROND_COLOR,PARAMETER_VALUES,FUNCTION_SIZE,MARGIN,AXIS_FONTSIZE,FUNCTION_SETTINGS,MOVEINC};
 
 // match with CommandsList, CommandsParList
-enum val_commands{DERIVE,ANALYZE,TANGENT,NORMAL,INTERPOLATION,REGRESSION,TABLE,INTEGRAL,ARCLENGTH,ZERO_ITERATION,MOVE,EVALUATE,INTERSECTION,CALCULATE,ROTATE,OSCCIRCLE,TOLATEXSTRING};
+enum val_commands{DERIVE,ANALYZE,TANGENT,NORMAL,INTERPOLATION,REGRESSION,TABLE,INTEGRAL,ARCLENGTH,ZERO_ITERATION,MOVE,EVALUATE,INTERSECTION,
+                     CALCULATE,ROTATE,OSCCIRCLE,TOLATEXSTRING,TAYLORPOL,REFLECTION};
 
 wxDECLARE_EVENT(MY_EVENT, MyThreadEvent);
 
@@ -155,6 +156,10 @@ void back_substitutepar(std::string &s, const val::Glist<char> &VarList, int nva
 // Recursive function to translate the infix function name of a valfunction object into a latex-string.
 std::string valfunction_to_latex(const val::valfunction &f, int cdot = 0);
 
+
+val::pol<double> taylor_polynomial(const val::valfunction &f, int deg, const double &x0 = 0);
+
+
 void computepoints(val::Glist<plotobject> &F, int points,const double &x1,const double &x2,double &ymax,double &ymin,int activef,int comppoints);
 
 void computetable(const plotobject& f,double x1,double x2,double dx);
@@ -183,6 +188,14 @@ void computeosccircle(std::string sf, const plotobject &f);
 
 void computetolatexstring(const plotobject& f);
 
+void computetaylorpolynomial(const plotobject &f, std::string input);
+
+// Reflect F to G
+void computereflection(const plotobject &F, const plotobject &G, double x1, double x2);
+
+// computes point reflection fo F to (px,py):
+void computepointreflection(const plotobject &F, double px, double py);
+
 template <class T>
 double kepler_simpson_sum(const T& f,const double& a,const double& b,int n);
 
@@ -197,6 +210,12 @@ double integral(const T& f,const double &a,const double &b,int iter = 50, const 
 // f1 = f'
 template<class T>
 int NewtonIteration(const T& f, const T &f1, double &x, const double& eps = 1e-9, int n = 15);
+
+namespace val
+{
+valfunction& operator *=(valfunction &f, const valfunction &g);
+std::ostream& operator <<(std::ostream& os,const valfunction &f);
+}
 
 
 // Iterationsverfahren zur Bestimmung einer Nullstelle nach der Sekanten-Methode:

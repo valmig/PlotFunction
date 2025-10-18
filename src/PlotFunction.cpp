@@ -132,7 +132,8 @@ const val::d_array<wxString> SettingsParList({"axis-scale sx [sy]   <Shift-Alt-S
                                              });
 
 const val::d_array<wxString> CommandsList({"derive", "analyze", "tangent", "normal", "interpolation", "regression", "table", "integral",
-                                             "arclength", "zero-iteration", "move", "evaluate", "intersection", "calculate", "rotate", "osc_circle", "latex-string"});
+                                             "arclength", "zero-iteration", "move", "evaluate", "intersection", "calculate", "rotate", "osc_circle", "latex-string", "taylor-polynomial",
+                                             "reflection"});
 
 const val::d_array<wxString> CommandsParList({"derive [#nr = 1]",
                                                  "analyze [#nr = 1] [x1 x2] [prec = 1e-09] [iterations] [decimals]    <Ctrl-A>",
@@ -150,7 +151,9 @@ const val::d_array<wxString> CommandsParList({"derive [#nr = 1]",
                                                  "calculate arithmetic expression",
                                                  "rotate [#nr = 1] angle (in degrees ) x y (center)",
                                                  "osc_circle [#nr = 1] x    ",
-                                                 "latex-string [#nr = 1]"
+                                                 "latex-string [#nr = 1]",
+                                                 "taylor-polynomial [#nr = 1] deg [x0 = 0]",
+                                                 "reflection [#nr1 = 1] #nr2 / object"
                                                  });
 
 
@@ -467,6 +470,31 @@ std::string valfunction_to_latex(const val::valfunction &f, int cdot)
 
     return ls;
 }
+
+
+val::pol<double> taylor_polynomial(const val::valfunction &f, int deg, const double &x0 )
+{
+    double value = f(x0);
+
+    if (deg < 0 || val::isNaN(value) || value == val::Inf || value == -val::Inf) return val::pol<double>();
+
+    val::pol<double> pf(value), factor{{1.0,1}, {-x0,0}}, mult(1.0);
+    double fak = 1.0;
+    val::valfunction df = f;
+
+    for (int i = 1; i <= deg; ++i) {
+        df = df.derive();
+        fak *= double(i);
+        mult *= factor;
+        value = df(x0);
+        if (val::isNaN(value) || value == val::Inf || value == -val::Inf) return val::pol<double>();
+        pf += (value/fak) * mult;
+    }
+
+    return pf;
+}
+
+
 
 double squaredistance(const wxPoint& l1, const wxPoint &l2, const wxPoint &p)
 {
@@ -1672,8 +1700,13 @@ void computetangent(std::string sf,const plotobject &f,double x1,double x2,int t
             }
             else if (diffbar) {
                 val::valfunction x_f(sf), m_f = (F.derive())(x_f);
+                // std::cout << "\n m_f = " << m_f.getinfixnotation() << std::endl;
                 if (!tangent) m_f = val::valfunction("-1/(" + m_f.getinfixnotation() + ")");
-                val::valfunction b_f = F(x_f) - m_f * x_f, g = m_f * val::valfunction("x") + b_f;
+                val::valfunction b_f = F(x_f) - m_f * x_f, g = m_f * val::valfunction("x") + b_f;// mult = m_f * x_f;
+                //mult.simplify();
+                //b_f = F(x_f) - mult;
+                //g = m_f * val::valfunction("x") + b_f;
+                // std::cout << "\n F(x_f) = " << F(x_f).getinfixnotation() << ", b_f = " << b_f.getinfixnotation() << ", m_f * xf = " << mult.getinfixnotation() << std::endl;
                 fstring += ";\n" + g.getinfixnotation();
             }
             else {
@@ -1930,6 +1963,182 @@ void computetolatexstring(const plotobject& f)
     if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event.Clone() );
 }
 
+void computetaylorpolynomial(const plotobject &f, std::string input)
+{
+    if (!f.IsFunction()) return;
+    val::d_array<char> sep{' '};
+    val::Glist<std::string> svalues = getwordsfromstring(input, sep);
+    double x0;
+    int deg;
+
+    if (svalues.length()  < 1) return;
+    if (svalues.length() >= 2) x0 = val::FromString<double>(svalues[1]);
+    deg = val::FromString<int>(svalues[0]);
+
+    if (deg < 0) return;
+
+    val::pol<double> p = val::ToDoublePolynom(taylor_polynomial(f.f, deg, x0)); // To round coefficients near 0.
+    std::string spol = val::PolToString(p);
+
+    val::valfunction g(spol);
+
+    if (g.is_zero()) return;
+
+    fstring += ";\n" + g.getinfixnotation();
+
+    MyThreadEvent event(MY_EVENT, IdRefresh);
+    if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event.Clone() );
+}
+
+
+// Reflect F to G
+void computereflection(const plotobject &F, const plotobject &G, double x1, double x2)
+{
+    using namespace val;
+
+    // Get algebraic equation of G: ax + by = c if possible:
+    valfunction a, b, c, zero("0"), one("1");
+
+    if (G.IsFunction()) {
+        if (!G.islinear) return;
+        a = -G.f.derive(); b = one; c = G.f(zero);
+    }
+    else if (G.IsAlgCurve()) {
+        if (!G.islinear) return;
+        vector<valfunction> z{zero, zero};
+        a = G.f.derive(1); b = G.f.derive(2); c = -G.f(z);
+    }
+    else if (G.IsLine() || G.IsPoints()) {
+        const val::d_array<double> &f = G.farray;
+        if (G.IsPoints() && f.length() == 2) {
+            computepointreflection(F, G.farray[0], G.farray[1]);
+            return;
+        }
+        if (f.length() < 4) return;
+        if (f[1] == f[3]) {
+            a = zero; b = one; c = valfunction(ToString(f[1]));
+        }
+        else if (f[0] == f[2]) {
+            a = one; b = zero; c = valfunction(ToString(f[0]));
+        }
+        else {
+            double m = (f[3] - f[1])/(f[2] - f[0]), d = f[1] - m * f[0];
+            a = -valfunction(ToString(m)), b = one, c = valfunction(ToString(d));
+        }
+    }
+    else if (G.IsParcurve()) {
+        if (!G.islinear) return;
+        a = -G.g.derive(); b = G.f.derive(); c = G.f(zero) * a + G.g(zero) * b;
+    }
+    else return;
+    // std::cout << "\n a = " << a.getinfixnotation() << ",  b = " << b.getinfixnotation() << ", c = " << c.getinfixnotation() << std::endl;
+
+
+    valfunction two("2");
+    std::string s;
+
+    if(F.IsFunction() && b.is_zero()) {
+        valfunction g = two*(c/a) - valfunction("x");
+        s = ";\n" + F.f(g).getinfixnotation();
+    }
+    else if (F.IsFunction() && a.is_zero()) {
+        valfunction g = two*(c/b) - F.f;
+        s = ";\n" + g.getinfixnotation();
+    }
+    else {
+        // Represent F as parametric function or get the points:
+        vector<valfunction> fv(2);
+        const d_array<double> *ppoints = nullptr;
+        if (F.IsFunction()) {
+            fv(0) = valfunction("x"); fv(1) = F.f;
+        }
+        else if (F.IsParcurve()) {
+            fv(0) = F.f; fv(1) = F.g;
+        }
+        else if (F.IsLine() || F.IsPoints() || F.IsPolygon() || F.IsTriangle()) {
+            ppoints = &F.farray;
+        }
+        else return;
+
+        matrix<valfunction> R{{b*b - a*a, -two*a*b}, {-two*a*b, a*a-b*b}};
+        vector<valfunction> p(2), q(2), y(2);
+
+        if (!a.is_zero()) {
+            p(0) = c/a; p(1) = zero;
+        }
+        else {
+            p(0) = zero; p(1) = c/b;
+        }
+
+        R *= one / (a * a + b * b);
+        q = p - R * p;
+        if (ppoints != nullptr) {
+            int n = ppoints->length();
+            matrix<double> dR(2);
+            vector<double> dq(2), dy(2);
+            for (int i = 0; i < R.numberofrows(); ++i) {
+                dq(i) = q(i)(0);
+                for (int j = 0; j < R.numberofcolumns(); ++j) {
+                    dR(i,j) = R(i,j)(0);
+                }
+            }
+
+            s = ";\n" + getfirstwordofstring(F.getinfixnotation(), d_array<char>{' '}) + " ";
+
+            for (int i = 0; i < n-1; i += 2) {
+                dy(0) = (*ppoints)[i]; dy(1) = (*ppoints)[i+1];
+                dy = dR * dy + dq;
+                s += ToString(dy(0)) + " " + ToString(dy(1)) + " ";
+            }
+        }
+        else { // F is parametric curve or function
+            std::string sx1 = ToString(x1), sx2 = ToString(x2);
+            y = R * fv + q;
+            if (F.IsParcurve()) {
+                // x1 = F.x_range.x; x2 = F.x_range.y;
+                sx1 = F.x1.getinfixnotation(); sx2 = F.x2.getinfixnotation();
+            }
+            s = ";\n( " + y(0).getinfixnotation() + " , " + y(1).getinfixnotation() + " ) [ " + sx1 + " , " + sx2 + " ]";
+        }
+    }
+    //std::cout << s << std::endl;
+    fstring += s;
+    MyThreadEvent event(MY_EVENT, IdRefresh);
+    if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event.Clone() );
+}
+
+
+
+void computepointreflection(const plotobject &F, double px, double py)
+{
+    using namespace val;
+    valfunction two("2"), fpx(ToString(px)), fpy(ToString(py));
+    std::string s;
+
+    if (F.IsFunction()) {
+        valfunction g = two * fpy - F.f(two*fpx - valfunction("x"));
+        s = ";\n" + g.getinfixnotation();
+    }
+    else if (F.IsParcurve()) {
+        valfunction g1(two * fpx - F.f), g2(two * fpx - F.g);
+        s = ";\n( " + g1.getinfixnotation() + " , " + g2.getinfixnotation() + " ) [ " + F.x1.getinfixnotation() + " , " + F.x2.getinfixnotation() + " ]";
+    }
+    else if (F.IsPoints() || F.IsLine() || F.IsPolygon()) {
+        const d_array<double> *ppoints = &F.farray;
+        s = ";\n" + getfirstwordofstring(F.getinfixnotation(), d_array<char>{' '});
+        for (int i = 0; i < ppoints->length()-1; i+= 2) {
+            s += " " + ToString(2*px - (*ppoints)[i]) + " " + ToString(2*py - (*ppoints)[i+1]);
+        }
+    }
+    else return;
+    fstring += s;
+    MyThreadEvent event(MY_EVENT, IdRefresh);
+    if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event.Clone() );
+}
+
+
+
+
 // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 const val::d_array<std::string> plotobject::s_object_type{"line", "text", "circle", "rectangle", "triangle", "fill", "polygon", "points", "histogram", "bitmap"};
@@ -1985,6 +2194,7 @@ int plotobject::checkiflatexisavailable()
     if (val::system("which latex") || val::system("which dvipng")) latexavailable = 0;
     if (latexavailable) {
         if (val::DirExists("/dev/shm")) plotobject::tempdir = "/dev/shm";
+        else plotobject::tempdir = settingsdir;
         tempfile_tex = tempdir + filesep + tempfile + ".tex";
         tempfile_png = tempdir + filesep + tempfile + ".png";
         std::string tfiledvi = tempdir + filesep + tempfile + ".dvi";

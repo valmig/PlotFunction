@@ -990,21 +990,6 @@ void PlotFunctionFrame::GetSettings()
             }
             if (!F[i].text_has_latex) continue;
             F[i].assign_latexbimap(Font[i].GetPointSize(), Color[i]);
-            // found = 0;
-            // for (auto &v : plotobject::latexbitmap_list) {
-            //     //if (!F[i].IsText()) continue;
-            //     if (v.color != Color[i]) continue;
-            //     if (v.fontsize != Font[i].GetPointSize()) continue;
-            //     if (v.text != F[i].textdata) continue;
-            //     F[i].latexbitmap = &(v.bitmap);
-            //     found = 1;
-            //     break;
-            // }
-            // if (!found) {
-            //     plotobject::latexbitmap_list.push_back(plotobject::latex_element(Color[i],Font[i].GetPointSize(),F[i].textdata));
-            //     llatexbitmaplist = plotobject::latexbitmap_list.length();
-            //     F[i].latexbitmap = &(plotobject::latexbitmap_list[llatexbitmaplist-1].bitmap);
-            // }
         }
         if (plotobject::latexbitmap_list.length() > 100) plotobject::clean_latexbitmap_list(F);
         // std::cout << "\nlength latexbitmap_list: " << plotobject::latexbitmap_list.length() << std::endl;
@@ -1018,11 +1003,6 @@ void PlotFunctionFrame::GetSettings()
     for (i=0;i<N;++i) {
         // mit menuItems:
         s="";
-        /*islinear[i] = 0;
-        if (F[i].objectype == plotobject::FUNCTION) {
-            if (islinearfunction(F[i])) islinear[i] = 1;
-        }
-        */
         if (F[i].iswithparameter()) {
             if (n) {
                 j=val::Min(i,n-1);
@@ -3042,8 +3022,8 @@ void PlotFunctionFrame::OnInputDialog(wxCommandEvent&)
 
     {
         int l = recentcommands.length();
-        if (l && (recentcommands[l-1] != svalue)) recentcommands.push_back(svalue);
-        else recentcommands.push_back(svalue);
+        if (l == 0) recentcommands.push_back(svalue);
+        else if (recentcommands[l-1] != svalue) recentcommands.push_back(svalue);
         if (l >= 100) recentcommands.skiphead();
     }
 
@@ -3852,6 +3832,30 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
         {
             if (f_nr < 0 || f_nr >= N) return;
             std::thread t(computetolatexstring, std::cref(F[f_nr]));
+            t.detach();
+            return;
+        }
+        break;
+    case val_commands::TAYLORPOL :
+        {
+            if (f_nr < 0 || f_nr >= N) return;
+            std::thread t(computetaylorpolynomial, std::cref(F[f_nr]), svalue);
+            t.detach();
+            return;
+        }
+        break;
+    case val_commands::REFLECTION :
+        {
+            if (f_nr < 0 || f_nr >= N) return;
+            if (svalue[0] == '#') {
+                std::string value = val::tailofstring(svalue, svalue.length() - 1);
+                int nr = val::FromString<int>(value) - 1;
+
+                if (nr < 0 || nr >= N) return;
+                global_function = F[nr];
+            }
+            else global_function = plotobject(svalue);
+            std::thread t(computereflection, std::cref(F[f_nr]), std::cref(global_function), x1, x2);
             t.detach();
             return;
         }

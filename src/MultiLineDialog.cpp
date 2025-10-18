@@ -583,8 +583,8 @@ InputDialog::InputDialog(wxWindow *parent, wxWindowID id, const val::d_array<wxS
     SetAcceleratorTable(accel);
 
     SetSizer(BoxSizer);
-	BoxSizer->Fit(this);
-	BoxSizer->SetSizeHints(this);
+    BoxSizer->Fit(this);
+    BoxSizer->SetSizeHints(this);
 }
 
 void InputDialog::OnEnterhit(wxCommandEvent &event)

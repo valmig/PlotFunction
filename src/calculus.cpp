@@ -27,7 +27,7 @@ std::istream& operator >>(std::istream& is,valfunction &f)
     return is;
 }
 
-std::ostream& operator <<(std::ostream& os,valfunction &f)
+std::ostream& operator <<(std::ostream& os,const valfunction &f)
 {
     os << f.getinfixnotation();
     return os;
