@@ -101,7 +101,7 @@ const val::d_array<wxString> defaultcolornames{"blue", "red", "green", "lblue", 
 const val::d_array<wxString> SettingsList({"axis-scale", "axis-color", "grid-scale", "grid-color", "values-number", "axis-range", "show-x-axis",
                                 "show-y-axis", "show-grid" , "show-x-scale", "show-y-scale" , "reset-colors", "font-size", "function-color", "panel-size", "axis-names", "regression-degree",
                                 "point-decimals", "show-function", "background-color", "parameter-values", "function-size", "margin",
-                                "axis-fontsize", "function-settings", "move-increment"});
+                                "axis-fontsize", "function-settings", "move-increment", "select"});
 
 const val::d_array<wxString> SettingsParList({"axis-scale sx [sy]   <Shift-Alt-S>",
                                               "axis-color def. color / Red Green Blue   <Shift-Ctrl-A>",
@@ -128,7 +128,8 @@ const val::d_array<wxString> SettingsParList({"axis-scale sx [sy]   <Shift-Alt-S
                                               "margin unsigned int    <Shift-Alt-S>",
                                               "axis-fontsize unsigned int    <Shift-Ctrl-F>",
                                               "function-settings [#nr=1]",
-                                              "move-increment dx [dy=dx] (p for pixels)    <Ctrl-M>"
+                                              "move-increment dx [dy=dx] (p for pixels)    <Ctrl-M>",
+                                              "select [#nr=1]"
                                              });
 
 const val::d_array<wxString> CommandsList({"derive", "analyze", "tangent", "normal", "interpolation", "regression", "table", "integral",
@@ -1360,6 +1361,16 @@ void computerotation(const val::d_array<plotobject*> F,std::string input)
                 d_f = f->farray;
                 break;
             }
+            case plotobject::RECTANGLE: {
+                sf+="polygon";
+                d_f.reserve(10);
+                d_f[0] = f->farray[0]; d_f[1] = f->farray[1];
+                d_f[2] = f->farray[2]; d_f[3] = f->farray[1];
+                d_f[4] = f->farray[2]; d_f[5] = f->farray[3];
+                d_f[6] = f->farray[0]; d_f[7] = f->farray[3];
+                d_f[8] = f->farray[0]; d_f[9] = f->farray[1];
+                break;
+            }
             case plotobject::PARCURVE: case plotobject::FUNCTION: {
                 val::valfunction f1,f2;
                 if (fmode == plotobject::FUNCTION) {
@@ -1723,24 +1734,42 @@ void computetangent(std::string sf,const plotobject &f,double x1,double x2,int t
             if (!F.isdifferentiable()) return;
             F1=F.derive();
             val::Glist<double> Roots;
+            val::Glist<val::valfunction> SRoots;
 
             h1 = val::valfunction("x - " + val::ToString(x));
             if (tangent) h = F - val::valfunction(val::ToString(y)) - h1*F1;
             else h = F1 * (F - val::valfunction(val::ToString(y))) + h1;
+            h.setparameter(F.getparameter());
             //fstring+=";\n" + h.getinfixnotation();
-            Roots = h.double_roots(x1,x2,1000);
+            //Roots = h.double_roots(x1,x2,1000);
+            computezeros(h, x1, x2, 1e-9, 8, 1000, Roots, SRoots);
+
+            // std::cout << "\n Roots.length = " << Roots.length() << " , SRoots.length = " << SRoots.length() << " , diffbar = " << diffbar << std::endl;
+            int symboliczeros = 0, j = 0;
+            if (Roots.length() == SRoots.length()) symboliczeros = 1;
             for (const auto& z : Roots) {
                 m=F1(z);
                 if (!tangent) m = -1.0/m;
                 if (val::isNaN(m)) continue;
                 if (isInf(m)) {
                     fstring+=";\nline "+val::ToString(z)+ " -inf " + val::ToString(z) + " inf";
+                    ++j;
                     continue;
                 }
-                b = F(z) - m*z;
-                fstring+=";\n" + val::ToString(m) + "*x";
-                if (b>0) fstring+= " + ";
-                fstring+=val::ToString(b);
+                else if (symboliczeros) {
+                    val::valfunction x_f(SRoots[j]), m_f = (F.derive())(x_f);
+                    if (!tangent) m_f = val::valfunction("-1/(" + m_f.getinfixnotation() + ")");
+                    val::valfunction b_f = F(x_f) - m_f * x_f, g = m_f * val::valfunction("x") + b_f;// mult = m_f * x_f;
+                    // std::cout << "\nx_f = " << x_f << " , m_f = " << m_f << " , bf = "<< b_f << std::endl;
+                    fstring += ";\n" + g.getinfixnotation();
+                }
+                else {
+                    b = F(z) - m*z;
+                    fstring+=";\n" + val::ToString(m) + "*x";
+                    if (b>0) fstring+= " + ";
+                    fstring+=val::ToString(b);
+                }
+                ++j;
             }
             if (!Roots.isempty()) fstring+=";\npoints";
             for (const auto& z : Roots) {
@@ -2049,15 +2078,18 @@ void computereflection(const plotobject &F, const plotobject &G, double x1, doub
         // Represent F as parametric function or get the points:
         vector<valfunction> fv(2);
         const d_array<double> *ppoints = nullptr;
+        int isalgcurve = 0;
+
         if (F.IsFunction()) {
             fv(0) = valfunction("x"); fv(1) = F.f;
         }
         else if (F.IsParcurve()) {
             fv(0) = F.f; fv(1) = F.g;
         }
-        else if (F.IsLine() || F.IsPoints() || F.IsPolygon() || F.IsTriangle()) {
+        else if (F.IsLine() || F.IsPoints() || F.IsPolygon() || F.IsTriangle() || F.IsRectangle()) {
             ppoints = &F.farray;
         }
+        else if (F.IsAlgCurve()) isalgcurve = 1;
         else return;
 
         matrix<valfunction> R{{b*b - a*a, -two*a*b}, {-two*a*b, a*a-b*b}};
@@ -2076,6 +2108,7 @@ void computereflection(const plotobject &F, const plotobject &G, double x1, doub
             int n = ppoints->length();
             matrix<double> dR(2);
             vector<double> dq(2), dy(2);
+            d_array<double> hP;
             for (int i = 0; i < R.numberofrows(); ++i) {
                 dq(i) = q(i)(0);
                 for (int j = 0; j < R.numberofcolumns(); ++j) {
@@ -2083,13 +2116,30 @@ void computereflection(const plotobject &F, const plotobject &G, double x1, doub
                 }
             }
 
-            s = ";\n" + getfirstwordofstring(F.getinfixnotation(), d_array<char>{' '}) + " ";
+            if (F.IsRectangle()) {
+                if (ppoints->length() < 4) return;
+                hP.reserve(10);
+                hP[0] = (*ppoints)[0]; hP[1] = (*ppoints)[1];
+                hP[2] = (*ppoints)[2]; hP[3] = (*ppoints)[1];
+                hP[4] = (*ppoints)[2]; hP[5] = (*ppoints)[3];
+                hP[6] = (*ppoints)[0]; hP[7] = (*ppoints)[3];
+                hP[8] = (*ppoints)[0]; hP[9] = (*ppoints)[1];
+                s = ";\npolygon ";
+                ppoints = &hP;
+                n = ppoints->length();
+            }
+            else s = ";\n" + getfirstwordofstring(F.getinfixnotation(), d_array<char>{' '}) + " ";
 
             for (int i = 0; i < n-1; i += 2) {
                 dy(0) = (*ppoints)[i]; dy(1) = (*ppoints)[i+1];
                 dy = dR * dy + dq;
                 s += ToString(dy(0)) + " " + ToString(dy(1)) + " ";
             }
+        }
+        else if (isalgcurve) {
+            vector<valfunction> x{valfunction{"x"}, valfunction{"y"}}, phi = R*x +q;
+            valfunction g = F.f(phi);
+            s = ";\n" + g.getinfixnotation();
         }
         else { // F is parametric curve or function
             std::string sx1 = ToString(x1), sx2 = ToString(x2);
@@ -2123,12 +2173,17 @@ void computepointreflection(const plotobject &F, double px, double py)
         valfunction g1(two * fpx - F.f), g2(two * fpx - F.g);
         s = ";\n( " + g1.getinfixnotation() + " , " + g2.getinfixnotation() + " ) [ " + F.x1.getinfixnotation() + " , " + F.x2.getinfixnotation() + " ]";
     }
-    else if (F.IsPoints() || F.IsLine() || F.IsPolygon()) {
+    else if (F.IsPoints() || F.IsLine() || F.IsPolygon() || F.IsTriangle() || F.IsRectangle()) {
         const d_array<double> *ppoints = &F.farray;
         s = ";\n" + getfirstwordofstring(F.getinfixnotation(), d_array<char>{' '});
         for (int i = 0; i < ppoints->length()-1; i+= 2) {
             s += " " + ToString(2*px - (*ppoints)[i]) + " " + ToString(2*py - (*ppoints)[i+1]);
         }
+    }
+    else if (F.IsAlgCurve()) {
+        vector<valfunction> phi{two * fpx - valfunction("x"), two * fpy - valfunction("y")};
+        valfunction g = F.f(phi);
+        s = ";\n" + g.getinfixnotation();
     }
     else return;
     fstring += s;

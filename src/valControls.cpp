@@ -693,14 +693,21 @@ SwitchCtrl::SwitchCtrl(wxWindow *parent,wxWindowID id,bool active) : wxControl(p
         if (parent != nullptr) backgroundcolor = parent->GetBackgroundColour();
     }
 
-//#ifdef _WIN32
     wxBoxSizer *BoxSizer = new wxBoxSizer(wxHORIZONTAL);
     BoxSizer->Add(DrawPanel,0,wxALL|wxALIGN_LEFT);
     SetSizer(BoxSizer);
     BoxSizer->Fit(this);
     BoxSizer->SetSizeHints(this);
-//#endif // _WIN32
 
+
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&SwitchCtrl::OnEnter,this,101);
+
+    wxAcceleratorEntry entries[2];
+    entries[0].Set(wxACCEL_NORMAL,WXK_RETURN,101);
+    entries[1].Set(wxACCEL_NORMAL,WXK_SPACE,101);
+
+    wxAcceleratorTable accel(2,entries);
+    SetAcceleratorTable(accel);
     Paint();
 }
 
@@ -787,6 +794,17 @@ void SwitchCtrl::OnMouseClicked(wxMouseEvent&)
     Paint();
     SendEvent();
 }
+
+
+void SwitchCtrl::OnEnter(wxCommandEvent&)
+{
+    if (is_active) is_active=false;
+    else is_active=true;
+
+    Paint();
+    SendEvent();
+}
+
 
 void SwitchCtrl::SendEvent()
 {

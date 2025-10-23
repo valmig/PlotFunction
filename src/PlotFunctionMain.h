@@ -97,7 +97,7 @@ class PlotFunctionFrame: public wxFrame
         double movex = 0, movey = 0;
         std::string Program_Name="PlotFunction",x_axis="x",y_axis="y",sx_scale="1",sy_scale="1",sgx_scale="0.5",sgy_scale="0.5",actual_filename="",actual_dirname="", sabst = "10",
                     saxis_fontsize = "10", sfontsize = "10", spoints = "1000", srounddrawingspoints = "-2", sregressiondegree = "1", sPanelx, sPanely,
-                    smovedx = "0.1", smovedy = "0.1";
+                    smovedx = "0.1", smovedy = "0.1", sactive_function = "0";
         wxString SideText_Word;
         wxFont defaultFont;
         wxSize bitmapsize,actualPanelsize; //DialogInputSize{wxDefaultSize};
@@ -120,7 +120,7 @@ class PlotFunctionFrame: public wxFrame
         //
         const val::d_array<val::d_array<const std::string*>> SettingsCurrent{{&sx_scale, &sy_scale}, {}, {&sgx_scale, &sgy_scale}, {}, {&spoints}, {&xstring, &ystring},
                                                                              {}, {}, {}, {}, {}, {}, {&sfontsize}, {}, {&sPanelx, &sPanely}, {&x_axis, &y_axis}, {&sregressiondegree}, {&srounddrawingspoints},
-                                                                             {}, {}, {}, {}, {&sabst}, {&saxis_fontsize}, {}, {&smovedx, &smovedy}};
+                                                                             {}, {}, {}, {}, {&sabst}, {&saxis_fontsize}, {}, {&smovedx, &smovedy}, {&sactive_function}};
         //
         wxMenu* MenuRecentfiles;
         val::Glist<wxMenuItem*> recent_menu;

@@ -5,8 +5,6 @@
 #include <valfunction.h>
 
 
-void computezeros(const val::valfunction &f,const double &x1,const double &x2,const double &epsilon,int decimals,int iterations,
-                  val::Glist<double> &d_zeros, val::Glist<val::valfunction> &s_zeros);
 
 int partialfraction(const val::valfunction& f, val::rational &cont, val::pol<val::rational> &fp,val::d_array<val::pol<val::rational>> &numpol,
                     val::d_array<val::pol<val::rational>> &denompol, val::d_array<int> &denumexpo, int comment = 0);

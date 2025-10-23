@@ -905,7 +905,7 @@ void PlotFunctionFrame::GetSettings()
     }
 
     s="";
-    if (fstring=="") {setfunctionsmenu(); WriteText(); return;}
+    if (fstring=="") {setfunctionsmenu(); WriteText(); active_function = -1;  return;}
     val::d_array<char> ignore({'\n'});
     val::Glist<int> colorindezes, stylechanged;
     int cindex, s_changed;
@@ -932,6 +932,7 @@ void PlotFunctionFrame::GetSettings()
     if (N==0) {
         fstring="";
         setfunctionsmenu();
+        active_function = -1;
         WriteText();
         return;
     }
@@ -1054,6 +1055,7 @@ void PlotFunctionFrame::GetSettings()
         if (F[i].x_range.x!=x1 || F[i].x_range.y!=x2 || F[i].getmode() == plotobject::PARCURVE) fstring+= "  [ "+ F[i].x1.getinfixnotation() +" , " + F[i].x2.getinfixnotation() + " ];\n";
         else fstring+=";\n";
     }
+    if (active_function >= N) active_function = N-1;
     setfunctionsmenu();
     //WriteText();
 }
@@ -2988,6 +2990,7 @@ void PlotFunctionFrame::OnInputDialog(wxCommandEvent&)
         size.x -= (widthSideText + 10);
         point.x += widthSideText +10;
     }
+    sactive_function = val::ToString(active_function + 1);
 
     InputDialog input(this,1,&InputDialogList,"",size,point,fontsize);
     input.SetComLists(CommandsList,CommandsParList);
@@ -3019,6 +3022,17 @@ void PlotFunctionFrame::OnInputDialog(wxCommandEvent&)
     }
 
     if (!n) return;
+    // get rid of ' ' at beginning of svalue,
+    {
+        std::string h = svalue;
+        int first = 0;
+        svalue = "";
+        for (size_t i = 0; i < h.length(); ++i) {
+            if (h[i] == ' ' && !first) continue;
+            svalue +=  h[i];
+            first = 1;
+        }
+    }
 
     {
         int l = recentcommands.length();
@@ -3033,7 +3047,9 @@ void PlotFunctionFrame::OnInputDialog(wxCommandEvent&)
     int command_number = -1, id = 1;
 
     // Extract first word from svalue:
-    svalue = val::tailofstring(svalue,svalue.length()-command.length() -1);
+    //svalue = val::tailofstring(svalue,svalue.length()-command.length() -1);
+    val::replace<char>(svalue, command + " ", "", 0);
+    // std::cout << "\nsvalue = " << svalue;
 
     // Extract function number from svalue
     if (svalue.length() > 1 && svalue[0] == '#') {
@@ -3467,6 +3483,19 @@ void PlotFunctionFrame::ChangeSettings(int command, const std::string &svalue, i
             if (moveinpointsx) smovedx += " p";
             if (moveinpointsy) smovedy += " p";
             Text_Editrefresh();
+        }
+        break;
+    case val_settings::SELECT:
+        {
+            if (id <= 0 || id > N) return;
+            active_function = id-1;
+            if (!f_menu[active_function]->IsChecked()) {
+                f_menu[active_function]->Check();
+            }
+            StatusBar1->SetStatusText(F[active_function].getinfixnotation());
+            iscomputing = 1;
+            WriteText();
+            Paint();
         }
         break;
     default:

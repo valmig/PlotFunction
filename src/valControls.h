@@ -155,6 +155,7 @@ private:
     void render();
     void OnDrawPanelPaint(wxPaintEvent&);
     void OnMouseClicked(wxMouseEvent&);
+    void OnEnter(wxCommandEvent&);
     void SendEvent();
 };
 

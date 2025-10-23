@@ -61,7 +61,7 @@ enum val_colors{BLUE,RED,GREEN,LBLUE,ORANGE,VIOLET,GREY,WHITE,BlACK,LGREY,YELLOW
 // match with SettingsList, SettingsParList
 enum val_settings{AXIS_SCALE,AXIS_COLOR,GRID_SCALE,GRID_COLOR,VALUES_NUMBER,AXIS_RANGE,SHOW_X_AXIS,SHOW_Y_AXIS,SHOW_GRID,SHOW_X_SCALE,
                     SHOW_Y_SCALE,RESET_COLORS,FONT_SIZE,FUNCTION_COLOR,PANEL_SIZE,AXIS_NAMES,REGRESSION_DEGREE,POINT_DECIMALS,
-                    SHOW_FUNCTION,BACKGROND_COLOR,PARAMETER_VALUES,FUNCTION_SIZE,MARGIN,AXIS_FONTSIZE,FUNCTION_SETTINGS,MOVEINC};
+                    SHOW_FUNCTION,BACKGROND_COLOR,PARAMETER_VALUES,FUNCTION_SIZE,MARGIN,AXIS_FONTSIZE,FUNCTION_SETTINGS,MOVEINC,SELECT};
 
 // match with CommandsList, CommandsParList
 enum val_commands{DERIVE,ANALYZE,TANGENT,NORMAL,INTERPOLATION,REGRESSION,TABLE,INTEGRAL,ARCLENGTH,ZERO_ITERATION,MOVE,EVALUATE,INTERSECTION,
@@ -217,6 +217,8 @@ valfunction& operator *=(valfunction &f, const valfunction &g);
 std::ostream& operator <<(std::ostream& os,const valfunction &f);
 }
 
+void computezeros(const val::valfunction &f,const double &x1,const double &x2,const double &epsilon,int decimals,int iterations,
+                  val::Glist<double> &d_zeros, val::Glist<val::valfunction> &s_zeros);
 
 // Iterationsverfahren zur Bestimmung einer Nullstelle nach der Sekanten-Methode:
 // Rückgabe: -2 Iterationsgrenze wird nicht erreicht, Methode fehlgeschlagen.
