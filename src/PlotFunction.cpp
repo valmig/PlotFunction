@@ -1623,7 +1623,7 @@ void computetangent(std::string sf,const plotobject &f,double x1,double x2,int t
 {
     if (sf=="") return;
     //std::string svalue;
-    int n=sf.length(),i,isingraph=0,isfunction=0;
+    int n=sf.length(),i,isingraph=0,isfunction=0, givenslope = 0;
     double x=0.0,y=0.0,m,b;
 
     val::d_array<char> separators{' ', ';'};
@@ -1631,10 +1631,13 @@ void computetangent(std::string sf,const plotobject &f,double x1,double x2,int t
 
     if (values.isempty()) return;
     x = values[0];
-    if (values.length()>1) {
+	if (sf.find('x') != std::string::npos) {
+		givenslope = 1;
+	}
+	else if (values.length()>1) {
         y = values[1];
     }
-    else isingraph = 1;
+	else isingraph = 1;
 
     if (f.f.numberofvariables()<=1) isfunction=1;
 
@@ -1642,10 +1645,16 @@ void computetangent(std::string sf,const plotobject &f,double x1,double x2,int t
     F.setparameter(f.f.getparameter());
 
     if (f.getmode() == plotobject::PARCURVE) {
-        val::valfunction G = f.g, f1 = f.f.derive(), g1 = f.g.derive(), h;
+        val::valfunction G = f.g, f1 = f.f.derive(), g1 = f.g.derive(), h, m_f(sf);
 
-        if (isingraph) h = F - val::valfunction(val::ToString(x,15));
-        else {
+		m_f = m_f.derive();
+
+		if (givenslope) {
+			if (tangent) h = f1 * m_f - g1;
+			else h = f1 + m_f * g1;
+		}
+		else if (isingraph) h = F - val::valfunction(val::ToString(x,15));
+		else {
             val::valfunction h1, h2 = G - val::valfunction(val::ToString(y,15));
             if (tangent) {
                 h1 = val::valfunction(val::ToString(x,15)) - F;
@@ -1656,6 +1665,7 @@ void computetangent(std::string sf,const plotobject &f,double x1,double x2,int t
                 h = h1*f1 + h2*g1;
             }
         }
+		// std::cout << "\n h = " << h.getinfixnotation() << std::endl;
         //F -= val::valfunction(val::ToString(x));
 
         auto t_values = h.double_roots(f.x_range.x, f.x_range.y, 1000);
@@ -1664,6 +1674,7 @@ void computetangent(std::string sf,const plotobject &f,double x1,double x2,int t
         std::string s_p = ";\npoints ";
         n = 0;
         for (const auto& t : t_values) {
+			// std::cout << "\n t = " << t << std::endl;
             x1 = f1(t); y1 = g1(t);
             if (val::abs(x1) < 1e-9 && val::abs(y1) < 1e-9) continue;
             ++n;
@@ -1676,13 +1687,16 @@ void computetangent(std::string sf,const plotobject &f,double x1,double x2,int t
                 if (val::abs(m) < 1e-9) m = val::Inf;
                 else m = -1/m;
             }
+			if (givenslope) m = m_f(0);
             if (isInf(m)) {
                 fstring += ";\nline " + val::ToString(x) + " -inf " + val::ToString(x) + " inf";
             }
             else {
                 if (val::abs(m) < 1e-9) m = 0.0;
-                if (isingraph) b = f.g(t) - m*x;
-                else b = y - m*x;
+				if (givenslope) b = f.g(t) - m * f.f(t);
+				else if (isingraph) b = f.g(t) - m*x;
+				else b = y - m*x;
+				if (val::abs(b) < 1e-9) b = 0.0;
                 h = val::valfunction(val::ToString(m) + "*x") + val::valfunction(val::ToString(b));
                 fstring += ";\n" + h.getinfixnotation();
             }
@@ -1736,10 +1750,23 @@ void computetangent(std::string sf,const plotobject &f,double x1,double x2,int t
             val::Glist<double> Roots;
             val::Glist<val::valfunction> SRoots;
 
-            h1 = val::valfunction("x - " + val::ToString(x));
-            if (tangent) h = F - val::valfunction(val::ToString(y)) - h1*F1;
-            else h = F1 * (F - val::valfunction(val::ToString(y))) + h1;
+			if (givenslope) {
+				double dm;
+				h1 = val::valfunction(sf);
+				if (!h1.islinearfunction()) return;
+				h1 = h1.derive();
+				dm = h1(0);
+				if (dm == 0 && !tangent) return;
+				if (!tangent) h1 = val::valfunction("-1") / h1;
+				h = F1 - h1;
+			}
+			else {
+				h1 = val::valfunction("x - " + val::ToString(x));
+				if (tangent) h = F - val::valfunction(val::ToString(y)) - h1*F1;
+				else h = F1 * (F - val::valfunction(val::ToString(y))) + h1;
+			}
             h.setparameter(F.getparameter());
+			
             //fstring+=";\n" + h.getinfixnotation();
             //Roots = h.double_roots(x1,x2,1000);
             computezeros(h, x1, x2, 1e-9, 8, 1000, Roots, SRoots);
@@ -1749,7 +1776,7 @@ void computetangent(std::string sf,const plotobject &f,double x1,double x2,int t
             if (Roots.length() == SRoots.length()) symboliczeros = 1;
             for (const auto& z : Roots) {
                 m=F1(z);
-                if (!tangent) m = -1.0/m;
+                if (!tangent && !givenslope) m = -1.0/m;
                 if (val::isNaN(m)) continue;
                 if (isInf(m)) {
                     fstring+=";\nline "+val::ToString(z)+ " -inf " + val::ToString(z) + " inf";
@@ -1757,8 +1784,12 @@ void computetangent(std::string sf,const plotobject &f,double x1,double x2,int t
                     continue;
                 }
                 else if (symboliczeros) {
-                    val::valfunction x_f(SRoots[j]), m_f = (F.derive())(x_f);
-                    if (!tangent) m_f = val::valfunction("-1/(" + m_f.getinfixnotation() + ")");
+                    val::valfunction x_f(SRoots[j]), m_f;
+					if (givenslope) m_f = val::valfunction(sf).derive();
+					else {
+						m_f = (F.derive())(x_f);
+						if (!tangent) m_f = val::valfunction("-1")/m_f;
+					}
                     val::valfunction b_f = F(x_f) - m_f * x_f, g = m_f * val::valfunction("x") + b_f;// mult = m_f * x_f;
                     // std::cout << "\nx_f = " << x_f << " , m_f = " << m_f << " , bf = "<< b_f << std::endl;
                     fstring += ";\n" + g.getinfixnotation();
@@ -1825,7 +1856,7 @@ void computetangent(std::string sf,const plotobject &f,double x1,double x2,int t
         else {
             if (F.numberofvariables()>2) return;
             int s_oldordtype=val::s_expo::getordtype(),n_oldordtype = val::n_expo::getordtype();
-            val::valfunction g;//= Fx*val::valfunction("x - "+val::ToString(x)) + Fy*val::valfunction("y - "+val::ToString(y));
+            val::valfunction g, m_f(sf);//= Fx*val::valfunction("x - "+val::ToString(x)) + Fy*val::valfunction("y - "+val::ToString(y));
             val::s_expo::setordtype(-1);
             val::n_expo::setordtype(-1);
             val::n_polynom<val::rational>::setstaticexpodim(2);
@@ -1836,8 +1867,16 @@ void computetangent(std::string sf,const plotobject &f,double x1,double x2,int t
             val::GPair<double> Paar;
             val::Glist<val::GPair<double>> candlist;
 
-            if (tangent) g = Fx*val::valfunction("x - "+val::ToString(x)) + Fy*val::valfunction("y - "+val::ToString(y));
-            else g = Fy*val::valfunction("x - "+val::ToString(x)) - Fx*val::valfunction("y - "+val::ToString(y));
+			m_f = m_f.derive();
+
+			if (givenslope) {
+				if (tangent) g = Fx + m_f * Fy;
+				else g = m_f * Fx - Fy;
+			}
+			else {
+				if (tangent) g = Fx*val::valfunction("x - "+val::ToString(x)) + Fy*val::valfunction("y - "+val::ToString(y));
+				else g = Fy*val::valfunction("x - "+val::ToString(x)) - Fx*val::valfunction("y - "+val::ToString(y));
+			}
 
             g1=val::primitivpart(F.gets_polynom<val::rational>()); g2 = val::primitivpart(g.gets_polynom<val::rational>());
             G.sinsert(std::move(g1)); G.sinsert(std::move(g2));
@@ -1880,10 +1919,12 @@ void computetangent(std::string sf,const plotobject &f,double x1,double x2,int t
                 return;
             }
 
-
+			if (givenslope) {
+				m = m_f(0);
+			}
 
             for (const auto& P : candlist) {
-                m=(P.y - y)/(P.x - x);
+                if (!givenslope) m=(P.y - y)/(P.x - x);
                 if (val::isNaN(m)) continue;
                 if (isInf(m)) {
                     //if (tangent) {
@@ -1900,6 +1941,7 @@ void computetangent(std::string sf,const plotobject &f,double x1,double x2,int t
                 }
                 //if (!tangent) m = -1.0/m;
                 b= P.y - m*P.x;
+				if (val::abs(b) < 1e-9) b = 0.0;
                 fstring+=";\n" + val::ToString(m) + "*x";
                 if (val::abs(b)>1e-9) {
                     if (b>=0) fstring+= " + ";
