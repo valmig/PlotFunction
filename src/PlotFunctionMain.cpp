@@ -194,6 +194,7 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     //MenuItem2 = new wxMenuItem(MenuHelp, idMenuAbout, _("About\tF1"), _("Show info about this application"), wxITEM_NORMAL);
     //MenuHelp->Append(MenuItem2);
     MenuHelp->Append(idMenuAbout, _("About\tF1"), _("Show info about this application"));
+    MenuHelp->Append(31, _("Keywords\tShift-F1"), _("Show keywords of this appllication"));
     // View Menu:
     wxMenu* viewMenu = new wxMenu();
     //
@@ -294,6 +295,8 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     //
     rightclickfunctionsmenu = new wxMenu();
     rightclickfunctionsmenu->Append(7101,_T("Change Settings"));
+	rightclickfunctionsmenu->AppendSeparator();
+    rightclickfunctionsmenu->Append(7102,_T("Delete Function"));
     // --------------------------------------------------------------------------------------- End of menu defintions -------------------------------------------------
     //
     // Build basic components:
@@ -387,7 +390,8 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenu_xAxisSelected,this,ID_MENUITEM3);
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuSizeSelected,this,ID_MENUITEM5);
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFontSize,this,ID_MENUITEM6);
-    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnAbout,this,idMenuAbout);
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnHelp,this,idMenuAbout);
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnHelp,this, 31);
     //*)
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnSideBarCheck,this,30101);
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnSideBarCheck,this,30102);
@@ -438,21 +442,22 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenunewfunction,this,3004);  // Delete All
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenunewfunction,this,3005);  // undo
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenunewfunction,this,3006);  // redo
-    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1001);         // Add Points
-    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1002);         // DrawPolygon
-    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1003);         // DrawLine
-    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1004);         // DrawRectangle
-    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1005);         // DrawCircle
-    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1006);         // DrawTriangle
-    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1101);         // Fill Area
-    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1102);         // Choose Color and Fill Area
-    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1103);         // circle
-    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1104);         // text
-    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1105);         // Copy to Clipboard
-    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1106);         // Paste from Clipboard to Background
-    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,1108);      // Paste from Clipboard to DrawPanel
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::Onrightclickmenu,this,1001);         // Add Points
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::Onrightclickmenu,this,1002);         // DrawPolygon
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::Onrightclickmenu,this,1003);         // DrawLine
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::Onrightclickmenu,this,1004);         // DrawRectangle
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::Onrightclickmenu,this,1005);         // DrawCircle
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::Onrightclickmenu,this,1006);         // DrawTriangle
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::Onrightclickmenu,this,1101);         // Fill Area
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::Onrightclickmenu,this,1102);         // Choose Color and Fill Area
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::Onrightclickmenu,this,1103);         // circle
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::Onrightclickmenu,this,1104);         // text
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::Onrightclickmenu,this,1105);         // Copy to Clipboard
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::Onrightclickmenu,this,1106);         // Paste from Clipboard to Background
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::Onrightclickmenu,this,1108);      // Paste from Clipboard to DrawPanel
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuColours,this,1107);      // Background Color
-    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFill,this,7101);         // Change Settings for marked function
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::Onrightclickmenu,this,7101);         // Change Settings for marked function
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::Onrightclickmenu,this,7102);         // Delete marked function
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnInputDialog,this,5011);      // Opens InputDialog
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnSideBarEvaluate,this,5020);  // Evaluate input in SideBar
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::ChangeSideTextStyle,this,5021);  // Evaluate input in SideBar
@@ -571,17 +576,23 @@ PlotFunctionFrame::~PlotFunctionFrame()
         file<<notebook_isshown<<endl<<endl;
         file.close();
     }
-    std::ofstream file3(RecentFilesPath,std::ios::out | std::ios::trunc);
-    for (const auto& v : recentfiles) {
-        file3<<v<<std::endl;
-    }
-    file3.close();
+	if (recentfileschanged) {
+		// std::cout << "\n recentfileschanged!";
+		std::ofstream file3(RecentFilesPath,std::ios::out | std::ios::trunc);
+		for (const auto& v : recentfiles) {
+			file3<<v<<std::endl;
+		}
+		file3.close();
+	}
 
-    std::ofstream file4(RecentCommandsPath,std::ios::out | std::ios::trunc);
-    for (const auto& v : recentcommands) {
-        file4 << v << std::endl;
-    }
-    file4.close();
+	if (recentcommandschanged) {
+		// std::cout << "\n recentcommandschanged!";
+		std::ofstream file4(RecentCommandsPath,std::ios::out | std::ios::trunc);
+		for (const auto& v : recentcommands) {
+			file4 << v << std::endl;
+		}
+		file4.close();
+	}
 
     if (DrawPanel->HasCapture()) DrawPanel->ReleaseMouse();
     for (auto &v : ViewSwitches) {
@@ -595,9 +606,11 @@ PlotFunctionFrame::~PlotFunctionFrame()
 
     if (plotobject::latexavailable){
         if (plotobject::tempfilesused) val::system(plotobject::removetempfiles);
-        std::ofstream file(latexdefinitionsfile, std::ios::out | std::ios::trunc);
-        if (file) file << plotobject::latex_doc_defs;
-        file.close();
+		if (!latexdefinitionsfileexists) {
+			std::ofstream file(latexdefinitionsfile, std::ios::out | std::ios::trunc);
+			if (file) file << plotobject::latex_doc_defs;
+			file.close();
+		}
     }
 
     //(*Destroy(PlotFunctionFrame)
@@ -709,10 +722,18 @@ void PlotFunctionFrame::OnFileMenu(wxCommandEvent& event)
 }
 
 
-void PlotFunctionFrame::OnAbout(wxCommandEvent& event)
+void PlotFunctionFrame::OnHelp(wxCommandEvent& event)
 {
-    wxMessageBox("programmed by Miguel Valbuena\nLocation: " + val::GetExeDir(),"PlotFunction");
+	if (event.GetId() == idMenuAbout) wxMessageBox("programmed by Miguel Valbuena\nLocation: " + val::GetExeDir(),"PlotFunction");
+	else {
+		if (!val::FileExists(keywordsfile)) {
+			wxMessageBox("Cannot find " + keywordsfile);
+			return;
+		}
+		wxExecute(openpdfcommand + keywordsfile);
+	}
 }
+
 
 void PlotFunctionFrame::GetSizeSettings()
 {
@@ -767,7 +788,9 @@ void PlotFunctionFrame::GetSizeSettings()
     while (file1) {
         getline(file1,line);
         if (line=="") break;
-        else recentfiles.push_back(line);
+        else {
+			recentfiles.push_back(line);
+		}
     }
 
     int n = recentfiles.length();
@@ -784,11 +807,23 @@ void PlotFunctionFrame::GetSizeSettings()
     while (file2) {
         getline(file2,line);
         if (line == "") break;
-        else recentcommands.push_back(line);
+        else {
+			recentcommands.push_back(line);
+		}
     }
     file2.close();
 
     if (plotobject::latexavailable) {
+		if (!val::FileExists(latexdefinitionsfile)) {
+			plotobject::latex_doc_defs ="\\newcommand{\\DS}{\\displaystyle}\n" 
+										 "\\newcommand{\\BS}[1]{\\boldsymbol{#1}}\n"
+                                         "\\newcommand{\\abs}[1]{\\left| #1 \\right|}\n"
+				                         "\\DeclareMathOperator{\\arsinh}{arsinh}\n"
+				                         "\\DeclareMathOperator{\\arcosh}{arcosh}\n"
+				                         "\\DeclareMathOperator{\\artanh}{artanh}";
+			return;
+		}
+		latexdefinitionsfileexists = 1;
         line = "";
         std::fstream file3(latexdefinitionsfile,std::ios::in);
         if (file3) plotobject::latex_doc_defs = "";
@@ -914,11 +949,10 @@ void PlotFunctionFrame::GetSettings()
     for (auto& v : svalues) {
         s_changed = 0;
         cindex = getfunctionfromstring(v,f,s_changed);
-        //f = plotobject(f_s);
-        if (f.f.numberofvariables()> 1) {
-            val::valfunction g(f.getinfixnotation());
-            f = plotobject(g.getinfixnotation());
-        }
+        // if (f.f.numberofvariables()> 1) {
+        //     val::valfunction g(f.getinfixnotation());
+        //     f = plotobject(g.getinfixnotation());
+        // }
         if (!f.is_empty()) {
             //std::cout << std::endl << f.getinfixnotation();
             F.push_back(std::move(f));
@@ -1045,6 +1079,7 @@ void PlotFunctionFrame::GetSettings()
     fstring="";
     for (i=0;i<N;++i) {
         fstring+=F[i].getinfixnotation();
+		// if (F[i].IsAlgCurve()) fstring += " = 0";
         if (i >= oldN && !multicolormenu->IsChecked()) Color[i] = defaultpaintcolor;
         if (F[i].x_range.x == F[i].x_range.y) {
             fstring+=";\n";
@@ -2082,7 +2117,7 @@ void PlotFunctionFrame::plotallfunctions(wxMemoryDC& dc)
 
 void PlotFunctionFrame::Paint()
 {
-#ifdef __LINUX__
+#ifndef _WIN32
     //For Compatibility with wayland:
     ispainted=1;
     iscomputing=0;
@@ -2187,7 +2222,7 @@ void PlotFunctionFrame::plottomemoryDc(wxMemoryDC &memDC)
 void PlotFunctionFrame::OnDrawPanelPaint(wxPaintEvent &event)
 {
     //event.Skip();
-    if (!ispainted || iscomputing) return;
+    //if (!ispainted || iscomputing) return;
 #ifndef _WIN32
     iscomputing=1;
     wxPaintDC dc(DrawPanel);
@@ -2717,11 +2752,11 @@ void PlotFunctionFrame::OnMenuTools(wxCommandEvent &event)
     std::string s;
 
     for (i=0;i<f_menu.length();++i) {
-        if (f_menu[i]->IsChecked() && (id == 7001 || id == 7007 || id == 7005) && F[i].getmode() == plotobject::PARCURVE) {
+        if (f_menu[i]->IsChecked() && (id == 7001 || id == 7007 || id == 7005 || id == 7012) && F[i].getmode() == plotobject::PARCURVE) {
             j=i; ++naktiv; List.push_back(F[i].getinfixnotation());indezes.push_back(i);
         }
         if (f_menu[i]->IsChecked() && (F[i].getmode()==plotobject::FUNCTION || F[i].getmode() == plotobject::ALGCURVE)) {
-            if (id!=7001 && id!= 7007 && F[i].f.numberofvariables()>1) continue;
+            if (id!=7001 && id!= 7007 && id != 7012 && F[i].f.numberofvariables()>1) continue;
             j=i; ++naktiv; List.push_back(F[i].getinfixnotation());indezes.push_back(i);
         }
         if (f_menu[i]->IsChecked() && id == 7011 && (F[i].getmode() == plotobject::POINTS || F[i].getmode() == plotobject::POLYGON || F[i].getmode() == plotobject::TRIANGLE )) {
@@ -2744,10 +2779,11 @@ void PlotFunctionFrame::OnMenuTools(wxCommandEvent &event)
         Entry += "1e-9\n" + val::ToString(sizex) + "\n" + "4";
 
         ListDialog ldialog(this,List,"Analyze Function",Entry,240,100,fontsize);
-#ifndef __LINUX__
-        ldialog.Centre();
+// #ifndef __LINUX__
+        // ldialog.Centre();
         ldialog.SetSelection(0);
-#endif // __LINUX___
+        ldialog.Move(GetPosition().x+10, GetPosition().y+10);
+// #endif // __LINUX___
         if (ldialog.ShowModal()==wxID_CANCEL) return;
         j=ldialog.GetSelection();
         if (j<0) j=0;
@@ -3036,8 +3072,14 @@ void PlotFunctionFrame::OnInputDialog(wxCommandEvent&)
 
     {
         int l = recentcommands.length();
-        if (l == 0) recentcommands.push_back(svalue);
-        else if (recentcommands[l-1] != svalue) recentcommands.push_back(svalue);
+        if (l == 0) {
+			recentcommands.push_back(svalue);
+			recentcommandschanged = 1;
+		}
+        else if (recentcommands[l-1] != svalue) {
+			recentcommands.push_back(svalue);
+			recentcommandschanged = 1;
+		}
         if (l >= 100) recentcommands.skiphead();
     }
 
@@ -3161,7 +3203,7 @@ void PlotFunctionFrame::ChangeSettings(int command, const std::string &svalue, i
         {
             regressiondegree = val::FromString<int>(svalue);
             if (regressiondegree<1) regressiondegree = 1;
-            if (regressiondegree>4) regressiondegree = 4;
+            if (regressiondegree>10) regressiondegree = 10;
             sregressiondegree = val::ToString(regressiondegree);
         }
         break;
@@ -3191,19 +3233,27 @@ void PlotFunctionFrame::ChangeSettings(int command, const std::string &svalue, i
     case val_settings::AXIS_RANGE:
         {
             val::d_array<char> separators{':'};
-            val::Glist<std::string> s_values=getwordsfromstring(svalue,separators,1);
-            val::Glist<double> values;
+            val::Glist<std::string> s_values=getwordsfromstring(svalue,separators,1), d_values;
+            // val::Glist<double> values;
             double d1 = 0 , d2 = 0;
 
             separators[0] = ';';
             separators.push_back(' ');
             if (!s_values.isempty())  {
-                values = getdoublevaluesfromstring(s_values[0],separators,0);
-                if (values.length() >= 2) {
-                    d1 = values[0]; d2 = values[1];
+                // values = getdoublevaluesfromstring(s_values[0],separators,0);
+				d_values = getwordsfromstring(s_values[0],separators);
+                // if (values.length() >= 2) {
+                //     d1 = values[0]; d2 = values[1];
+                // }
+                // else if (values.length() >= 1) {
+                //     d2 = val::abs(values[0]);
+                //     d1 = -d2;
+                // }
+                if (d_values.length() >= 2) {
+                    d1 = val::valfunction(d_values[0])(0); d2 = val::valfunction(d_values[1])(0);
                 }
-                else if (values.length() >= 1) {
-                    d2 = val::abs(values[0]);
+                else if (d_values.length() >= 1) {
+                    d2 = val::abs(val::valfunction(d_values[0])(0));
                     d1 = -d2;
                 }
             }
@@ -3242,12 +3292,20 @@ void PlotFunctionFrame::ChangeSettings(int command, const std::string &svalue, i
                     Compute();
                     return;
                 }
-                values = getdoublevaluesfromstring(s_values[1],separators,0);
-                if (values.length() >= 2) {
-                    d1 = values[0]; d2 = values[1];
+                // values = getdoublevaluesfromstring(s_values[1],separators,0);
+				d_values = getwordsfromstring(s_values[0],separators);
+                // if (values.length() >= 2) {
+                //     d1 = values[0]; d2 = values[1];
+                // }
+                // else if (values.length() >= 1) {
+                //     d2 = val::abs(values[0]);
+                //     d1 = -d2;
+                // }
+                if (d_values.length() >= 2) {
+                    d1 = val::valfunction(d_values[0])(0); d2 = val::valfunction(d_values[1])(0);
                 }
-                else if (values.length() >= 1) {
-                    d2 = val::abs(values[0]);
+                else if (d_values.length() >= 1) {
+                    d2 = val::abs(val::valfunction(d_values[0])(0));
                     d1 = -d2;
                 }
 
@@ -3969,7 +4027,6 @@ void PlotFunctionFrame::OnMyEvent(MyThreadEvent& event)
 
     tablestring.Replace(wxString("PI"), pi);
 
-
     if (id == myevent_id::IdTable || id == myevent_id::IdEval) { //
         std::string title;
 
@@ -4022,13 +4079,17 @@ void PlotFunctionFrame::OnMyEvent(MyThreadEvent& event)
     }
     else if (id == myevent_id::IdIntegral || id == myevent_id::IdCalculate || id == myevent_id::IdPointStat) { // Integral or Calculate
         std::string title;
-        if (id == IdIntegral) title = "Integral";
+		int height = 250;
+        if (id == IdIntegral) {
+			title = "Integral";
+			height = 290;
+		}
         else if (id == IdPointStat) title = "Points Statistic";
         else title = "Calculate";
-        y=y+dy-250;
+        y=y+dy-height;
         Point.x = x; Point.y = y;
         Size.SetWidth(300);
-        Size.SetHeight(250);
+        Size.SetHeight(height);
         if (id == IdPointStat) Size.SetWidth(400);
         InfoWindow *tablewindow = new InfoWindow(this,nchildwindows,tablestring,Point,Size,title,fontsize,1,InfoStyle);
         tablewindow->Show();
@@ -4071,14 +4132,29 @@ void PlotFunctionFrame::OnParentEvent(ParentEvent &event)
 }
 
 
-void PlotFunctionFrame::OnMenuFill(wxCommandEvent &event)
+void PlotFunctionFrame::Onrightclickmenu(wxCommandEvent &event)
 {
     int id = event.GetId();
 
-    if (id == 7101) {
-        if (active_function != -1) changefunctionsettings(active_function);
-        return;
+	if (id == 7101) {
+		if (active_function != -1) changefunctionsettings(active_function);
+		return;
     }
+	else if (id == 7102 && active_function != -1) {
+		fstring = "";
+		for (int i = 0; i < F.length(); ++i) {
+			if (i == active_function) continue;
+			fstring += F[i].getinfixnotation();
+			if (F[i].x_range.x==F[i].x_range.y) fstring+=";\n";
+			else if (F[i].x_range.x!=x1 || F[i].x_range.y!=x2 || F[i].getmode() == plotobject::PARCURVE) fstring+= "  [ "+ F[i].x1.getinfixnotation() +" , " + F[i].x2.getinfixnotation() + " ];\n";
+			else fstring+=";\n";
+		}
+		active_function = -1;
+		refreshfunctionstring();
+		GetSettings();
+		Compute();
+		return;
+	}
 
     int n=fstring.length()-1;
     double x,y;
@@ -4901,8 +4977,9 @@ void PlotFunctionFrame::displacefunction(int i,const std::string &dx1,const std:
                         else if (sf[j] == 'y') nf += sy;
                         else nf +=sf[j];
                     }
-                    val::valfunction f(nf);
-                    F[i] = plotobject(f.getinfixnotation());
+                    // val::valfunction f(nf);
+                    // F[i] = plotobject(f.getinfixnotation());
+                    F[i] = plotobject(nf);
                 }
 
             }
@@ -5445,6 +5522,7 @@ void PlotFunctionFrame::OnMenuRecent(wxCommandEvent& event)
             delete recent_menu[i];
         }
         recent_menu.dellist();
+		recentfileschanged = 1;
         return;
     }
 
@@ -5474,6 +5552,7 @@ void PlotFunctionFrame::OnMenuRecent(wxCommandEvent& event)
         delete recent_menu[n-1];
         recent_menu.delelement(n-1);
         recentfiles.delelement(m);
+		recentfileschanged = 1;
         n--;
         for (int i=0;i<n;++i) recent_menu[i]->SetItemLabel(recentfiles[i]);
         return;
@@ -5509,6 +5588,7 @@ int PlotFunctionFrame::checkinrecent(const std::string& filename)
             for (j=i;j>0;--j) recentfiles[j]=recentfiles[j-1];
             recentfiles[0]=filename;
             for (j=0;j<n;++j) recent_menu[j]->SetItemLabel(recentfiles[j]);
+			recentfileschanged = 1;
             return 1;
         }
     }
@@ -5534,6 +5614,7 @@ void PlotFunctionFrame::appendrecentfiles(const std::string& filename)
         ++n;
     }
     for (i=0;i<n;++i) recent_menu[i]->SetItemLabel(recentfiles[i]);
+	recentfileschanged = 1;
 }
 
 
@@ -5896,5 +5977,7 @@ void PlotFunctionFrame::ChangeSideTextStyle(wxCommandEvent&)
     }
     SideText->Clear();
     SideText->SetWindowStyleFlag(style);
+	// SideText->Refresh();
+	// SideText->Update();
     WriteText();
 }

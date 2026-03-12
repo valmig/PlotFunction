@@ -89,6 +89,7 @@ class PlotFunctionFrame: public wxFrame
         int moveinpointsx = 0, moveinpointsy = 0;
         int bitmapbackground = 0, axis_fontsize = 10, SideText_isshown = 0, widthSideText = 200;
         int notebook_isshown = 0, widthNoteBookPanel = 200, plusw = 12, dpanelinsertmode = NORMAL_I, n_points = 0, wraptext = 0, lastfocusedwindow = 1;
+	    int recentfileschanged = 0, recentcommandschanged = 0, latexdefinitionsfileexists = 0;
         long InfoStyle = wxRESIZE_BORDER;
         bool closebrackets = true, computedefaultobject = false;
         wxPoint actuallinepoint,actualpolygonpoint;
@@ -204,7 +205,7 @@ class PlotFunctionFrame: public wxFrame
 
         //*Handlers(PlotFunctionFrame)
         void OnQuit(wxCommandEvent& event);
-        void OnAbout(wxCommandEvent& event);
+        void OnHelp(wxCommandEvent& event);
         void OnDrawPanelPaint(wxPaintEvent& event);
         void OnDrawPanelResize(wxSizeEvent& event);
         void OnAllSettingsSelected(wxCommandEvent& event);
@@ -223,7 +224,7 @@ class PlotFunctionFrame: public wxFrame
         void OnScaleMenu(wxCommandEvent &event);
         void OnGridMenu(wxCommandEvent &event);
         void OnMoveMenu(wxCommandEvent &);
-        void OnMenuFill(wxCommandEvent &event);
+        void Onrightclickmenu(wxCommandEvent &event);
         void OnInputDialog(wxCommandEvent &event);
         void OnMenuButton(wxCommandEvent&);
         void OnMenuRecent(wxCommandEvent& event);

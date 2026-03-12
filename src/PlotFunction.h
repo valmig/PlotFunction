@@ -32,7 +32,8 @@ extern wxFrame *MyFrame;
 extern wxString tablestring;
 extern std::string fstring,xstring,ystring,filesep,filedir,sizestring,settingsfile,settingsdir,valdir,iconpath,savefiledir,
                    openfiledir,handcursor,RecentFilesPath,alticonpath, RecentCommandsPath, errorfile, ansexpr,
-                   latexdefinitionsfile;
+                   latexdefinitionsfile, keywordsfile , openpdfcommand;
+
 
 extern std::mutex compute_mutex;
 extern plotobject global_function;
@@ -100,9 +101,15 @@ int operator <(const val::GPair<double>& p,const val::GPair<double>& q);
 const int MaxPrec = 19;
 }
 
+
+val::Glist<val::GPair<double>> zeros_of_two_alg_curves(const val::valfunction& f, const val::valfunction& g);
+
 double squaredistance(const wxPoint& l1, const wxPoint &l2, const wxPoint &p); // square distance between line-segment def. by l1, l2 and point p
+
 double squaredistance(const wxPoint& m, const wxPoint &p, int rx, int ry, int angle);
+
 val::GPair<double> coordinatesdistance(const double &mx, const double &my, const double &px, const double &py,const double &r, int angle);
+
 double degree_angle(const double &a, const double &b); // angle in degree of vector (a,b) and (1,0)
 
 int decimal(const double& x);

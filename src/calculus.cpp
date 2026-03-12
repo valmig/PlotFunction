@@ -13,11 +13,15 @@
 #include <polfactor.h>
 #include <pol_arithmetic.h>
 #include <LA.h>
+#include <ideal_roots.h>
+
+
+void compute_zeros_of_alg_curves(const val::valfunction &f, const val::valfunction &g, const double &epsilon, int decimals,
+	                             val::Glist<val::GPair<double>> &d_zeros, val::Glist<val::GPair<val::valfunction>> &s_zeros);
 
 
 namespace val
 {
-
 
 std::istream& operator >>(std::istream& is,valfunction &f)
 {
@@ -137,24 +141,80 @@ int has_pi_or_parameter(const std::string& s)
     return is;
 }
 
-int sqrt_dis(const val::valfunction &dis, val::valfunction &res)
+// Computes greatest nat. number  b, with b<=sqrt[n](x), by bisection-method in [a,b].
+val::integer nth_root(const val::integer& x, int n)
 {
+	if (x < 0 || n < 0) return 0;
+    val::integer a,a1,c,d,b=x;
+
+    while ((d=(b-a))>1) {
+        d = d >> 1;
+        a1=a+d;
+        c = val::power(a1, n);
+        if (c>x) b=std::move(a1);
+        else a=std::move(a1);
+    }
+    if (val::power(b, n) > x) return a;
+    else return b;
+}
+
+// test if a rational number is a nth-power and computes eventually the nth root of it.
+int is_nth_power(const val::rational& r, int n, val::rational &root)
+{
+	if (r.iszero() && n == 0) return 0;
+    const val::integer &p = r.nominator(), &q = r.denominator();
+    val::integer sp, sq;
+    root = val::rational(0);
+    if (q.iszero()) return 0;
+    if (p.iszero()) return 1;
+    if (p.signum() < 0) return 0;
+    sp = nth_root(p, n);
+    sq = nth_root(q, n);
+    root = val::rational(sp,sq);
+    if (r == val::power(root, n)) return 1;
+    else return 0;
+}
+
+// dis  is constant. res = sqrt[n](dis).
+int sqrt_dis(const val::valfunction &dis, val::valfunction &res, int n = 2)
+{
+	if (n < 0) return 0;
+	if (n ==0) {
+		if (res.is_zero()) return 0;
+		res = val::valfunction("0");
+		return 1;
+	}
+	if (n==1) {
+		res = dis;
+		return 1;
+	}
     val::valfunction sqrt("sqrt(x)");
     std::string op;
-    if (!has_pi_or_parameter(dis.getinfixnotation())) {
+	int n_even = 1, isnegative = 0;
+	if (n > 2) {
+		std::string sn = "x^(1/" + val::ToString(n) + ")";
+		sqrt = val::valfunction(sn);
+		if (n%2) n_even = 0;
+	}
+	if (!has_pi_or_parameter(dis.getinfixnotation())) {
         if (dis.isrationalfunction()) {
             val::rational r = val::FromString<val::rational>(dis.getinfixnotation()), root, rootnum, rootdenum;
             val::integer num = r.numerator(), denum = r.denominator();
 
-            if (r.signum() == -1) return 0;
-            if (val::isquadratic(num, rootnum)) {
+            if (r.signum() == -1) {
+				isnegative = 1;
+				num.changesign();
+				if (n_even) return 0;
+			}
+            if (is_nth_power(num, n, rootnum)) {
+				if (isnegative) rootnum.changesign();
                 res = val::valfunction(val::ToString(rootnum));
             }
             else {
                 res = val::valfunction("sqrt(" + val::ToString(num) + ")");
+				if (isnegative) res = -res;
             }
-            //std::cout << "\n res = " << res << std::endl;
-            if (val::isquadratic(denum, rootdenum)) {
+            if (is_nth_power(denum, n, rootdenum)) {
                 res /= val::valfunction(val::ToString(rootdenum));
             }
             else res *= val::valfunction("sqrt(" + val::ToString(denum) + ")")/val::valfunction(val::ToString(denum));
@@ -162,35 +222,79 @@ int sqrt_dis(const val::valfunction &dis, val::valfunction &res)
         }
         else {
             double value = dis(0);
-            if (value < 0.0) return 0;
+            if (value < 0.0) {
+				if (n_even) return 0;
+				isnegative = 1;
+			}
             res = sqrt(dis);
+			if (isnegative) res = -res;
             return 1;
         }
     }
-    else if (dis.getfirstoperator() == "^") {
-        val::valfunction f = dis.getfirstargument(), expo = dis.getsecondargument();
+
+	val::valfunction dis1 = dis;
+	isnegative = 0;
+
+	if (dis.getfirstoperator() == "m") {
+		dis1 = dis.getfirstargument();
+		if (!has_parameter(dis1.getinfixnotation()) && dis1(0.0) < 0 && n_even)  return 0;
+		isnegative = 1;
+	}
+	
+	if (dis1.getfirstoperator() == "^") {
+        val::valfunction f = dis1.getfirstargument(), expo = dis1.getsecondargument();
+		if (isnegative) dis1 = -dis1;
         if (val::isinteger(expo.getinfixnotation())) {
             int e = val::FromString<int>(expo.getinfixnotation());
-            if (e%2 == 0) {
-                e/=2;
+			if (isnegative && e%2 == 0 && n_even) return 0;
+            if (e%n == 0) {
+				if (isnegative && n_even) return 0;
+                e/=n;
                 res = val::valfunction("(" + f.getinfixnotation() + ")^(" + val::ToString(e) + ")");
             }
-            else res = sqrt(dis);
+            else {
+				if (isnegative) f = -f;
+				val::rational exp(e,n);
+				if (exp == val::rational(1,2)) {
+					sqrt = val::valfunction("sqrt(x)");
+					res = sqrt(f);
+				}
+				else {
+					sqrt = val::valfunction("x^(" + val::ToString(exp) + ")");
+					res = sqrt(f);
+				}
+			}
         }
-        else res = sqrt(dis);
+        else res = sqrt(dis1);
         return 1;
     }
-    else if ((op = dis.getfirstoperator()) == "*" || op == "/")  {
-        val::valfunction f = dis.getfirstargument(), g = dis.getsecondargument(), res1, res2;
-        if (sqrt_dis(f, res1) && sqrt_dis(g, res2)) {
+	else if ((op = dis1.getfirstoperator()) == "*" || op == "/")  {
+        val::valfunction f = dis1.getfirstargument(), g = dis1.getsecondargument(), res1, res2;
+		if (isnegative) {
+			if (has_parameter(f.getinfixnotation())) f = -f;
+			else g = -g;
+		}
+        if (sqrt_dis(f, res1, n) && sqrt_dis(g, res2, n)) {
             if (op == "*") res = res1 * res2;
             else res = res1/res2;
             return 1;
         }
         else return 0;
     }
-    else {
-        res = sqrt(dis);
+	else {
+		if (isnegative) {
+			dis1 = -dis1;
+			isnegative = 0;
+		}
+		if (!has_parameter(dis1.getinfixnotation())) {
+			double value = dis1(0);
+			if (value < 0.0) {
+				if (n_even) return 0;
+				isnegative = 1;
+			}
+		}
+        res = sqrt(dis1);
+		if (isnegative) res = -res;
         return 1;
     }
 }
@@ -1283,10 +1387,10 @@ val::valfunction integral(const val::valfunction &f, int k)
         }
         break;
         case hintegral::TAN: {
-            valfunction h1("log(x)"), h2("abs(cos(x))");
+            valfunction h1("-log(x)"), h2("abs(cos(x))");
             h2 = h2(g);
             h1 = h1(h2);
-            return h2/Pg.LC();
+            return h1/Pg.LC();
         }
         break;
         case hintegral::SINH: {
@@ -1548,7 +1652,7 @@ void computeintegral(const plotobject& f,std::string x1,std::string x2,double de
             val::valfunction F= integral(val::valfunction(f.getinfixnotation()));
             if (!F.is_zero()) {
                 F.setparameter(f.f.getparameter());
-                name += "integral("+f.getinfixnotation()+") \n= " + F.getinfixnotation() + "\n\n";
+                name += "integral("+f.getinfixnotation()+") =\n\t" + F.getinfixnotation() + " + C\n\n";
                 exact = 1;
                 symbolic = F(B) - F(A);
                 exwert = symbolic(0);
@@ -1565,12 +1669,12 @@ void computeintegral(const plotobject& f,std::string x1,std::string x2,double de
     tablestring = name + f.getinfixnotation() + " ; " + ToString(x1) + " ; " + ToString(x2) + " ) =\n";
     //if (ispol) tablestring+= ToString(r_wert) + "\n\ndouble:   ";
     if (exact) {
-        tablestring += "Symbolic over stammfunction:\n" + symbolic.getinfixnotation() + ";\n double over stammfunction: ";
-        tablestring += ToString(val::round(exwert,dez),eprec) + ";\n\ndouble:   ";
+        tablestring += "Symbolic over stammfunction:\n\t" + symbolic.getinfixnotation() + "\nDouble over stammfunction:\n\t";
+        tablestring += ToString(val::round(exwert,dez),eprec) + "\nDouble over approximation:\n\t";
     }
     tablestring+=ToString(val::round(wert,dez),wprec);
     //if (k==0)
-    tablestring+= "\nPrecision : " + ToString(delta) + " , Round to decimal: " + ToString(dez) + "\nIterations : " + ToString(n);
+    tablestring+= "\n\nPrecision : " + ToString(delta) + " , Round to decimal: " + ToString(dez) + "\nIterations : " + ToString(n);
 
     if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event.Clone() );
 }
@@ -1774,7 +1878,7 @@ void computezeros(const val::valfunction &f,const double &x1,const double &x2,co
         if (pF.degree() == 0) return;
     }
 
-    if (pF.degree() == 1) {                     // Linear Funktion with symbols
+	if (pF.degree() == 1) {                     // Linear Funktion with symbols
         valfunction m = pF.LC(), b = pF[0], z = -b/m;
 
         z.setparameter(f.getparameter());
@@ -1786,7 +1890,7 @@ void computezeros(const val::valfunction &f,const double &x1,const double &x2,co
         d_zeros.push(dz);
         return;
     }
-    else if (pF.degree() == 2) {
+	else if (pF.degree() == 2) {
         pF /= pF[2];
         if (pF[0].is_zero()) {
             valfunction z1, z2 = -pF[1];
@@ -1801,23 +1905,120 @@ void computezeros(const val::valfunction &f,const double &x1,const double &x2,co
             return;
         }
         valfunction phalf = -pF[1]/valfunction("2"), dis = phalf*phalf - pF[0], sqrt("sqrt(x)"), d, z1, z2;
-        double x1, x2;
+        double x1, x2, droot;
+		int valid = 1;
 
-        if (!hzeros::sqrt_dis(dis, d)) return;
+		if (!hzeros::sqrt_dis(dis, d)) {
+			if (hzeros::has_parameter(dis.getinfixnotation())) {
+				dis.setparameter(f.getparameter());
+				dis = val::valfunction(ToString(dis(0)));
+				if (hzeros::sqrt_dis(dis, d)) {
+					droot = d(0);
+					if (val::isNaN(droot) || droot == val::Inf || droot == -val::Inf) return;
+					if (val::abs(d(0)) < epsilon) d_zeros.push_back(droot);
+					else {
+						d_zeros.push_back(d(0)); d_zeros.push_back(-droot);
+					}
+				}
+			}
+			return;
+		}
         z1 = phalf - d;
         z2 = phalf + d;
         z1.setparameter(f.getparameter()); z2.setparameter(f.getparameter());
+		droot = d(0);
         x1 = z1(0); x2 = z2(0);
         if (abs(x1) < epsilon) x1 = 0.0;
         if (abs(x2) < epsilon) x2 = 0.0;
         s_zeros.push_back(z1);
-        d_zeros.push_back(x1);
+		if (val::isNaN(x1) || x1 == val::Inf || x1 == -val::Inf) valid = 0;
+        if (valid) d_zeros.push_back(x1);
         if (z1 != z2) {
             s_zeros.push_back(z2);
         }
-        if (abs(x1 - x2) > epsilon) d_zeros.push_back(x2);
+		valid = 1;
+		if (val::isNaN(x2) || x2 == val::Inf || x2 == -val::Inf) valid = 0;
+        if (abs(x1 - x2) > epsilon && valid) d_zeros.push_back(x2);
         return;
     }
+	else if (pF.length() == 2) {
+		int n = pF.degree(), valid = 1;
+		val::valfunction lc = pF.LC(), dis = (-pF.getlastcoef())/lc, d;
+		double droot;
+		d.setparameter(f.getparameter());
+		if (!hzeros::sqrt_dis(dis, d, n)) {
+			if (hzeros::has_parameter(dis.getinfixnotation())) {
+				dis.setparameter(f.getparameter());
+				dis = val::valfunction(ToString(dis(0)));
+				if (hzeros::sqrt_dis(dis, d, n)) {
+					droot = d(0);
+					if (val::isNaN(droot) || droot == val::Inf || droot == -val::Inf) valid = 0;
+					if (n%2 || val::abs(droot) < epsilon) d_zeros.push_back(droot);
+					else {
+						d_zeros.push_back(droot); d_zeros.push_back(-droot);
+					}
+				}
+			}
+			return;
+		}
+		d.setparameter(f.getparameter());
+		droot = d(0);
+		if (val::isNaN(droot) || droot == val::Inf || droot == -val::Inf) valid = 0;
+		if (n%2) {
+			s_zeros.push_back(d);
+			if (valid) d_zeros.push_back(droot);
+		}
+		else {
+			s_zeros.push_back(d); s_zeros.push_back(-d);
+			if (!valid) return;
+			d_zeros.push_back(droot);
+			if (val::abs(d(0)) > epsilon) d_zeros.push_back(-droot);
+		}
+		return;
+	}
+	else if (pF.length() == 3) { // Check if a substitution is possible:
+		auto monom = pF.begin();
+		int deg = monom.actualdegree(), d1, d0;
+		monom++; d1 = monom.actualdegree();
+		monom++; d0 = monom.actualdegree();
+		if (deg%2 == 0 && d1 == deg/2 && d0 == 0) {
+			monom = pF.begin();
+			valfunction g = monom.actualcoef() * valfunction("x^2");
+			monom++; g += monom.actualcoef() * valfunction("x");
+			monom++; g += monom.actualcoef();
+			g.setparameter(f.getparameter());
+			// std::cout <<"\n g = " << g.getinfixnotation() << std::endl;
+
+			Glist<double> pd_zeros;
+			Glist<valfunction> ps_zeros;
+			computezeros(g, x1, x2, epsilon, decimals, iterations, pd_zeros, ps_zeros);
+			if (pd_zeros.isempty() && ps_zeros.isempty()) return;
+			
+			int deg_iseven = 1;
+			double z;
+			valfunction nsqrt("x^(1/" + ToString(d1) + ")"), sz;
+			if (d1%2) deg_iseven = 0;
+			for (const auto &zero : pd_zeros) {
+				if (deg_iseven) {
+					if (zero < 0) continue;
+					if (d1 == 2) z = val::sqrt(zero);
+					else z = nsqrt(zero);
+					// z ist nth-root of zero.
+					d_zeros.push(z);
+					if (abs(z) > epsilon) d_zeros.push_back(-z); 
+				}
+				else d_zeros.push_back(nsqrt(zero));
+			}
+			for (const auto &zero : ps_zeros) {
+				if (hzeros::sqrt_dis(zero, sz, d1)) {
+					sz.setparameter(f.getparameter());
+					s_zeros.push_back(sz);
+					if (deg_iseven) s_zeros.push_back(-sz);
+				}
+			}
+			return;
+		}
+	}
 
     if (f.ispolynomialfunction()) {
         pol<rational> F = f.getpolynomial();
@@ -1971,6 +2172,74 @@ void computezeros(const val::valfunction &f,const double &x1,const double &x2,co
 }
 
 
+void compute_zeros_of_alg_curves(const val::valfunction &f, const val::valfunction &g, const double &epsilon, int decimals,
+	                             val::Glist<val::GPair<double>> &d_zeros, val::Glist<val::GPair<val::valfunction>> &s_zeros)
+{
+	d_zeros.dellist(); s_zeros.dellist();
+    if (f.is_zero() || g.is_zero()) return;
+	if (f.numberofvariables() != 2 && g.numberofvariables() != 2) return;
+
+    int i, oldordn = val::n_expo::getordtype(), oldordns = val::s_expo::getordtype();
+    val::Glist<val::s_polynom<val::integer>> G;
+    val::s_polynom<val::integer> h,h1;
+    const val::matrix<int> &OM_s = val::s_expo::getordmatrix(), &OM_n = val::n_expo::getordmatrix();
+
+    val::n_polynom<val::rational>::setstaticexpodim(2);
+    val::n_expo::setordtype(-2);
+    val::s_expo::setordtype(-2);
+    h=val::primitivpart(f.gets_polynom<val::rational>());
+    h1=val::primitivpart(g.gets_polynom<val::rational>());
+    G.sinsert(std::move(h));
+    G.sinsert(std::move(h1));
+    val::groebner(G);
+
+	val::vector<val::pol<val::rational>> F;
+	int index, result;
+
+	result = val::getnormalpospol(G, F, index, 3, 0);
+
+    val::s_expo::setordtype(oldordns);
+    val::n_expo::setordtype(oldordn);
+    val::n_expo::setordmatrix(OM_n);
+    val::s_expo::setordmatrix(OM_s);
+
+	if (!result) return;
+
+	val::vector<val::valfunction> FF(F.dimension());
+	val::Glist<double> dd_zeros;
+	val::Glist<val::valfunction> ss_zeros;
+	val::GPair<double> d_pair;
+	val::GPair<val::valfunction> s_pair;
+	
+	for (i = 0; i < F.dimension(); ++i) FF(i) = val::valfunction(val::PolToString(F(i)));
+	computezeros(FF(index), 0, 0, epsilon, decimals, 1000, dd_zeros,  ss_zeros);
+
+	for (const auto &zero: dd_zeros) {
+		if (F.dimension() > 2) {
+			d_pair.x = val::round(FF(1)(zero), decimals); d_pair.y = val::round(FF(2)(zero), decimals);
+		}
+		else if (index == 0) {
+			d_pair.x = val::round(zero, decimals); d_pair.y = val::round(FF(1)(zero), decimals); 
+		}
+		else {
+			d_pair.x = val::round(FF(0)(zero), decimals); d_pair.y = val::round(zero, decimals); 
+		}
+		d_zeros.push_back(d_pair);
+	}
+	
+	for (const auto &zero: ss_zeros) {
+		if (F.dimension() > 2) {
+			s_pair.x = FF(1)(zero); s_pair.y = FF(2)(zero);
+		}
+		else if (index == 0) {
+			s_pair.x = zero; s_pair.y = FF(1)(zero); 
+		}
+		else {
+			s_pair.x = FF(0)(zero); s_pair.y = zero; 
+		}
+		s_zeros.push_back(s_pair);
+	}
+}
 
 /*
 void analize_rationalfunction(val::valfunction& F,const double& eps,int dec)
@@ -2724,6 +2993,7 @@ void analyzefunction(const plotobject &f,std::string input)
         if (!isInf(f.f(z)) && !val::isNaN(f.f(z))) zeros.push_back(z);
     }
     N=zeros.length();
+	n = 0;
     if (N) {
         Points[0].reserve(N);
         zeros.sort();
@@ -2733,7 +3003,10 @@ void analyzefunction(const plotobject &f,std::string input)
             digits = val::Min(digits,val::MaxPrec);
             analyze_output[1] += "  " + val::ToString(val::round(zeros[i],decimals),digits);
             for (const auto &z : s_zeros) {
-                if (val::abs(z(0)-zeros[i]) < epsilon) analyze_output[1] += " [ = " + z.getinfixnotation() + " ],  ";
+                if (val::abs(z(0)-zeros[i]) < epsilon) {
+					++n;
+					analyze_output[1] += " [ = " + z.getinfixnotation() + " ],  ";
+				}
             }
             Points[0].push_back(val::GPair<double>(zeros[i],0.0));
         }
@@ -2741,6 +3014,12 @@ void analyzefunction(const plotobject &f,std::string input)
         ymin = ymax = 0;
     }
     else analyze_output[1] += "\nNo real zeros.";
+	if (n < s_zeros.length()) {
+		analyze_output[1] += "\n Symbolic zeros:\n";
+		for (const auto &z : s_zeros) {
+			analyze_output[1] += "  " + z.getinfixnotation() + ", ";
+		}
+	}
     analyze_output[1]+="\n";
     //std::cout << "\n xmin = " << xmin << "; xmax = " << xmax;
     //
@@ -2915,34 +3194,90 @@ void analyzefunction(const plotobject &f,std::string input)
 }
 
 
+void alg_curve_intersection(const val::valfunction &f, const val::valfunction &g, const double &epsilon, int decimals)
+{
+	val::Glist<val::GPair<double>> d_zeros;
+	val::Glist<val::GPair<val::valfunction>> s_zeros;
+	int N = 0;
+
+	compute_zeros_of_alg_curves(f, g, epsilon, decimals, d_zeros, s_zeros);
+	N  = d_zeros.length();
+    analyze_output[0] = "Intersection points of\n f(x) = " + f.getinfixnotation() + "\n g(x) = " + g.getinfixnotation();
+	if (!N) analyze_output[1] += "No real intersection points.\n";
+	else {
+		int digits, ydigits, symbolic;
+		val::valfunction fx = f.derive(), fy = f.derive(2), gx = g.derive(), gy = g.derive(2);
+		double arg, a, alpha, dfx, dfy, dgx, dgy, delta = val::power(1,-decimals);
+		val::vector<double> value(2);
+        analyze_output[1]+="Number of real intersection points: "+ val::ToString(N) + "\n";
+        Points[0].reserve(N);
+		std::cout << "\n number of symbolic zeros = " << s_zeros.length() << std::endl;
+		for (const auto &dpair : d_zeros) {
+			symbolic = 0;
+            digits = intdigits(dpair.x) + decimals;
+            digits = val::Min(digits,val::MaxPrec);
+            ydigits = intdigits(dpair.y) + decimals;
+            ydigits = val::Min(digits,val::MaxPrec);
+            analyze_output[1] += "\t( " + val::ToString(dpair.x, digits) + " | " + val::ToString(dpair.y, ydigits) + " )";
+			Points[0].push_back(dpair); 
+			for (const auto &spair : s_zeros) {
+				if (val::abs(dpair.x - spair.x(0)) < delta && val::abs(dpair.y - spair.y(0)) < delta) {
+					analyze_output[1] += " [ = ( " + spair.x.getinfixnotation() + " | " + spair.y.getinfixnotation() + " )]\n";
+					symbolic = 1;
+					break;
+				}
+			}
+			if (!symbolic) analyze_output[1] += "\n";
+			value(0) = dpair.x; value(1) = dpair.y;
+			dfx = fx(value); dfy = fy(value); dgx = gx(value); dgy = gy(value);
+			a = val::sqrt((dfx*dfx + dfy*dfy) * (dgx*dgx + dgy*dgy));
+			if (a != 0) {
+				arg = val::round (val::abs(dfx*dgx + dfy*dgy)/a, 4);
+				alpha = val::round(val::arccos(arg) * 180/val::PI, 2);
+				analyze_output[1] += "Intersection angle: " + val::ToString(alpha) + _T("°\n");
+			}
+		}
+	}
+    MyThreadEvent event(MY_EVENT,IdIntersection);
+    if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event.Clone() );
+}
+
+
+
 void intersection(const plotobject &f, const plotobject &g, std::string input)
 {
-    if (f.f.is_zero() || g.f.is_zero()) return;
-
-    enum {FF, FA, FP};
+    // if (f.f.is_zero() || g.f.is_zero()) return;
+    //
+	
+    enum {FF, FA, FP, AP, AA};
     int i,iterations=1000,decimals=4,n, N = 0, digits, ydigits, type = FF;//=input.length();
     double x1=-5,x2=5,epsilon=1e-9, y;
     val::Glist<double> zeros;
     val::Glist<double> places;
     val::Glist<val::valfunction> r_places;
-    val::valfunction F, G, h;
+    val::valfunction h;
+	const val::valfunction *F1 = nullptr, *F2 = nullptr, *AC1 = nullptr; //*AC2 = nullptr;
     plotobject const *pcurve = nullptr;
-
-    if (f.IsFunction()) {
-        F = val::valfunction(f.getinfixnotation(), 0);
-        F.setparameter(f.f.getparameter());
+	
+	if (f.IsFunction()) {
+        // F = val::valfunction(f.getinfixnotation(), 0);
+        // F.setparameter(f.f.getparameter());
+		F1 = &f.f;
         if (g.IsFunction()) {
-            G = val::valfunction(g.getinfixnotation(),0);
-            G.setparameter(g.f.getparameter());
-            h = F-G; h.simplify();
+            // G = val::valfunction(g.getinfixnotation(),0);
+            // G.setparameter(g.f.getparameter());
+			F2 = &g.f;
+            //h = F-G; h.simplify();
+            h = *F1 - *F2; h.simplify();
             type = FF;
         }
         else if (g.IsAlgCurve()) {
             std::string s = g.getinfixnotation();
 
             type = FA;
-            F = val::valfunction(f.getinfixnotation(), 0);
-            G = val::valfunction(s, 0);
+            // F = val::valfunction(f.getinfixnotation(), 0);
+            // G = val::valfunction(s, 0);
+			AC1 = &g.f;
             val::replace<char>(s, "y", "(" + f.getinfixnotation() + ")");
             h = val::valfunction(s);
         }
@@ -2957,12 +3292,14 @@ void intersection(const plotobject &f, const plotobject &g, std::string input)
         }
         else return;
     }
-    else if(g.IsFunction()) {
-        F = val::valfunction(g.getinfixnotation(), 0);
+	else if(g.IsFunction()) {
+        // F = val::valfunction(g.getinfixnotation(), 0);
+		F1 = &g.f;
         if (f.IsAlgCurve()) {
             std::string s = f.getinfixnotation();
             type = FA;
-            G = val::valfunction(s, 0);
+            // G = val::valfunction(s, 0);
+			AC1 = &f.f;
             val::replace<char>(s, "y", "(" + g.getinfixnotation() + ")");
             h = val::valfunction(s);
         }
@@ -2977,8 +3314,37 @@ void intersection(const plotobject &f, const plotobject &g, std::string input)
         }
         else return;
     }
-    else return;
+	else if (f.IsAlgCurve()) {
+		AC1 = &f.f;
+		if (g.IsParcurve()) {
+			std::string s1 = g.f.getinfixnotation(), s2 = g.g.getinfixnotation(), s = f.getinfixnotation(); 
+			pcurve = &g;
+			// G = f.f;
+			val::replace<char>(s, "x", "(" + s1 + ")");
+			val::replace<char>(s, "y", "(" + s2 + ")");
+			h = val::valfunction(s);
+			type = AP;
+            x1 = g.x_range.x; x2 = g.x_range.y;
+		}
+		else type = AA;
+	}
+	else if (f.IsParcurve()) {
+		pcurve = &f;
+		if (g.IsAlgCurve()) {
+			std::string s1 = f.f.getinfixnotation(), s2 = f.g.getinfixnotation(), s = g.getinfixnotation(); 
+			// G = g.f;
+			AC1 = &g.f;
+			val::replace<char>(s, "x", "(" + s1 + ")");
+			val::replace<char>(s, "y", "(" + s2 + ")");
+			h = val::valfunction(s);
+			type = AP;
+            x1 = f.x_range.x; x2 = f.x_range.y;
+		}
+		else return;
+	}
+	else return;
 
+	
     analyze_output.resize(2);
     Points.resize(1);
     for (i=0;i<2;++i) analyze_output[i]="";
@@ -3000,6 +3366,12 @@ void intersection(const plotobject &f, const plotobject &g, std::string input)
     }
     if (epsilon<0.0) epsilon = 1e-9;
     if (decimals<0 || decimals >10) decimals=2;
+
+	if (type == AA) {
+		alg_curve_intersection(f.f, g.f, epsilon, decimals);
+		return;
+	}
+	
 
     analyze_output[0] = "Intersection points of\n f(x) = " + f.getinfixnotation() + "\n g(x) = " + g.getinfixnotation();
     analyze_output[0] += "\n\n x in [ "+ val::ToString(val::round(x1,decimals)) + " ; " + val::ToString(val::round(x2,decimals)) + " ]";
@@ -3028,75 +3400,99 @@ void intersection(const plotobject &f, const plotobject &g, std::string input)
     if (n) {
         for (i = 0; i < n; ++i) {
             if ((type == FF) && !isInf(f.f(zeros[i])) && !val::isNaN(f.f(zeros[i])) && !isInf(g.f(zeros[i])) && !val::isNaN(g.f(zeros[i]))) places.push_back(zeros[i]);
-            else if ((type == FA) && !isInf(F(zeros[i])) && !val::isNaN(F(zeros[i]))) places.push_back(zeros[i]);
-            else if (type == FP && !isInf(pcurve->f(zeros[i])) && !val::isNaN(pcurve->f(zeros[i])) && !isInf(pcurve->g(zeros[i])) && !val::isNaN(pcurve->g(zeros[i]))) {
+            else if ((type == FA) && !isInf((*F1)(zeros[i])) && !val::isNaN((*F1)(zeros[i]))) places.push_back(zeros[i]);
+            else if ((type == FP || type == AP) && !isInf(pcurve->f(zeros[i])) && !val::isNaN(pcurve->f(zeros[i])) && !isInf(pcurve->g(zeros[i])) && !val::isNaN(pcurve->g(zeros[i]))) {
                 places.push_back(zeros[i]);
                 //std::cout << std::endl << zeros[i];
             }
         }
         N = places.length();
     }
-    if (type == FP) {
-        for (auto &v : r_places) {
-            v = pcurve->f(v);
-            v.simplify();
-        }
-        places.sort();
-    }
+    // if (type == FP || type == AP) {
+    //     for (auto &v : r_places) {
+    //         v = pcurve->f(v);
+    //         v.simplify();
+    //     }
+    //     places.sort();
+    // }
 
     if (!N) analyze_output[1]+="No real intersection points.\n";
     else {
         int rat, diff = 0;
         std::string xr,yr;
-        val::valfunction f1, g1, g2;
+        val::valfunction f1, f2, g1, g2;
         double alpha = 0;
 
-        F.simplify();
-        if (type <= 1) {   // type == FF || type == FA
-            G.simplify();
-            if (F.isdifferentiable() && G.isdifferentiable()) {
+        // F.simplify();
+		if (type <= 1) {   // type == FF || type == FA
+            // G.simplify();
+            if (type == FF && F1->isdifferentiable() && F2->isdifferentiable()) {
                 diff = 1;
-                f1 = F.derive(); g1 = G.derive();
+                f1 = F1->derive(); g1 = F2->derive();
             }
-            if (type == FA) g2 = G.derive(2);
+            else if (type== FA && F1->isdifferentiable() && AC1->isdifferentiable()) {
+				diff =1;
+				f1 = F1->derive(); 
+				g1 = AC1->derive(); g2 = AC1->derive(2);
+			}
         }
-        else {
+		else if (type == FP) { 
             g1 = pcurve->f; g2 = pcurve->g;
             g1.simplify(); g2.simplify();
-            if (g1.isdifferentiable() && g2.isdifferentiable() && F.isdifferentiable()) {
+            if (g1.isdifferentiable() && g2.isdifferentiable() && F1->isdifferentiable()) {
                 diff = 1;
                 g1 = g1.derive(); g2 = g2.derive();
-                f1 = F.derive();
+                f1 = F1->derive();
             }
         }
+		else if (type == AP) {
+			f1 = pcurve->f, f2 = pcurve->g;
+			f1.simplify(); f2.simplify();
+			// g1 = G.derive(); g2 = G.derive(2);
+			g1 = AC1->derive(); g2 = AC1->derive(2);
+            if (f1.isdifferentiable() && f2.isdifferentiable()) {
+                diff = 1;
+                f1 = f1.derive(); f2 = f2.derive();
+            }
+		}
+		else return;
         Points[0].reserve(N);
         places.sort();
         analyze_output[1]+="Number of real intersection points: "+ val::ToString(N) + "\n";
 
-        double f1x , g1x , g2x, a, xo;
+        double f1x, f2x, g1x , g2x, a, xo;
         val::vector<double> v(2);
 
         for (auto &x : places) {
-            if (type == FP) {
+            if (type == FP || type == AP) {
                 xo = x;
                 y = pcurve->g(x);
                 x = pcurve->f(x);
             }
-            else y = F(x);
+            else y = (*F1)(x);
             if (x == 0) x = 0;
             digits = intdigits(x) + decimals;
             digits = val::Min(digits,val::MaxPrec);
             ydigits = intdigits(y) + decimals;
             ydigits = val::Min(digits,val::MaxPrec);
-            analyze_output[1] += "( " + val::ToString(val::round(x,decimals),digits) + " | " + val::ToString(val::round(y,decimals),ydigits) + " )";
+            analyze_output[1] += "\t( " + val::ToString(val::round(x,decimals),digits) + " | " + val::ToString(val::round(y,decimals),ydigits) + " )";
             Points[0].push_back(val::GPair<double>(val::round(x,decimals),val::round(y,decimals)));
             rat = 0;
             for (const auto& r : r_places) {
-                if (val::abs(r(0)-x) < epsilon) {
-                    xr = r.getinfixnotation(); yr = F(val::valfunction(xr)).getinfixnotation();
-                    rat = 1;
-                    break;
-                }
+				if (type == AP || type == FP) {
+					if (val::abs(pcurve->f(r)(0) - x) < epsilon && val::abs(pcurve->g(r)(0) - y) < epsilon) {
+						xr = pcurve->f(r).getinfixnotation(); 
+						if (type == FP) yr = (*F1)(val::valfunction(xr)).getinfixnotation();
+						else yr = pcurve->g(r).getinfixnotation();
+						rat = 1;
+						break;
+					}	
+				}
+				else if (val::abs(r(0)-x) < epsilon) {
+					xr = r.getinfixnotation(); yr = (*F1)(val::valfunction(xr)).getinfixnotation();
+					rat = 1;
+					break;
+				}
             }
             if (rat) {
                 analyze_output[1] += " [ = ( " + xr + " | " + yr + " )]\n";
@@ -3104,11 +3500,11 @@ void intersection(const plotobject &f, const plotobject &g, std::string input)
             else analyze_output[1] += "\n";
             if (diff) {
                 f1x = f1(x);
-                if (type == FF) {
+				if (type == FF) {
                     g1x = g1(x);
                     alpha = val::abs(val::arctan(f1x) - val::arctan(g1x)) * 180/val::PI;
                 }
-                else if (type == FA) {
+				else if (type == FA) {
                     v(0) = x, v(1) = y;
                     g1x = g1(v);
                     g2x = g2(v);
@@ -3118,12 +3514,25 @@ void intersection(const plotobject &f, const plotobject &g, std::string input)
                     else alpha = val::NaN;
                     //double a = val::abs(g1(x)*f1(x) - g2(x)), b = val::sqrt(f1(x)*f1(x)*(g1(x)));
                 }
-                else if (type == FP){
+				else if (type == FP){
                     f1x = f1(x); g1x = g1(xo); g2x = g2(xo);
                     a = val::sqrt(f1x*f1x*(g1x*g1x + g2x*g2x));
                     if (a != 0.0) alpha = val::arccos(abs(g1x + f1x*g2x)/a) * 180/val::PI;
                     else alpha = val::NaN;
                 }
+				else if (type == AP) {
+					f1x = f1(xo), f2x = f2(xo);
+					v(0) = x, v(1) = y;
+					g1x = g1(v); g2x = g2(v);
+					a = val::sqrt((f1x*f1x + f2x*f2x) * (g1x*g1x + g2x*g2x));
+					if (a != 0.0) {
+						double value = abs(f1x*g1x + f2x*g2x)/a;
+						value = val::round(value, 4); 
+						alpha = val::arccos(value) * 180/val::PI;
+					}
+					else alpha = val::NaN;
+					alpha = 90 - alpha;
+				}
                 if (alpha > 90) alpha = 180 - alpha;
                 alpha = val::round(alpha,2);
                 if (!val::isNaN(a)) analyze_output[1] += "Intersection angle: " + val::ToString(alpha) + _T("°\n");

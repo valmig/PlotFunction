@@ -27,7 +27,9 @@ std::string filesep="\\", filedir=val::CurrentHomeDir(), valdir = val::CurrentHo
             iconpath="C:\\gccprogrammes\\Plot\\PlotFunction\\icon\\MV_plot.xpm",
             handcursor="C:\\gccprogrammes\\Plot\\PlotFunction\\icon\\hand.png",
             alticonpath = val::GetExeDir() + "\\MV_plot.xpm",
-            errorfile = settingsdir + "\\error.log";
+            errorfile = settingsdir + "\\error.log",
+            openpdfcommand = "start ",
+	        keywordsfile = settingsdir + "\\keywords.pdf";
 #endif // _WIN32
 #ifdef __LINUX__
 std::string filesep="/",filedir=val::CurrentHomeDir(), valdir= val::CurrentHomeDir() + "/.config/MVPrograms",
@@ -35,7 +37,9 @@ std::string filesep="/",filedir=val::CurrentHomeDir(), valdir= val::CurrentHomeD
             iconpath = val::CurrentHomeDir() + "/.local/share/icons/MVPrograms/MV_Plot.xpm",
             handcursor = val::CurrentHomeDir() + "/.local/share/icons/MVPrograms/hand.png",
             alticonpath = val::CurrentHomeDir() + "/.local/share/icons/MVPrograms/MV_Plot.xpm",
-            errorfile = settingsdir + "/error.log";
+            errorfile = settingsdir + "/error.log",
+	        keywordsfile = settingsdir + "/keywords.pdf",
+            openpdfcommand = "xdg-open ";
 #endif
 #ifdef __APPLE__
 std::string filesep="/",filedir=val::CurrentHomeDir(), valdir= val::CurrentHomeDir() + "/Library/Application Support",
@@ -43,7 +47,9 @@ std::string filesep="/",filedir=val::CurrentHomeDir(), valdir= val::CurrentHomeD
             iconpath = val::CurrentHomeDir() + "/.local/share/icons/MVPrograms/MV_Plot.xpm",
             handcursor = val::CurrentHomeDir() + "/.local/share/icons/MVPrograms/hand.png",
             alticonpath = val::GetExeDir() + "/../Resources/MV_Plot.xpm",
-            errorfile = settingsdir + "/error.log";
+            errorfile = settingsdir + "/error.log",
+	        keywordsfile = settingsdir + "/keywords.pdf",
+            openpdfcommand = "open ";
 #endif //
 
 std::string RecentFilesPath = settingsdir + filesep + "recentfiles.txt";
@@ -227,16 +233,17 @@ val::pol<double> eval_f(const val::s_polynom<val::integer>& f,const double &x,in
     return g;
 }
 
-val::Glist<val::GPair<double>> critical_points_pl_alg_curve(const val::valfunction& f)
+// val::Glist<val::GPair<double>> critical_points_pl_alg_curve(const val::valfunction& f)
+val::Glist<val::GPair<double>> zeros_of_two_alg_curves(const val::valfunction& f, const val::valfunction& g)
 {
-    val::Glist<val::GPair<double>> crit_points;
-    if (f.is_zero() || f.numberofvariables()!=2) return crit_points;
+    val::Glist<val::GPair<double>> zero_pairs;
+    if (f.is_zero() || g.is_zero()) return zero_pairs;
+	if (f.numberofvariables() != 2 && g.numberofvariables() != 2) return  zero_pairs;
 
-    val::valfunction g;
     int i,j,oldordn=val::n_expo::getordtype(), oldordns=val::s_expo::getordtype();
     val::Glist<val::s_polynom<val::integer>> G;
     val::s_polynom<val::integer> h,h1;
-    val::matrix<int> OM_s=val::s_expo::getordmatrix(), OM_n=val::n_expo::getordmatrix();
+    const val::matrix<int> &OM_s=val::s_expo::getordmatrix(), &OM_n=val::n_expo::getordmatrix();
     val::vector<double> roots,rootsy;
     val::GPair<double> Paar;
 
@@ -244,7 +251,6 @@ val::Glist<val::GPair<double>> critical_points_pl_alg_curve(const val::valfuncti
     val::n_expo::setordtype(-1);
     val::s_expo::setordtype(-1);
     h=val::primitivpart(f.gets_polynom<val::rational>());
-    g=f.derive(2);
     h1=val::primitivpart(g.gets_polynom<val::rational>());
     //h.reord();
     //h1.reord();
@@ -252,14 +258,14 @@ val::Glist<val::GPair<double>> critical_points_pl_alg_curve(const val::valfuncti
     G.sinsert(std::move(h1));
     val::primitiv_groebner(G);
     // Check if is 0-dimensional!
-    if (G.length()!=2) return crit_points;
+    if (G.length()!=2) return zero_pairs;
     //
     val::realRoots(val::ToDoublePolynom(val::To_unipol(G[0],1)),rootsy,1e-9);
     for (i=0;i<rootsy.dimension();++i) {
         val::realRoots(eval_f(G[1],rootsy[i],1),roots,1e-9);
         for (j=0;j<roots.dimension();++j) {
             Paar.x=roots[j]; Paar.y=rootsy[i];
-            if (!isinList(crit_points,Paar,1e-4)) crit_points.sinsert(Paar);
+            if (!isinList(zero_pairs,Paar,1e-4)) zero_pairs.sinsert(Paar);
         }
     }
 
@@ -268,7 +274,7 @@ val::Glist<val::GPair<double>> critical_points_pl_alg_curve(const val::valfuncti
     val::n_expo::setordtype(oldordn);
     val::n_expo::setordmatrix(OM_n);
     val::s_expo::setordmatrix(OM_s);
-    return crit_points;
+    return zero_pairs;
 }
 
 val::d_array<double> critical_x_values(const val::Glist<val::GPair<double>>& crit_pair)
@@ -1045,7 +1051,8 @@ void computepoints(val::Glist<plotobject> &F,int points,const double &x1,const d
             }
             if (comppoints) { // || critpoints[i_c].isempty()) {
                 val::valfunction f(F[i].getinfixnotation());
-                F[i].critpoints = critical_points_pl_alg_curve(f);
+                // F[i].critpoints = critical_points_pl_alg_curve(f,f.derive(2));
+                F[i].critpoints = zeros_of_two_alg_curves(f,f.derive(2));
                 F[i].critx = critical_x_values(F[i].critpoints);
             }
         }
@@ -2259,15 +2266,15 @@ std::string plotobject::latex_doc_end = "\\end{document}";
 int plotobject::latex_element::create_latex_element(const wxColour &col, int f_size, const wxString &ltext)
 {
     color = col; fontsize = f_size; text = ltext;
-    std::string text = latex_doc_beg;
-    text += "{" + val::ToString(int(col.Red())) + "," + val::ToString(int(col.Green())) +  "," + val::ToString(int(col.Blue()))
+    std::string ftext = latex_doc_beg;
+    ftext += "{" + val::ToString(int(col.Red())) + "," + val::ToString(int(col.Green())) +  "," + val::ToString(int(col.Blue()))
         + "}\n\\color{mycolor}\n{\\fontsize{" + val::ToString(f_size) + "}{" + val::ToString(f_size)
         + "}\\selectfont\n" + std::string(ltext) + "}\n" + latex_doc_end;
 
     // Create tex-file:
     std::fstream file(tempfile_tex, std::ios::out | std::ios::trunc);
     if (!file) return 0;
-    file << text;
+    file << ftext;
     file.close();
     tempfilesused = 1;
     if (val::system(createdvifile)) {
@@ -2478,7 +2485,27 @@ plotobject::plotobject(const std::string &sf)
     }
     //
     if (objectype == FUNCTION) {
-        f = val::valfunction(s_f,0);
+		// std::cout << "\n s_f = " << s_f << std::endl;
+		// int isalgcurve = 0;
+		if (s_f.find("=") != std::string::npos) {
+			std::string sf1, sf2;
+			n = s_f.length();
+			for (i = 0; i < n; ++i) {
+				if (s_f[i] == '=') {
+					++i;
+					break;
+				}
+				sf1 += s_f[i];
+			}
+			for (; i < n; ++i) sf2 += s_f[i];
+			// std::cout << "\nsf1 = " << sf1 << " , sf2 = " << sf2 << std::endl;
+			f = val::valfunction(sf1) - val::valfunction(sf2);
+			// if (!f.is_zero()) isalgcurve = 1;
+		}
+		else {
+			f = val::valfunction(s_f,0);
+			if (f.numberofvariables() > 1) f = val::valfunction(f.get_infix());
+		}
         if (f.getinfixnotation() == "0" && s_f != "0") s_infix = "";
         else if (f.is_zero()) s_infix = "0";
         else s_infix = f.getinfixnotation();
@@ -2489,7 +2516,11 @@ plotobject::plotobject(const std::string &sf)
                 s_infix = "";
                 f = val::valfunction("");
             }
-            else objectype = ALGCURVE;
+            else {
+				objectype = ALGCURVE;
+				// s_infix += " = 0";
+				// std::cout << "\n s_infix = " << s_infix << std::endl;
+			}
         }
         return;
     }

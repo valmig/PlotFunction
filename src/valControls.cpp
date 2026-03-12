@@ -31,7 +31,7 @@ int isbetweenbrackets(int pos, wxString word)
 
     for (i = pos; i < n; ++i) {
         for (j = 0; j < rightbrackets.length(); ++j) {
-            if (char(word[i]) == rightbrackets[j]) {
+            if (wxChar(word[i]) == rightbrackets[j]) {
                 rbracket = j;
                 break;
             }
@@ -42,7 +42,7 @@ int isbetweenbrackets(int pos, wxString word)
 
 
     for (i = pos-1; i >= 0; --i) {
-        if (char(word[i]) == leftbrackets[rbracket]) return 1;
+        if (wxChar(word[i]) == leftbrackets[rbracket]) return 1;
     }
 
     return 0;
@@ -407,7 +407,7 @@ void IntervalSlider::setallvalues(int l_l, int l_r, int l, int r)
 
 IntervalSlider::~IntervalSlider()
 {
-    if (MouseCaptured) return;
+    //if (MouseCaptured) return;
 }
 
 
@@ -444,11 +444,10 @@ void IntervalSlider::Paint()
     DrawPanel->Update();
 }
 
-void IntervalSlider::render()
+void IntervalSlider::render(wxDC &dc1)
 {
     if (!ispainted) return;
     ispainted=0;
-    wxPaintDC dc1(DrawPanel);
 
 
     wxBitmap paper = wxBitmap(DrawPanel->GetSize());
@@ -577,6 +576,7 @@ void IntervalSlider::OnSpinCtrl(wxSpinEvent &event)
 
 void IntervalSlider::OnMouseCaptured(wxMouseEvent& event)
 {
+    DrawPanel->SetFocus();
     int mouse_x=event.GetX(); //mouse_y=event.GetY();
     leftmoved=rightmoved=0;
     if (mouse_x <= x1+10 && mouse_x >= x1-10) leftmoved=1;
@@ -629,7 +629,6 @@ void IntervalSlider::OnMouseMoved(wxMouseEvent& event)
 
 void IntervalSlider::OnLostMouse(wxMouseCaptureLostEvent &event)
 {
-
 }
 
 
@@ -640,7 +639,8 @@ void IntervalSlider::OnDrawPanelPaint(wxPaintEvent &event)
     //StatusBar1->SetStatusText(val::ToString(npainted));
 #ifndef _WIN32
     //wxPaintDC dummy(DrawPanel);
-    render();
+    wxPaintDC dc1(DrawPanel);
+    render(dc1);
 #endif // _WIN32
 }
 

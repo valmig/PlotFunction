@@ -116,7 +116,7 @@ private:
 
     void plotbar(wxDC &dc);
     void Paint();
-    void render();
+    void render(wxDC &dc);
     void OnDrawPanelPaint(wxPaintEvent& event);
     void OnDrawPanelResize(wxSizeEvent&);
     void OnSpinCtrl(wxSpinEvent &event);

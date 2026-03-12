@@ -10,7 +10,7 @@ int partialfraction(const val::valfunction& f, val::rational &cont, val::pol<val
                     val::d_array<val::pol<val::rational>> &denompol, val::d_array<int> &denumexpo, int comment = 0);
 
 
-void analize_rationalfunction(val::valfunction& f,const double& eps=1e-9,int decimal=4);
+// void analize_rationalfunction(val::valfunction& f,const double& eps=1e-9,int decimal=4);
 
 void analyzefunction(const plotobject &f,std::string input);
 
