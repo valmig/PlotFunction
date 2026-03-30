@@ -23,19 +23,19 @@ void compute_zeros_of_alg_curves(const val::valfunction &f, const val::valfuncti
 namespace val
 {
 
-std::istream& operator >>(std::istream& is,valfunction &f)
-{
-    std::string s;
-    is >> s;
-    f = valfunction(s);
-    return is;
-}
+// std::istream& operator >>(std::istream& is,valfunction &f)
+// {
+//     std::string s;
+//     is >> s;
+//     f = valfunction(s);
+//     return is;
+// }
 
-std::ostream& operator <<(std::ostream& os,const valfunction &f)
-{
-    os << f.getinfixnotation();
-    return os;
-}
+// std::ostream& operator <<(std::ostream& os,const valfunction &f)
+// {
+//     os << f.getinfixnotation();
+//     return os;
+// }
 
 
 int operator ==(const val::valfunction &f, const val::valfunction &g)
@@ -1853,6 +1853,68 @@ int trigolinzeros(const val::valfunction &f_var, const double &x1, const double 
     return 1;
 }
 
+void rootsofquadraticpol(const val::pol<val::valfunction> &F, val::Glist<double> &d_zeros, val::Glist<val::valfunction> &s_zeros,
+						 const double &parameter, const double &epsilon = 1e-9)
+{
+	using namespace val;
+	if (F.degree() != 2) return;
+	val::pol<val::valfunction> pF = F;
+
+	d_zeros.dellist(); s_zeros.dellist();
+	pF /= pF[2];
+	if (pF[0].is_zero()) {
+		valfunction z1, z2 = -pF[1];
+		double x1, x2;
+		z1.setparameter(parameter);
+		z2.setparameter(parameter);
+		x1 = z1(0);
+		x2 = z2(0);
+		if (abs(x1) < epsilon) x1 = 0;
+		if (abs(x2) < epsilon) x2 = 0;
+		s_zeros.push_back(z1);
+		d_zeros.push_back(x1);
+		if (z1 != z2) s_zeros.push_back(z2);
+		if (abs(x1 - x2) > epsilon) d_zeros.push_back(x2);
+		return;
+	}
+	valfunction phalf = -pF[1]/valfunction("2"), dis = phalf*phalf - pF[0], sqrt("sqrt(x)"), d, z1, z2;
+	double x1, x2, droot;
+	int valid = 1;
+
+	if (!sqrt_dis(dis, d)) {
+		if (has_parameter(dis.getinfixnotation())) {
+			dis.setparameter(parameter);
+			dis = val::valfunction(ToString(dis(0)));
+			if (sqrt_dis(dis, d)) {
+				droot = d(0);
+				if (val::isNaN(droot) || droot == val::Inf || droot == -val::Inf) return;
+				if (val::abs(d(0)) < epsilon) d_zeros.push_back(droot);
+				else {
+					d_zeros.push_back(d(0)); d_zeros.push_back(-droot);
+				}
+			}
+		}
+		return;
+	}
+	z1 = phalf - d;
+	z2 = phalf + d;
+	z1.setparameter(parameter); z2.setparameter(parameter);
+	droot = d(0);
+	x1 = z1(0); x2 = z2(0);
+	if (abs(x1) < epsilon) x1 = 0.0;
+	if (abs(x2) < epsilon) x2 = 0.0;
+	s_zeros.push_back(z1);
+	if (val::isNaN(x1) || x1 == val::Inf || x1 == -val::Inf) valid = 0;
+	if (valid) d_zeros.push_back(x1);
+	if (z1 != z2) {
+		s_zeros.push_back(z2);
+	}
+	valid = 1;
+	if (val::isNaN(x2) || x2 == val::Inf || x2 == -val::Inf) valid = 0;
+	if (abs(x1 - x2) > epsilon && valid) d_zeros.push_back(x2);
+	return;
+}
+
 } // end namespace hzeros
 
 
@@ -1891,54 +1953,7 @@ void computezeros(const val::valfunction &f,const double &x1,const double &x2,co
         return;
     }
 	else if (pF.degree() == 2) {
-        pF /= pF[2];
-        if (pF[0].is_zero()) {
-            valfunction z1, z2 = -pF[1];
-            double x1, x2;
-            z1.setparameter(f.getparameter()); z2.setparameter(f.getparameter());
-            x1 = z1(0); x2 = z2(0);
-            if(abs(x1) < epsilon) x1 = 0;
-            if(abs(x2) < epsilon) x2 = 0;
-            s_zeros.push_back(z1); d_zeros.push_back(x1);
-            if (z1 != z2) s_zeros.push_back(z2);
-            if (abs(x1 - x2) > epsilon) d_zeros.push_back(x2);
-            return;
-        }
-        valfunction phalf = -pF[1]/valfunction("2"), dis = phalf*phalf - pF[0], sqrt("sqrt(x)"), d, z1, z2;
-        double x1, x2, droot;
-		int valid = 1;
-
-		if (!hzeros::sqrt_dis(dis, d)) {
-			if (hzeros::has_parameter(dis.getinfixnotation())) {
-				dis.setparameter(f.getparameter());
-				dis = val::valfunction(ToString(dis(0)));
-				if (hzeros::sqrt_dis(dis, d)) {
-					droot = d(0);
-					if (val::isNaN(droot) || droot == val::Inf || droot == -val::Inf) return;
-					if (val::abs(d(0)) < epsilon) d_zeros.push_back(droot);
-					else {
-						d_zeros.push_back(d(0)); d_zeros.push_back(-droot);
-					}
-				}
-			}
-			return;
-		}
-        z1 = phalf - d;
-        z2 = phalf + d;
-        z1.setparameter(f.getparameter()); z2.setparameter(f.getparameter());
-		droot = d(0);
-        x1 = z1(0); x2 = z2(0);
-        if (abs(x1) < epsilon) x1 = 0.0;
-        if (abs(x2) < epsilon) x2 = 0.0;
-        s_zeros.push_back(z1);
-		if (val::isNaN(x1) || x1 == val::Inf || x1 == -val::Inf) valid = 0;
-        if (valid) d_zeros.push_back(x1);
-        if (z1 != z2) {
-            s_zeros.push_back(z2);
-        }
-		valid = 1;
-		if (val::isNaN(x2) || x2 == val::Inf || x2 == -val::Inf) valid = 0;
-        if (abs(x1 - x2) > epsilon && valid) d_zeros.push_back(x2);
+        hzeros::rootsofquadraticpol(pF, d_zeros, s_zeros, f.getparameter(), epsilon);
         return;
     }
 	else if (pF.length() == 2) {
@@ -1982,16 +1997,14 @@ void computezeros(const val::valfunction &f,const double &x1,const double &x2,co
 		monom++; d1 = monom.actualdegree();
 		monom++; d0 = monom.actualdegree();
 		if (deg%2 == 0 && d1 == deg/2 && d0 == 0) {
-			monom = pF.begin();
-			valfunction g = monom.actualcoef() * valfunction("x^2");
-			monom++; g += monom.actualcoef() * valfunction("x");
-			monom++; g += monom.actualcoef();
-			g.setparameter(f.getparameter());
-			// std::cout <<"\n g = " << g.getinfixnotation() << std::endl;
 
 			Glist<double> pd_zeros;
 			Glist<valfunction> ps_zeros;
-			computezeros(g, x1, x2, epsilon, decimals, iterations, pd_zeros, ps_zeros);
+			pol<valfunction> pG;
+
+			pG.insert(pF[deg], 2); pG.insert(pF[d1],1); pG.insert(pF[0],0);
+			std::cout << "\n pG = \n" << pG << std::endl;
+			hzeros::rootsofquadraticpol(pG, pd_zeros, ps_zeros, f.getparameter(), epsilon);
 			if (pd_zeros.isempty() && ps_zeros.isempty()) return;
 			
 			int deg_iseven = 1;

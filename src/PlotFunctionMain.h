@@ -152,19 +152,6 @@ class PlotFunctionFrame: public wxFrame
         void GetSizeSettings();
         void valFloodFill(wxMemoryDC& dc, int x, int y, const wxColour &fgc);
         void plotvertices(wxDC& dc);
-        /*
-        void plotfunction(wxDC& dc,const val::d_array<double> &f,int colour=0);
-        void plotline(wxDC& dc,const val::d_array<double> &f,int colour=0);
-        void plotcircle(wxDC& dc,const val::d_array<double> &f,int colour=0);
-        void plotrectangle(wxDC& dc,const val::d_array<double> &f,int colour=0);
-        void plottriangle(wxDC& dc,const val::d_array<double> &f,int colour=0);
-        void plotfill(wxMemoryDC& dc,const val::d_array<double> &f,int colour=0);
-        void plotpolygon(wxDC& dc,const val::d_array<double> &f,int colour=0);
-        void plotpoints(wxDC& dc,const val::d_array<double> &f,int colour=0);
-        void plottext(wxDC& dc,const val::d_array<double> &f,int colour=0);
-        void plotcurve(wxDC& dc,const val::d_array<val::d_array<double> > &c,const val::Glist<val::GPair<double>>& critpoints
-                       ,const val::d_array<double> &critx,int colour=0);
-        */
         void plotfunction(wxDC& dc,int colour);
         void plotline(wxDC& dc,int colour);
         void plotcircle(wxDC& dc,int colour);

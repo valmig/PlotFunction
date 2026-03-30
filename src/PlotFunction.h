@@ -160,6 +160,10 @@ val::Glist<char> substitutepar(std::string &s);
 
 void back_substitutepar(std::string &s, const val::Glist<char> &VarList, int nvariables);
 
+// replace #k with the object name of F[k-1]
+void replace_object_in_string(std::string &fs, const val::Glist<plotobject> &F);
+
+
 // Recursive function to translate the infix function name of a valfunction object into a latex-string.
 std::string valfunction_to_latex(const val::valfunction &f, int cdot = 0);
 
@@ -221,7 +225,7 @@ int NewtonIteration(const T& f, const T &f1, double &x, const double& eps = 1e-9
 namespace val
 {
 valfunction& operator *=(valfunction &f, const valfunction &g);
-std::ostream& operator <<(std::ostream& os,const valfunction &f);
+//std::ostream& operator <<(std::ostream& os,const valfunction &f);
 }
 
 void computezeros(const val::valfunction &f,const double &x1,const double &x2,const double &epsilon,int decimals,int iterations,

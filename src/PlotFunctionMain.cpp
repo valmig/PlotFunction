@@ -123,8 +123,6 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     MenuFile->Append(103,_("Save file\tCtrl-S"));
     MenuFile->Append(104,_("Save file as...\tCtrl-Shift-S"));
     MenuFile->Append(105, _("Export Graphic as...\tCtrl-E"));
-    //MenuSave = new wxMenuItem(MenuFile, ID_MENUITEM4, _("Export Graphic as...\tCtrl-E"), wxEmptyString, wxITEM_NORMAL);
-    //MenuFile->Append(MenuSave);
 #ifdef __APPLE__
     MenuFile->Append(106,_("Quit\tCtrl-Q"), _("Quit the application"));
 #else
@@ -537,7 +535,9 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     Accel.push_back(wxAcceleratorEntry(wxACCEL_CTRL,WXK_MENU,7201));
     Accel.push_back(wxAcceleratorEntry(wxACCEL_CTRL,(int) '0',7202));
     Accel.push_back(wxAcceleratorEntry(wxACCEL_NORMAL,WXK_F9,7011));
+    Accel.push_back(wxAcceleratorEntry(wxACCEL_SHIFT|wxACCEL_CTRL,(int) 'A',7011));
     Accel.push_back(wxAcceleratorEntry(wxACCEL_SHIFT|wxACCEL_CTRL,(int) 'x',6));
+    Accel.push_back(wxAcceleratorEntry(wxACCEL_SHIFT|wxACCEL_CTRL,(int) 'y',7));
     Accel.push_back(wxAcceleratorEntry(wxACCEL_ALT,(int) 'l',5021));
     //Accel.push_back(wxAcceleratorEntry(wxACCEL_SHIFT|wxACCEL_CTRL,WXK_DELETE,3004));
 
@@ -674,6 +674,10 @@ void PlotFunctionFrame::OnFileMenu(wxCommandEvent& event)
         Compute();
     }
     else if (id == 103 || id == 104) { // Save, Save as:
+		if (N > 200) {
+			wxMessageBox("Too many functions!");
+			return;
+		}
         if (id==104 || actual_filename=="") {
             wxFileDialog Dialog(this, _("Save File As"), wxEmptyString, wxEmptyString, filetype,wxFD_SAVE|wxFD_OVERWRITE_PROMPT,wxDefaultPosition, wxDefaultSize, _T("wxFileDialog"));
             Dialog.SetDirectory(savefiledir);
@@ -730,7 +734,7 @@ void PlotFunctionFrame::OnHelp(wxCommandEvent& event)
 			wxMessageBox("Cannot find " + keywordsfile);
 			return;
 		}
-		wxExecute(openpdfcommand + keywordsfile);
+		wxExecute(openpdfcommand + "\"" + keywordsfile + "\"");
 	}
 }
 
@@ -815,7 +819,7 @@ void PlotFunctionFrame::GetSizeSettings()
 
     if (plotobject::latexavailable) {
 		if (!val::FileExists(latexdefinitionsfile)) {
-			plotobject::latex_doc_defs ="\\newcommand{\\DS}{\\displaystyle}\n" 
+			plotobject::latex_doc_defs = "\\newcommand{\\DS}{\\displaystyle}\n" 
 										 "\\newcommand{\\BS}[1]{\\boldsymbol{#1}}\n"
                                          "\\newcommand{\\abs}[1]{\\left| #1 \\right|}\n"
 				                         "\\DeclareMathOperator{\\arsinh}{arsinh}\n"
@@ -843,7 +847,7 @@ void PlotFunctionFrame::ResetColours()
     Color[0] = defaultcolors[BLUE]; //wxColour(0,0,255);// blue
     Color[1] = defaultcolors[RED]; //wxColour(255,0,0); // red
     Color[2] = defaultcolors[GREEN]; //wxColour(0,255,0); // green
-    Color[3] = defaultcolors[LBLUE]; //wxColour(0,230,246); // light blue
+    Color[3] = defaultcolors[DBLUE];  // dark blue blue
     Color[4] = defaultcolors[ORANGE]; //wxColour(255,116,0); // orange
     Color[5] = defaultcolors[VIOLET];  //wxColour(238,0,255); // violet
     Color[6] = defaultcolors[GREY]; //wxColour(125,125,125);  // grey
@@ -948,6 +952,7 @@ void PlotFunctionFrame::GetSettings()
     svalues = getwordsfromstring(fstring,separators,0,ignore);
     for (auto& v : svalues) {
         s_changed = 0;
+		replace_object_in_string(v, F);
         cindex = getfunctionfromstring(v,f,s_changed);
         // if (f.f.numberofvariables()> 1) {
         //     val::valfunction g(f.getinfixnotation());
@@ -1308,13 +1313,15 @@ void PlotFunctionFrame::plotvertices(wxDC& dc)
 void PlotFunctionFrame::plotfunction(wxDC& dc,int colour)
 {
     const val::d_array<double> &f = F[colour].farray;
-    int ix0,ix1,iy0,iy1,index,ylimit=abst+sizey-1,aw=0,ew=sizex, ready = 0, i, k;
+    int ix0,ix1 = -1, iy0, iy1 = -1,index,ylimit=abst+sizey-1,aw=0,ew=sizex, ready = 0, i, k;
     double faktor_x,faktor_y,xr1=F[colour].x_range.x, xr2=F[colour].x_range.y, yvalue = 0, yold = val::Inf, dyzero(yzero);
 
+	if (f.length() < points) return;
 
     if (xr1 == xr2) {
         aw=0;
         ew=sizex;
+		xr1 = x1; xr2 = x2;
     }
     else {
         xr1=val::Max(x1,xr1);
@@ -1367,65 +1374,261 @@ void PlotFunctionFrame::plotfunction(wxDC& dc,int colour)
     if (active_function == colour) dc.SetPen(wxPen(Color[colour],pen[colour]+3));
     else dc.SetPen(wxPen(Color[colour],pen[colour]));
 
-    int j = 0, style = 0;
+    int j = 0, style = 0, awset = 0, ewset = 0;// iaw_x = 0 ,iaw_y = 0, iew_x = 0, iew_y = 0;
     bool draw = true;
+	double daw = 0.0, dew = 0.0, xl = xr1, xr = xr2;
+	val::Glist<val::GPair<double>> def_intervals; // defined intervalls.
 
-    if (F[colour].penstyle != wxPENSTYLE_SOLID) style = 1;
+	for (const auto &pair : F[colour].critpoints) {
+		if (xr <=  pair.y) {
+			xr = val::Min(pair.x, xr);
+			break;
+		}
+		if (xl < pair.x) {
+			def_intervals.push_back(val::GPair<double>(xl, pair.x));
+			xl = val::Max(pair.y, xl);
+			continue;
+		}
+		xl = val::Max(pair.y, xl);
+	}
+	if (xl < xr) def_intervals.push_back(val::GPair<double>(xl,xr));
 
-    i = aw;
-    do {
-        draw = true;
-        j = 0;
-        k = 0;
-        do { // search first point:
-            ++k;
-            yold = yvalue;
-            ix0 = i + abst;
-            index = int (val::round(double(i)*faktor_x,0));
-            if (index<0 || index >= points) return;
-            yvalue = f[index];
-            iy0 = int(val::round(dyzero - faktor_y*yvalue,0));//yzero-int(val::round(faktor_y * yvalue,0));
-            ++i;
-            if (i >= ew) return;
-        }
-        while (isInf(yvalue) || val::isNaN(yvalue) || (iy0 > ylimit) || (iy0 < abst));
 
-        if ((k > 1) && !isInf(yold) && !val::isNaN(yold)) {
-            --i; --ix0;
-            iy0 = int(val::round(dyzero - faktor_y*yold,0));//yzero - int(val::round(faktor_y * yold ,0));
-            if (iy0 > ylimit) iy0 = ylimit;
-            if (iy0 < abst) iy0 = abst;
-        }
+	for (const auto &pair : def_intervals) {
+		i = aw = int(val::round(double(sizex-1)*((pair.x-x1)/(x2-x1)),0));
+		ew = int(val::round(double(sizex-1)*((pair.y-x1)/(x2-x1)),0));
+		daw = pair.x;
+		dew = pair.y;
+		
+		awset = 1; ewset = 1;
+		ready = 0;
+		yvalue = val::Inf;
 
-        for (; i < ew; ++i, ix0 = ix1, iy0 = iy1, ++j) {
-            if (j == 5) {
-                draw = !draw;
-                j = 0;
-            }
-            ix1=abst+i;
-            index=int (val::round(double(i)*faktor_x,0));
-            if (index<0 || index >=points) return;
-            yvalue = f[index];
-            iy1= int(val::round(dyzero - faktor_y*yvalue,0)); //yzero -int(val::round(faktor_y* yvalue,0));
-            if (isInf(yvalue) || val::isNaN(yvalue)) { // || (iy1 > ylimit) || (iy1 < abst)) {
-                ++i;
-                break;
-            }
-            if (iy1 > ylimit || iy1 < abst) {
-                iy1 = val::Max(iy1,abst);
-                iy1 = val::Min(iy1,ylimit);
-                dc.DrawLine(ix0,iy0,ix1,iy1);
-                ++i;
-                break;
-            }
-            if (style) {
-                if (draw) dc.DrawLine(ix0,iy0,ix1,iy1);
-            }
-            else dc.DrawLine(ix0,iy0,ix1,iy1);
-        }
-        if (i >= ew) ready = 1;
-    }
-    while (!ready);
+		do {
+			draw = true;
+			j = 0;
+			k = 0;
+			do { // search first point:
+				++k;
+				yold = yvalue;
+				ix0 = i + abst;
+				index = int (val::round(double(i)*faktor_x,0));
+				if (index<0 || index >= points) return;
+				if (awset) {
+					yvalue = F[colour].f(daw + 1e-9);
+					// if (val::isNaN(yvalue) || isInf(yvalue)) {
+					// 	yvalue = F[colour].f(daw + 1e-9);
+					// }
+					awset = 0;
+				}
+				else yvalue = f[index];
+				iy0 = int(val::round(dyzero - faktor_y*yvalue,0));//yzero-int(val::round(faktor_y * yvalue,0));
+				if (yvalue < y1) iy0 = ylimit + 10;
+				if (yvalue > y2) iy0 = abst - 10;
+				++i;
+				if (i >= ew) break;
+			}
+			while (isInf(yvalue) || val::isNaN(yvalue) || (iy0 > ylimit) || (iy0 < abst));
+
+			if ((k > 1) && !isInf(yold) && !val::isNaN(yold) && i < ew) {
+				--i; --ix0;
+				iy0 = int(val::round(dyzero - faktor_y*yold,0));//yzero - int(val::round(faktor_y * yold ,0));
+				if (yold > y2) iy0 = abst - 10;
+				if (yold < y1) iy0 = ylimit + 10;
+				if (iy0 > ylimit) iy0 = ylimit;
+				if (iy0 < abst) iy0 = abst;
+			}
+
+			for (; i < ew; ++i, ix0 = ix1, iy0 = iy1, ++j) {
+				if (j == 5) {
+					draw = !draw;
+					j = 0;
+				}
+				ix1=abst+i;
+				index=int (val::round(double(i)*faktor_x,0));
+				if (index<0 || index >=points) return;
+				yvalue = f[index];
+				iy1= int(val::round(dyzero - faktor_y*yvalue,0)); //yzero -int(val::round(faktor_y* yvalue,0));
+				if (isInf(yvalue) || val::isNaN(yvalue)) { // || (iy1 > ylimit) || (iy1 < abst)) {
+					++i;
+					break;
+				}
+				if (yvalue > y2) iy1 = abst - 10;
+				if (yvalue < y1) iy1 = ylimit + 10;
+				if (iy1 > ylimit || iy1 < abst) {
+					iy1 = val::Max(iy1,abst);
+					iy1 = val::Min(iy1,ylimit);
+					dc.DrawLine(ix0,iy0,ix1,iy1);
+					++i;
+					break;
+				}
+				if (style) {
+					if (draw) dc.DrawLine(ix0,iy0,ix1,iy1);
+				}
+				else dc.DrawLine(ix0,iy0,ix1,iy1);
+			}
+			if (i >= ew) {
+				ready = 1;
+				if (ewset) {
+					ix0 = ew - 1;
+					index=int (val::round(double(ix0)*faktor_x,0));
+					if (index<0 || index >=points) {
+						std::cout << "\n index = " << index << std::endl;
+						return;
+					}
+					yvalue = f[index];
+					if (!isInf(yvalue) && !val::isNaN(yvalue)) {
+					 	iy0 = int(val::round(dyzero - faktor_y*yvalue,0));
+						if (yvalue < y1) iy0 = ylimit + 10;
+						if (yvalue > y2) iy0 = abst - 10;
+					 	//if (iy0 < abst) iy0 = abst;
+					 	//if (iy0 > ylimit) iy0 = ylimit;
+					 	ix0 += abst;
+					}
+					else break;
+					ix1 = ew + abst;
+					yvalue = F[colour].f(dew - 1e-9);
+					// if (val::isNaN(yvalue) || isInf(yvalue)) {
+					// 	yvalue = F[colour].f(dew - 1e-9);
+					// }
+					iy1 = int(val::round(dyzero - faktor_y*yvalue,0));
+
+
+					if (yvalue > y2) iy1 = abst - 10;
+					if (yvalue < y1) iy1 = ylimit + 10;
+					if (iy1 > ylimit && iy0 <= ylimit && iy0 >= abst) {
+						iy1 = ylimit; ix1 = ix0;
+					}
+					if (iy1 < abst && iy0 <= ylimit && iy0 >= abst) {
+						iy1 = abst; ix1 = ix0;
+					}
+					
+					if (iy1  <= ylimit && iy1 >= abst) {
+						// std::cout << "\n pair.y = " << pair.y << ", iy0 = " << iy0 << " iy1 = " << iy1 << " , yvalue = " << yvalue << std::endl;
+						if (style) {
+							if (draw) dc.DrawLine(ix0,iy0,ix1,iy1);
+						}
+						else dc.DrawLine(ix0,iy0,ix1,iy1);
+					} 
+				}
+			}
+		}
+		while (!ready);
+	}
+
+
+	// for (const auto& pair : F[colour].critpoints) {
+	// 	ix0 = int(val::round(double(sizex-1)*((pair.x-x1)/(x2-x1)),0)); 
+	// 	iy0 = int(val::round(double(sizex-1)*((pair.y-x1)/(x2-x1)),0));
+	// 	if (aw >= ix0 && aw <= iy0) {
+	// 		aw = iy0;
+	// 		if (!isInf(pair.y) && !val::isNaN(pair.y)) {
+	// 			awset = 1;
+	// 			daw = pair.y;
+	// 		}
+	// 	}
+	// 	if (xr2 >= pair.x && xr2 <= pair.y) {
+	// 		ew = ix0;
+	// 		ewset = 1;
+	// 		dew = pair.x;
+	// 	}
+	// }
+
+    // if (F[colour].penstyle != wxPENSTYLE_SOLID) style = 1;
+
+    // i = aw;
+    // do {
+    //     draw = true;
+    //     j = 0;
+    //     k = 0;
+    //     do { // search first point:
+    //         ++k;
+    //         yold = yvalue;
+    //         ix0 = i + abst;
+    //         index = int (val::round(double(i)*faktor_x,0));
+    //         if (index<0 || index >= points) return;
+	// 		if (awset) {
+	// 			yvalue = F[colour].f(daw);
+	// 			if (val::isNaN(yvalue) || isInf(yvalue)) {
+	// 				yvalue = F[colour].f(daw + 1e-9);
+	// 			}
+	// 			awset = 0;
+	// 		}
+	// 		else yvalue = f[index];
+    //         iy0 = int(val::round(dyzero - faktor_y*yvalue,0));//yzero-int(val::round(faktor_y * yvalue,0));
+    //         ++i;
+    //         if (i >= ew) break;
+    //     }
+    //     while (isInf(yvalue) || val::isNaN(yvalue) || (iy0 > ylimit) || (iy0 < abst));
+
+    //     if ((k > 1) && !isInf(yold) && !val::isNaN(yold) && i < ew) {
+    //         --i; --ix0;
+    //         iy0 = int(val::round(dyzero - faktor_y*yold,0));//yzero - int(val::round(faktor_y * yold ,0));
+    //         if (iy0 > ylimit) iy0 = ylimit;
+    //         if (iy0 < abst) iy0 = abst;
+    //     }
+
+    //     for (; i < ew; ++i, ix0 = ix1, iy0 = iy1, ++j) {
+    //         if (j == 5) {
+    //             draw = !draw;
+    //             j = 0;
+    //         }
+    //         ix1=abst+i;
+    //         index=int (val::round(double(i)*faktor_x,0));
+    //         if (index<0 || index >=points) return;
+    //         yvalue = f[index];
+    //         iy1= int(val::round(dyzero - faktor_y*yvalue,0)); //yzero -int(val::round(faktor_y* yvalue,0));
+    //         if (isInf(yvalue) || val::isNaN(yvalue)) { // || (iy1 > ylimit) || (iy1 < abst)) {
+    //             ++i;
+    //             break;
+    //         }
+    //         if (iy1 > ylimit || iy1 < abst) {
+    //             iy1 = val::Max(iy1,abst);
+    //             iy1 = val::Min(iy1,ylimit);
+    //             dc.DrawLine(ix0,iy0,ix1,iy1);
+    //             ++i;
+    //             break;
+    //         }
+    //         if (style) {
+    //             if (draw) dc.DrawLine(ix0,iy0,ix1,iy1);
+    //         }
+    //         else dc.DrawLine(ix0,iy0,ix1,iy1);
+    //     }
+    //     if (i >= ew) {
+	// 		ready = 1;
+	// 		if (ewset) {
+	// 			ix0 = ew - 1;
+	// 			index=int (val::round(double(ix0)*faktor_x,0));
+	// 			yvalue = f[index];
+	// 			if (!isInf(yvalue) && !val::isNaN(yvalue)) {
+	// 				iy0 = int(val::round(dyzero - faktor_y*yvalue,0));
+	// 				if (iy0 < abst) iy0 = abst;
+	// 				if (iy0 > ylimit) iy0 = ylimit;
+	// 				ix0 += abst;
+	// 			}
+	// 			else return;
+				
+	// 			ix1 = ew + abst;
+	// 			yvalue = F[colour].f(dew);
+	// 			if (val::isNaN(yvalue)) {
+	// 				yvalue = F[colour].f(dew - 1e-9);
+	// 			}
+	// 			if (yvalue == val::Inf) iy1 = abst;
+	// 			if (yvalue == -val::Inf) iy1 = ylimit;
+	// 			// if (!isInf(yvalue) && !val::isNaN(yvalue)) {
+	// 			// 	iy1 = int(val::round(dyzero - faktor_y*yvalue,0));
+	// 			// }
+	// 			else return;
+	// 			if (iy1  <= ylimit && iy1 >= abst) {
+	// 				if (style) {
+	// 					if (draw) dc.DrawLine(ix0,iy0,ix1,iy1);
+	// 				}
+	// 				else dc.DrawLine(ix0,iy0,ix1,iy1);
+	// 			} 
+	// 		}
+	// 	}
+    // }
+    // while (!ready);
 }
 
 
@@ -1890,6 +2093,8 @@ void PlotFunctionFrame::plotcurve(wxDC& dc,int colour)
     int ix,x,y,ylimit=abst+sizey,index,n_critx=cx.length(),i_cx,i_cx0,j,m,k,oldx=abst;
     double xval=x1,dx=(x2-x1)/double(points-1);
     val::d_array<int> oldy,critindex;
+
+	if (f.length() < points) return;
 
     if (active_function == colour) {
         dc.SetPen(wxPen(Color[colour],pen[colour]+3, F[colour].penstyle));
@@ -2649,15 +2854,19 @@ void PlotFunctionFrame::OnMenuParameter(wxCommandEvent &event)
 void PlotFunctionFrame::OnMenuTools(wxCommandEvent &event)
 {
     using namespace val;
-    int i,naktiv=0,j=0,id=event.GetId();
+    int i,naktiv=0,j=0,id=event.GetId(), clientheight = 0, clientwidth = 0;
+	wxPoint Point  = this->GetPosition(), clientPos = Point;
+	wxSize Size = this->GetSize();
 
     if (dpanelinsertmode) changedpanelinsertmode(insert_type::NORMAL_I);
 
     if (id==7006) {  //interpolation
         MultiLineDialog dialog(this,"","Enter Points:",240,80,"Interpolation",fontsize);
-#ifdef __APPLE__
-        dialog.Centre();
-#endif // __APPLE__
+// #ifdef __APPLE__
+//         dialog.Centre();
+// #endif // __APPLE__
+		clientPos.y = Point.y + Size.y - (20 + dialog.GetSize().y);
+		dialog.SetPosition(clientPos);
         if (dialog.ShowModal()==wxID_CANCEL) return;
         d_array<char> sep{' '};
         std::string s(dialog.GetSettingsText()), fw = getfirstwordofstring(s,sep);
@@ -2695,9 +2904,11 @@ void PlotFunctionFrame::OnMenuTools(wxCommandEvent &event)
         if (naktiv==0) return;
         if (naktiv>1) {
             val::MultiChoiceDialog dialog(this,"Available functions:","Rotate...",List);
-#ifdef __APPLE__
-            dialog.Centre();
-#endif // __APPLE__
+// #ifdef __APPLE__
+//             dialog.Centre();
+// #endif // __APPLE__
+			clientPos.y = Point.y + Size.y - (20 + dialog.GetSize().y);
+			dialog.SetPosition(clientPos);
             if (dialog.ShowModal()==wxID_OK) {
                 val::d_array<int> sel = dialog.GetSelections();
                 if (sel.isempty()) return;
@@ -2707,9 +2918,11 @@ void PlotFunctionFrame::OnMenuTools(wxCommandEvent &event)
         }
         else ind.push_back(j);
         MultiLineDialog dialog(this,"","Enter alpha; x0;y0",240,80,"Rotate...",fontsize);
-#ifdef __APPLE__
-        dialog.Centre();
-#endif // __APPLE__
+// #ifdef __APPLE__
+//         dialog.Centre();
+// #endif // __APPLE__
+		clientPos.y = Point.y + Size.y - (20 + dialog.GetSize().y);
+		dialog.SetPosition(clientPos);
         if (dialog.ShowModal()==wxID_CANCEL) return;
 
         val::d_array<plotobject*> H;
@@ -2737,9 +2950,11 @@ void PlotFunctionFrame::OnMenuTools(wxCommandEvent &event)
         if (naktiv==0) return;
         if (naktiv>1) {
             val::SingleChoiceDialog dialog(this,"Available functions:","Regression",List);
-#ifdef __APPLE__
-            dialog.Centre();
-#endif // __APPLE__
+// #ifdef __APPLE__
+//             dialog.Centre();
+// #endif // __APPLE__
+			clientPos.y = Point.y + Size.y - (20 + dialog.GetSize().y);
+			dialog.SetPosition(clientPos);
             if (dialog.ShowModal()==wxID_OK) {
                 j = indezes[dialog.GetSelection()];
             }
@@ -2753,11 +2968,11 @@ void PlotFunctionFrame::OnMenuTools(wxCommandEvent &event)
 
     for (i=0;i<f_menu.length();++i) {
         if (f_menu[i]->IsChecked() && (id == 7001 || id == 7007 || id == 7005 || id == 7012) && F[i].getmode() == plotobject::PARCURVE) {
-            j=i; ++naktiv; List.push_back(F[i].getinfixnotation());indezes.push_back(i);
+			++naktiv; List.push_back(F[i].getinfixnotation());indezes.push_back(i);
         }
         if (f_menu[i]->IsChecked() && (F[i].getmode()==plotobject::FUNCTION || F[i].getmode() == plotobject::ALGCURVE)) {
             if (id!=7001 && id!= 7007 && id != 7012 && F[i].f.numberofvariables()>1) continue;
-            j=i; ++naktiv; List.push_back(F[i].getinfixnotation());indezes.push_back(i);
+			++naktiv; List.push_back(F[i].getinfixnotation());indezes.push_back(i);
         }
         if (f_menu[i]->IsChecked() && id == 7011 && (F[i].getmode() == plotobject::POINTS || F[i].getmode() == plotobject::POLYGON || F[i].getmode() == plotobject::TRIANGLE )) {
             s = F[i].getinfixnotation();
@@ -2765,7 +2980,7 @@ void PlotFunctionFrame::OnMenuTools(wxCommandEvent &event)
                 s.resize(47);
                 s += "...";
             }
-            j=i; ++naktiv; List.push_back(s);indezes.push_back(i);
+			++naktiv; List.push_back(s);indezes.push_back(i);
         }
     }
 
@@ -2782,7 +2997,9 @@ void PlotFunctionFrame::OnMenuTools(wxCommandEvent &event)
 // #ifndef __LINUX__
         // ldialog.Centre();
         ldialog.SetSelection(0);
-        ldialog.Move(GetPosition().x+10, GetPosition().y+10);
+		clientPos.y = Point.y + Size.y - (20 + ldialog.GetSize().y);
+		ldialog.SetPosition(clientPos);
+        // ldialog.Move(GetPosition().x+10, GetPosition().y+10);
 // #endif // __LINUX___
         if (ldialog.ShowModal()==wxID_CANCEL) return;
         j=ldialog.GetSelection();
@@ -2800,8 +3017,10 @@ void PlotFunctionFrame::OnMenuTools(wxCommandEvent &event)
 
         Entry += "1e-9\n" + val::ToString(sizex) + "\n" + "4";
         ListDialog ldialog(this,List,"Intersection",Entry,240,100,fontsize,wxLB_MULTIPLE,2);
+		clientPos.y = Point.y + Size.y - (20 + ldialog.GetSize().y);
+		ldialog.SetPosition(clientPos);
         ldialog.SetSelections(val::d_array<int>({0,1}));
-        ldialog.Move(GetPosition().x+10, GetPosition().y+10);
+        // ldialog.Move(GetPosition().x+10, GetPosition().y+10);
         if (ldialog.ShowModal() == wxID_CANCEL) return;
         val::d_array<int> selections = ldialog.GetSelections();
         if (selections.length() != 2) return;
@@ -2826,16 +3045,18 @@ void PlotFunctionFrame::OnMenuTools(wxCommandEvent &event)
             default: break;
         }
         val::SingleChoiceDialog dialog(this,"Available functions:",title,List);
-#ifdef __APPLE__
-        dialog.Centre();
-#endif // __APPLE__
+// #ifdef __APPLE__
+//         dialog.Centre();
+// #endif // __APPLE__
+		clientPos.y = Point.y + Size.y - (20 + dialog.GetSize().y);
+		dialog.SetPosition(clientPos);
         if (dialog.ShowModal()==wxID_OK) {
             j = indezes[dialog.GetSelection()];
         }
         else return;
     }
 
-    if (id==7001 || id ==7007 || id == 7013) { // Tangente, Normale, Circulating circle
+    if (id==7001 || id ==7007 || id == 7013) { // Tangente, Normale, Osculating circle
         std::string type,input;
         if (id==7001) type = "tangent";
         else if (id == 7007){
@@ -2843,9 +3064,11 @@ void PlotFunctionFrame::OnMenuTools(wxCommandEvent &event)
         }
         else type = "osculating circle";
         MultiLineDialog tangentdialog(this,"","Entry x-value or point",240,-1,"Set Point for " + type,fontsize,1);
-#ifdef __APPLE__
-        tangentdialog.Centre();
-#endif // __APPLE__
+// #ifdef __APPLE__
+//         tangentdialog.Centre();
+// #endif // __APPLE__
+		clientPos.y = Point.y + Size.y - (20 + tangentdialog.GetSize().y);
+		tangentdialog.SetPosition(clientPos);
         if (tangentdialog.ShowModal()==wxID_CANCEL) return;
         input=tangentdialog.GetSettingsText();
         if (id == 7013) ExecuteCommand(OSCCIRCLE,j,input,id);
@@ -2857,21 +3080,23 @@ void PlotFunctionFrame::OnMenuTools(wxCommandEvent &event)
         return;
     }
     else if (id==7003) { // Table
-        if (nchildwindows) return;
+        // if (nchildwindows) return;
 
         MultiLineDialog tabledialog(this,wxString(xstring) + " ; 0.5" ,"Entry x1,x2,dx:",240,-1,"Set Values for Table",fontsize,1);
-#ifdef __APPLE__
-        tabledialog.Centre();
-#endif // __APPLE__
+// #ifdef __APPLE__
+//         tabledialog.Centre();
+// #endif // __APPLE__
+		clientPos.y = Point.y + Size.y - (20 + tabledialog.GetSize().y);
+		tabledialog.SetPosition(clientPos);
         if (tabledialog.ShowModal()==wxID_CANCEL) return;
         ExecuteCommand(TABLE,j,std::string(tabledialog.GetSettingsText()));
         return;
     }
     else if (id==7004 || id==7005 || id==7008)    { // Integral + Iteration:
         //if (id==7005 && isderived(F[j])) return;
+        clientwidth = 240; clientheight = 100;
 
         std::string title,param;
-        wxPoint Point  = this->GetPosition();
 
         if (id==7004) title ="Integral";
         else if (id==7005) {title = "Arc Length";}
@@ -2881,13 +3106,14 @@ void PlotFunctionFrame::OnMenuTools(wxCommandEvent &event)
 
         std::string text=val::ToString(dez) + "\n" + val::ToString(iter) + "\n" + val::ToString(delta) + "\n";
 
-        MultiLineDialog integraldialog(this,text,param,240,100,title,fontsize);
-#ifdef __APPLE__
+        MultiLineDialog integraldialog(this,text,param,clientwidth,clientheight,title,fontsize);
+		clientPos.y = Point.y + Size.y - (20 + integraldialog.GetSize().y);
+// #ifdef __APPLE__
+//         integraldialog.Centre();
+// #endif // __APPLE__
 
-        integraldialog.Centre();
-#endif // __APPLE__
-
-        integraldialog.SetPosition(wxPoint(Point.x,Point.y+10));
+        // integraldialog.SetPosition(wxPoint(Point.x,Point.y+10));
+        integraldialog.SetPosition(clientPos);
 
         if (integraldialog.ShowModal()==wxID_CANCEL) return;
         wxString value = integraldialog.GetSettingsText();
@@ -3142,7 +3368,6 @@ void PlotFunctionFrame::OnInputDialog(wxCommandEvent&)
 
 void PlotFunctionFrame::ChangeSettings(int command, const std::string &svalue, int id)
 {
-    //WriteText();
     switch (command)
     {
     case val_settings::PANEL_SIZE:
@@ -3234,21 +3459,12 @@ void PlotFunctionFrame::ChangeSettings(int command, const std::string &svalue, i
         {
             val::d_array<char> separators{':'};
             val::Glist<std::string> s_values=getwordsfromstring(svalue,separators,1), d_values;
-            // val::Glist<double> values;
             double d1 = 0 , d2 = 0;
 
             separators[0] = ';';
             separators.push_back(' ');
             if (!s_values.isempty())  {
-                // values = getdoublevaluesfromstring(s_values[0],separators,0);
 				d_values = getwordsfromstring(s_values[0],separators);
-                // if (values.length() >= 2) {
-                //     d1 = values[0]; d2 = values[1];
-                // }
-                // else if (values.length() >= 1) {
-                //     d2 = val::abs(values[0]);
-                //     d1 = -d2;
-                // }
                 if (d_values.length() >= 2) {
                     d1 = val::valfunction(d_values[0])(0); d2 = val::valfunction(d_values[1])(0);
                 }
@@ -3292,15 +3508,7 @@ void PlotFunctionFrame::ChangeSettings(int command, const std::string &svalue, i
                     Compute();
                     return;
                 }
-                // values = getdoublevaluesfromstring(s_values[1],separators,0);
 				d_values = getwordsfromstring(s_values[0],separators);
-                // if (values.length() >= 2) {
-                //     d1 = values[0]; d2 = values[1];
-                // }
-                // else if (values.length() >= 1) {
-                //     d2 = val::abs(values[0]);
-                //     d1 = -d2;
-                // }
                 if (d_values.length() >= 2) {
                     d1 = val::valfunction(d_values[0])(0); d2 = val::valfunction(d_values[1])(0);
                 }
@@ -3325,7 +3533,6 @@ void PlotFunctionFrame::ChangeSettings(int command, const std::string &svalue, i
     case val_settings::AXIS_SCALE:
         {
             int n;
-
             val::d_array<char> separators{' ', ';', '\n'};
             val::Glist<std::string> words = getwordsfromstring(svalue,separators);
 
@@ -3721,7 +3928,7 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
     case val_commands::TABLE:
         {
             if (f_nr < 0 || f_nr >= N) return;
-            if (nchildwindows) return;
+            // if (nchildwindows) return;
 
             val::rational x_1(x1),x_2(x2),d_x(0.5);
             int rat=0;
@@ -4064,6 +4271,7 @@ void PlotFunctionFrame::OnMyEvent(MyThreadEvent& event)
         else {
             title = "Intersection Points";
             dtype = anadialog_type::intersection_type;
+			sy = 200;
         }
 
         x+=dx;
@@ -4086,20 +4294,32 @@ void PlotFunctionFrame::OnMyEvent(MyThreadEvent& event)
 		}
         else if (id == IdPointStat) title = "Points Statistic";
         else title = "Calculate";
-        y=y+dy-height;
+        // y=y+dy-height;
+        // Point.x = x; Point.y = y;
+        x += dx;
+		sx = 300;
+        if (x+ sx + 23 >maxx) {
+            x-=maxx-(x+sx+23);
+        }
         Point.x = x; Point.y = y;
-        Size.SetWidth(300);
+        Size.SetWidth(sx);
         Size.SetHeight(height);
         if (id == IdPointStat) Size.SetWidth(400);
         InfoWindow *tablewindow = new InfoWindow(this,nchildwindows,tablestring,Point,Size,title,fontsize,1,InfoStyle);
         tablewindow->Show();
     }
     else { // zero-iteration:
-        y+=dy-200;
+        // y+=dy-200;
+        // Point.x = x; Point.y = y;
+        x += dx;
+		sx = 300;
+        if (x+ sx + 23 >maxx) {
+            x-=maxx-(x+sx+23);
+        }
         Point.x = x; Point.y = y;
-        Size.SetWidth(300);
-        Size.SetHeight(205);
-        InfoWindow *tablewindow = new InfoWindow(this,nchildwindows,tablestring,wxDefaultPosition,Size,"zero iteration",fontsize,1,InfoStyle);
+        Size.SetWidth(sx);
+        Size.SetHeight(360);
+        InfoWindow *tablewindow = new InfoWindow(this,nchildwindows,tablestring,Point,Size,"zero iteration",fontsize,1,InfoStyle);
         tablewindow->Show();
     }
 }
@@ -4981,7 +5201,6 @@ void PlotFunctionFrame::displacefunction(int i,const std::string &dx1,const std:
                     // F[i] = plotobject(f.getinfixnotation());
                     F[i] = plotobject(nf);
                 }
-
             }
             break;
         case plotobject::TEXT :
@@ -5781,8 +6000,8 @@ void PlotFunctionFrame::OnSideBarCheck(wxCommandEvent &event)
 void PlotFunctionFrame::CreateNoteBook()
 {
     wxPanel *panel1 = new wxPanel(notebook,8001,wxDefaultPosition,wxSize(widthNoteBookPanel,100)),
-        *panel2 = new wxPanel(notebook,8002,wxDefaultPosition,wxSize(widthNoteBookPanel,100)),
-        *panel3 = new wxPanel(notebook,8003,wxDefaultPosition,wxSize(widthNoteBookPanel,100));
+            *panel2 = new wxPanel(notebook,8002,wxDefaultPosition,wxSize(widthNoteBookPanel,100)),
+            *panel3 = new wxPanel(notebook,8003,wxDefaultPosition,wxSize(widthNoteBookPanel,100));
     int i, n_view = 5,viewf_size = 12, viewdy = viewf_size + 30, y, rows = 4, columns = 3, b_xsize = 50;
 
 

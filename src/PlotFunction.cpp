@@ -409,6 +409,48 @@ void back_substitutepar(std::string &s, const val::Glist<char> &VarList, int nva
 }
 
 
+void replace_object_in_string(std::string &fs, const val::Glist<plotobject> &F)
+{
+	int pluspos = 1, pos = 0, withlatex = 0, k;
+	std::string prefix = "#", snumber, sfrom, sto;
+	val::d_array<char> separators{' ', '{', '\n'};
+
+	if (val::getfirstwordofstring(fs, separators) == "text")  {
+		pluspos = 2;
+		prefix = "\\#";
+		if (fs.find("\\l") !=  fs.npos) withlatex = 1;
+	}
+	
+	
+
+	while ( unsigned(pos = fs.find(prefix, pos)) != fs.npos) {
+		if (pos < 0 || unsigned(pos) >= fs.length()) return;
+		pos += pluspos;
+		snumber = val::findnumber(fs, pos);
+		k = val::FromString<int>(snumber) - 1;
+		if (k < 0 || k >= F.length()) continue;
+
+		// std::cout << "\n withlatex = " << withlatex << ", k = " << k << std::endl;
+
+		sfrom = prefix + snumber;
+
+		if (withlatex) {
+			if (F[k].IsFunction() || F[k].IsAlgCurve()) sto = valfunction_to_latex(F[k].f);
+			else if (F[k].IsParcurve()) {
+				sto = "\\begin{pmatrix} " + valfunction_to_latex(F[k].f) + "\\\\" + valfunction_to_latex(F[k].g) + "\\end{pmatrix}";
+			}
+			else sto = F[k].getinfixnotation();
+		}
+		else sto = F[k].getinfixnotation();
+
+		// std::cout << "\n sto = " << sto << std::endl;
+
+		val::replace(fs, sfrom, sto);
+	}
+}
+
+
+
 // Recursive function to translate the infix function name of a valfunction object into a latex-string.
 std::string valfunction_to_latex(const val::valfunction &f, int cdot)
 {
@@ -728,7 +770,8 @@ int getfunctionfromstring(std::string &fstring, plotobject &f, int &style_change
     std::string ns="";
     int i, colorindex = -1, style = 0;
     //int i, n, colorindex = -1;
-    f = plotobject(fstring);
+
+	f = plotobject(fstring);
 
     ns = extractstringfrombrackets(fstring, '{', '}');  // so it is allow to have < , > in textdata.
     ns = extractstringfrombrackets(fstring,'<','>');
@@ -992,6 +1035,8 @@ void computepoints(val::Glist<plotobject> &F,int points,const double &x1,const d
         return;
     }
 
+    std::lock_guard<std::mutex> lock(compute_mutex);
+	
     int m=F.length(),i,j;// nrf = 0, i_rf = 0;
     val::pol<double> p;
     val::vector<double> zeros;
@@ -1002,7 +1047,6 @@ void computepoints(val::Glist<plotobject> &F,int points,const double &x1,const d
         ymin=val::Inf;
     }
 
-    //wxMessageBox("Fine!");
     for (i=0;i<m;++i) {
         if ((activef != -1) && (activef != i)) continue;
         if (F[i].getmode() == plotobject::PARCURVE && activef == -1) {
@@ -1016,11 +1060,8 @@ void computepoints(val::Glist<plotobject> &F,int points,const double &x1,const d
                 y = F[i].farray[j+1] = F[i].g(x);
                 ymax=val::Max(ymax,y);
                 ymin=val::Min(ymin,y);
-                //std::cout << fx << " " << y << " " << std::endl;
             }
-            //std::cout << dx << std::endl;
         }
-        //if (F[i].getmode() != plotobject::FUNCTION) continue;
         if (F[i].getmode() == plotobject::FUNCTION) {
             F[i].farray.reserve(points);
             for (x=x1,j=0;j<points;++j,x+=delta) {
@@ -1029,37 +1070,32 @@ void computepoints(val::Glist<plotobject> &F,int points,const double &x1,const d
                 ymax=val::Max(ymax,y);
                 ymin=val::Min(ymin,y);
             }
+			if (comppoints) {
+				F[i].critpoints = F[i].f.get_undefined_intervals(x1, x2, points);
+			}
         }
         else if (F[i].getmode() == plotobject::ALGCURVE) { //algebraische Kurve.
-                //std::ofstream file("/home/miguel/test/log",std::ios::out | std::ios::trunc);
             F[i].curvearray.del();
             F[i].curvearray.reserve(points);
             for (x=x1,j=0;j<points;++j,x+=delta) {
                 p=F[i].f.getunivarpol(x,"x2");
-                //p = F[i].getpol(x);
                 val::realRoots(p,zeros,1e-9);
                 zeros.sort();
                 F[i].curvearray[j].reserve(zeros.dimension());
-                    //file<<x<<":       ";
                 for (int k=0;k<zeros.dimension();++k) {
-                        //file<<zeros[k]<<" , ";
                     F[i].curvearray[j][k] = y = zeros[k];
                     ymax=val::Max(ymax,y);
                     ymin=val::Min(ymin,y);
                 }
-                    //file<<std::endl;
             }
             if (comppoints) { // || critpoints[i_c].isempty()) {
                 val::valfunction f(F[i].getinfixnotation());
-                // F[i].critpoints = critical_points_pl_alg_curve(f,f.derive(2));
                 F[i].critpoints = zeros_of_two_alg_curves(f,f.derive(2));
                 F[i].critx = critical_x_values(F[i].critpoints);
             }
         }
     }
-
-    //wxMessageBox("Fine!");
-
+	
     if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event.Clone() );
 }
 
@@ -1209,8 +1245,6 @@ void computeevaluation(const plotobject& f, double par)
     std::string ow;
     val::Glist<char> VarList;
 
-    //F.setparameter(par);
-
     tablestring = "f(x) = " + f.getinfixnotation() + "\n";
 
     for (auto & w : wlist) {
@@ -1250,7 +1284,6 @@ void calculate(std::string s)
 {
     val::replace<char>(s, "ans", ansexpr);
     std::string   os = s;//, rw, rs;
-    //int i, n = WordList.length(), found = 0, j = 1; //nvar = 0;
     val::Glist<char> VarList;
 
     VarList = substitutepar(s);
@@ -2268,8 +2301,8 @@ int plotobject::latex_element::create_latex_element(const wxColour &col, int f_s
     color = col; fontsize = f_size; text = ltext;
     std::string ftext = latex_doc_beg;
     ftext += "{" + val::ToString(int(col.Red())) + "," + val::ToString(int(col.Green())) +  "," + val::ToString(int(col.Blue()))
-        + "}\n\\color{mycolor}\n{\\fontsize{" + val::ToString(f_size) + "}{" + val::ToString(f_size)
-        + "}\\selectfont\n" + std::string(ltext) + "}\n" + latex_doc_end;
+              + "}\n\\color{mycolor}\n{\\fontsize{" + val::ToString(f_size) + "}{" + val::ToString(f_size)
+              + "}\\selectfont\n" + std::string(ltext) + "}\n" + latex_doc_end;
 
     // Create tex-file:
     std::fstream file(tempfile_tex, std::ios::out | std::ios::trunc);
@@ -2277,13 +2310,20 @@ int plotobject::latex_element::create_latex_element(const wxColour &col, int f_s
     file << ftext;
     file.close();
     tempfilesused = 1;
+
     if (val::system(createdvifile)) {
-        wxMessageBox("Cannot create dvi file!");
+		MyThreadEvent event(MY_EVENT,IdInfo);
+		event.SetMessage("Cannot create dvi file!");
+        if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event.Clone() );
+		
+        // wxMessageBox("Cannot create dvi file!");
         //std::cout << "\nCannot create dvi file!" << std::endl;
         return 0;
     }
     if (val::system(createpngfile)) {
-        wxMessageBox("Cannot create png file!");
+		MyThreadEvent event(MY_EVENT,IdInfo);
+		event.SetMessage("Cannot create dvi file!");
+        if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event.Clone() );
         return 0;
     }
 
@@ -2294,27 +2334,24 @@ int plotobject::latex_element::create_latex_element(const wxColour &col, int f_s
 
 int plotobject::checkiflatexisavailable()
 {
-    latexavailable = 1;
-    if (val::system("which latex") || val::system("which dvipng")) latexavailable = 0;
-    if (latexavailable) {
-        if (val::DirExists("/dev/shm")) plotobject::tempdir = "/dev/shm";
-        else plotobject::tempdir = settingsdir;
-        tempfile_tex = tempdir + filesep + tempfile + ".tex";
-        tempfile_png = tempdir + filesep + tempfile + ".png";
-        std::string tfiledvi = tempdir + filesep + tempfile + ".dvi";
-        std::string tfileout = tempdir + filesep + tempfile + ".png";
-        createdvifile = "latex -halt-on-error -output-directory=" + tempdir + " " + tempfile_tex;
-        // std::cout << "\ncreatetexfile-command = " << plotobject::createdvifile;
-        createpngfile = "dvipng -bg 'Transparent' " + tfiledvi + " -o " + tfileout;
-        // std::cout << "\ncreatepngfile-command = " << plotobject::createpngfile;
-        removetempfiles = "rm " + tempdir + filesep + tempfile + "*";
-        // std::cout << "\nremovetempfiles-command = " <<
-        // plotobject::removetempfiles;
-    }
-    return latexavailable;
+	latexavailable = 0;
+    if (val::system("which latex") || val::system("which dvipng")) return 0;
+	if (val::DirExists("/dev/shm")) plotobject::tempdir = "/dev/shm";
+	else plotobject::tempdir = settingsdir;
+	tempfile_tex = tempdir + filesep + tempfile + ".tex";
+	tempfile_png = tempdir + filesep + tempfile + ".png";
+	std::string tfiledvi = tempdir + filesep + tempfile + ".dvi";
+	std::string tfileout = tempdir + filesep + tempfile + ".png";
+	createdvifile = "latex -halt-on-error -output-directory=" + tempdir + " " + tempfile_tex;
+	// std::cout << "\ncreatetexfile-command = " << plotobject::createdvifile;
+	createpngfile = "dvipng -bg 'Transparent' " + tfiledvi + " -o " + tfileout;
+	// std::cout << "\ncreatepngfile-command = " << plotobject::createpngfile;
+	removetempfiles = "rm " + tempdir + filesep + tempfile + "*";
+	// std::cout << "\nremovetempfiles-command = " <<
+	latexavailable = 1;
+	return 1;
 }
 
-//replace std::tring with wxString
 void plotobject::setdrawingwords(const wxString &s)
 {
     TextWords.dellist();
@@ -2376,14 +2413,7 @@ int plotobject::has_latex_script()
 {
     if (!latexavailable) return 0;
     int i, n = textdata.length();
-    // for (int i = 0; i < n; ++i) {
-    //     if (textdata[i] == '$') {
-    //         if (i == 0) return 1;
-    //         if (textdata[i-1] != '\\') return 1;
-    //     }
-    // }
-    // wxString w1 = "\\begin{equation*}", w2 = "\\begin{alignat*}";
-    // if (textdata.find(w1) || textdata.find(w2)) return 1;
+
     for (i = 0; i < n; ++i) {
         if (textdata[i] != ' ' && textdata[i] != '\n') break;
     }
@@ -2402,7 +2432,6 @@ plotobject::plotobject(const std::string &sf)
     val::rational factor;
 
     islinear = 0;
-
 
     textdata = extractstringfrombrackets(s_f, '{', '}');
     ns = extractstringfrombrackets(s_f, '<', '>');              // get rid of colour defenition.
@@ -2548,16 +2577,6 @@ plotobject::plotobject(const std::string &sf)
                 s_infix = "";
                 return;
             }
-            /*
-            if (n%2 == 0) m = n+1;
-            farray = val::d_array<double>(0.0,m);
-            for (int i = 0; i < n; ++i) {
-                farray[i] = val::FromString<double>(values[i]);
-                if (i < m-1) s_infix += " " + values[i];
-            }
-            farray[m-1] = val::Max(0.0, farray[m-1]);
-            farray[m-1] = val::Min(1.0, farray[m-1]);
-            */
             for (int i = 0; i < n-1; i += 2) {
                 critpoints.sinsert(val::GPair<double>(val::FromString<double>(values[i]),double(val::FromString<val::rational>(values[i+1]))));
             }
@@ -2622,7 +2641,6 @@ void plotobject::assign_latexbimap(int fontsize, const wxColour &col)
     if (!text_has_latex) return;
     int found = 0, n = 0;
     for (auto &v : plotobject::latexbitmap_list) {
-        //if (!F[i].IsText()) continue;
         if (v.color !=col) continue;
         if (v.fontsize != fontsize) continue;
         if (v.text != textdata) continue;
@@ -2638,7 +2656,6 @@ void plotobject::assign_latexbimap(int fontsize, const wxColour &col)
             return;
         }
         latexbitmap_list.push_back(std::move(lelem));
-        //plotobject::latexbitmap_list.push_back(plotobject::latex_element(col, fontsize, textdata));
         n = plotobject::latexbitmap_list.length();
         latexbitmap = &(plotobject::latexbitmap_list[n-1].bitmap);
     }
@@ -2674,7 +2691,6 @@ int plotobject::iswithparameter() const
     if (objectype != FUNCTION) return 0;
     int n = s_infix.length(), is = 0;
     for (int i = 0; i < n-1; ++i) {
-        //if (s[i] == 'P' && s[i+1] == 'I') is = 1;
         if (s_infix[i] == 'r' && s_infix[i+1] == 't') {  //  case sqrt
             ++i;
             continue;
@@ -2688,11 +2704,6 @@ int plotobject::iswithparameter() const
 
 val::pol<double> plotobject::getpol(const double& x) const
 {
-    /*
-    val::vector<val::valfunction> arg({val::valfunction(val::ToString(x)), val::valfunction("x")});
-    val::valfunction g;
-    g = f(arg);
-    */
     std::string sf = s_infix, value = "(" + val::ToString(x) + ")", svarx = "x", svary = "y";
     val::replace(sf, svarx, value);
     val::replace(sf, svary, svarx);
