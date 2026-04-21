@@ -1606,6 +1606,7 @@ void computeintegral(const plotobject& f,std::string x1,std::string x2,double de
     val::valfunction g, symbolic;
     std::string name="";
 
+
     if (arclength) {
         if (f.getmode() == plotobject::PARCURVE) {
             if (!f.f.isdifferentiable() || !f.g.isdifferentiable()) return;
@@ -1666,7 +1667,7 @@ void computeintegral(const plotobject& f,std::string x1,std::string x2,double de
     wprec = val::Min(wprec,val::MaxPrec);
     eprec = val::Min(eprec,val::MaxPrec);
 
-    tablestring = name + f.getinfixnotation() + " ; " + ToString(x1) + " ; " + ToString(x2) + " ) =\n";
+    tablestring = name + f.getinfixnotation() + " ; " + x1 + " ; " + x2 + " ) =\n";
     //if (ispol) tablestring+= ToString(r_wert) + "\n\ndouble:   ";
     if (exact) {
         tablestring += "Symbolic over stammfunction:\n\t" + symbolic.getinfixnotation() + "\nDouble over stammfunction:\n\t";

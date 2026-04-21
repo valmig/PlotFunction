@@ -107,7 +107,7 @@ const val::d_array<wxString> defaultcolornames{"blue", "red", "green", "lblue", 
 const val::d_array<wxString> SettingsList({"axis-scale", "axis-color", "grid-scale", "grid-color", "values-number", "axis-range", "show-x-axis",
                                 "show-y-axis", "show-grid" , "show-x-scale", "show-y-scale" , "reset-colors", "font-size", "function-color", "panel-size", "axis-names", "regression-degree",
                                 "point-decimals", "show-function", "background-color", "parameter-values", "function-size", "margin",
-                                "axis-fontsize", "function-settings", "move-increment", "select"});
+                                "axis-fontsize", "function-settings", "move-increment", "select", "point-size"});
 
 const val::d_array<wxString> SettingsParList({"axis-scale sx [sy]   <Shift-Alt-S>",
                                               "axis-color def. color / Red Green Blue   <Shift-Ctrl-A>",
@@ -135,7 +135,8 @@ const val::d_array<wxString> SettingsParList({"axis-scale sx [sy]   <Shift-Alt-S
                                               "axis-fontsize unsigned int    <Shift-Ctrl-F>",
                                               "function-settings [#nr=1]",
                                               "move-increment dx [dy=dx] (p for pixels)    <Ctrl-M>",
-                                              "select [#nr=1]"
+                                              "select [#nr=1]",
+											  "point size (in pixels)"
                                              });
 
 const val::d_array<wxString> CommandsList({"derive", "analyze", "tangent", "normal", "interpolation", "regression", "table", "integral",
@@ -455,24 +456,28 @@ void replace_object_in_string(std::string &fs, const val::Glist<plotobject> &F)
 std::string valfunction_to_latex(const val::valfunction &f, int cdot)
 {
     std::string ls, op = f.getfirstoperator();
-    const val::d_array<std::string> Uni_op_func{"log", "sqrt", "sin", "cos", "tan", "arcsin", "arccos", "arctan", "sinh", "cosh",
+    const val::d_array<std::string> Uni_op_func{"log", "sin", "cos", "tan", "arcsin", "arccos", "arctan", "sinh", "cosh",
                                                 "tanh", "arsinh", "arcosh", "artanh"};
     val::valfunction g = f.getfirstargument();
 
-    if (val::isinContainer(op, Uni_op_func)) {
+	
+	if (val::isinContainer(op, Uni_op_func)) {
         if (op == "log") op = "ln";
         ls = "\\" + op + "\\left( " + valfunction_to_latex(g, cdot) + " \\right)";
     }
-    else if (op == "exp") {
+	else if (op == "sqrt") {
+        ls = "\\sqrt{ " + valfunction_to_latex(g, cdot) + " }";
+    }
+	else if (op == "exp") {
         ls = "e^{ " + valfunction_to_latex(g, cdot) + " }";
     }
-    else if (op == "abs") {
+	else if (op == "abs") {
         ls = "\\left| " + valfunction_to_latex(g, cdot) + " \\right|";
     }
-    else if (op == "m") {
+	else if (op == "m") {
         ls = "-" + valfunction_to_latex(g, cdot);
     }
-    else if (op == "*" || op == "^")  {
+	else if (op == "*" || op == "^")  {
         if (op == "*") {
             if (cdot) op = " \\cdot ";
             else op = " ";
@@ -492,15 +497,15 @@ std::string valfunction_to_latex(const val::valfunction &f, int cdot)
         if (op == "^") ls += "{" + valfunction_to_latex(h, cdot) + "}";
         else ls += lpar + valfunction_to_latex(h, cdot) + rpar;
     }
-    else if (op == "/") {
+	else if (op == "/") {
         val::valfunction h = f.getsecondargument();
         ls = "\\frac{ " + valfunction_to_latex(g, cdot) + " }{ " + valfunction_to_latex(h, cdot) + " }";
     }
-    else if (op == "+" || op == "-") {
+	else if (op == "+" || op == "-") {
         val::valfunction h = f.getsecondargument();
         ls = valfunction_to_latex(g, cdot) + op + valfunction_to_latex(h, cdot);
     }
-    else {
+	else {
         std::string x = "x", var, subst;
         int i, n = f.numberofvariables();
         ls = f.getinfixnotation();
@@ -710,6 +715,30 @@ void gettangentvalues(const plotobject &f,const double &x,double &m,double &b,in
     b=derive(f,x) -m*x;
     return;
 }
+
+
+val::Glist<std::string> getfunctionstrings(const std::string &sf)
+{
+    val::Glist<std::string> values;
+    std::string s="";
+    int n = sf.length(), nbrackets = 0;
+
+    for (int i = 0; i < n ; ++i) {
+		if (sf[i] == '\n') continue;
+		if (sf[i] == ';' && !nbrackets) {
+            if (s != "") values.push_back(s);
+            s = "";
+        }
+		else s += sf[i];
+		if (sf[i] == '{') ++nbrackets;
+		if (sf[i] == '}') --nbrackets;
+    }
+
+    if (s != "") values.push_back(s);
+
+    return values;
+}
+
 
 
 std::string extractstringfrombrackets(std::string &sf,const char lb, const char rb)
@@ -2292,6 +2321,8 @@ std::string plotobject::latex_doc_defs = "\\newcommand{\\DS}{\\displaystyle} \n"
 std::string plotobject::latex_doc_beg = "\\documentclass[preview]{standalone} \n"
                                         "\\usepackage{xcolor} \n"
                                         "\\usepackage [fleqn]{amsmath} \n"
+	                                    "\\usepackage{amssymb} \n"
+	                                    "\\usepackage{dsfont} \n"
                                         "\\usepackage{anyfontsize} \n";
 std::string plotobject::latex_doc_end = "\\end{document}";
 

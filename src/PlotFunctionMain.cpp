@@ -46,7 +46,7 @@
 const long PlotFunctionFrame::ID_PANEL1 = 30001;//wxNewId();
 //const long PlotFunctionFrame::idMenuQuit = 30002;//wxNewId();
 //const long PlotFunctionFrame::ID_MENUITEM4 = 30003;//wxNewId();
-const long PlotFunctionFrame::ID_MENUITEM1 = 30004;//wxNewId();
+// const long PlotFunctionFrame::ID_MENUITEM1 = 30004;//wxNewId();
 const long PlotFunctionFrame::ID_MENUITEM2 = 30005;//wxNewId();
 const long PlotFunctionFrame::ID_MENUITEM3 = 30006;//wxNewId();
 const long PlotFunctionFrame::ID_MENUITEM7 = 30007;//wxNewId();
@@ -60,7 +60,7 @@ const long PlotFunctionFrame::ID_STATUSBAR1 = 30011;//wxNewId();
 void custom_error(const char* c)
 {
     std::ofstream file(errorfile, std::ios::out | std::ios::trunc);
-    std::cout << std::endl << c;
+    std::cerr << std::endl << c << std::endl;
     if (file) {
         file << std::endl << c;
     }
@@ -131,7 +131,7 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     //
     // Settings Menu:
     wxMenu *MenuSettings = new wxMenu();
-    MenuSettings->Append(ID_MENUITEM1, _("Main Settings...\tAlt-M"));
+    //MenuSettings->Append(ID_MENUITEM1, _("Main Settings...\tAlt-M"));
 
     wxMenu *submenuaxis = new wxMenu();
 
@@ -142,30 +142,30 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     submenuaxis->Append(Menu_yAxis);
     Menu_yAxis->Check(true);
     MenuSettings->AppendSubMenu(submenuaxis, _("Axis"));
-    MenuSettings->Append(ID_MENUITEM5, _("Size for png-Graphic"));
-    //MenuItem4 = new wxMenuItem(MenuSettings, ID_MENUITEM6, _("Font Size\tCtrl-F"), wxEmptyString, wxITEM_NORMAL);
-    //MenuSettings->Append(MenuItem4);
+    MenuSettings->Append(22,_T("Set Panel Size...\tF8"));
     MenuSettings->Append(ID_MENUITEM6, _("Font Size\tCtrl-F"));
+    MenuSettings->Append(5, _("Change Parameter Values...\tCtrl-P"));
     //
     colorsubmenu = new wxMenu();
     multicolormenu = new wxMenuItem(colorsubmenu,111,"Multiple Colors \tAlt-C",wxEmptyString,wxITEM_CHECK);
     colorsubmenu->Append(multicolormenu);
     multicolormenu->Check(true);
     colorsubmenu->Append(4400,_T("Background Color...\tCtrl-Shift-B"));
-    colorsubmenu->Append(4401,_T("Axis Color...\tCtrl-Shift-A"));
+    colorsubmenu->Append(4401,_T("Axis Color...\tCtrl-Alt-A"));
     colorsubmenu->Append(4402,_T("Grid Color...\tCtrl-Shift-G"));
     colorsubmenu->Append(4403,_T("Default Function Color...\tAlt-Shift-C"));
     colorsubmenu->AppendSeparator();
-    MenuSettings->Insert(3,3,"Colors",colorsubmenu);
-    wxMenuItem *resetcoloursmenu=new wxMenuItem(MenuSettings,4,"Reset Colours \tCtrl-Alt-R", wxEmptyString);
-    MenuSettings->Insert(4,resetcoloursmenu);
+	MenuSettings->AppendSubMenu(colorsubmenu, "Colors");
+    // MenuSettings->Insert(3,3,"Colors",colorsubmenu);
+    // wxMenuItem *resetcoloursmenu=new wxMenuItem(MenuSettings,4,"Reset Colours \tCtrl-Alt-R", wxEmptyString);
+    // MenuSettings->Insert(4,resetcoloursmenu);
+    MenuSettings->Append(4, _("Reset Colours \tCtrl-Alt-R"));
     //
-    wxMenuItem *ChangeParameterMenu= new wxMenuItem(MenuSettings,5,"Change Parameter Values...\tCtrl-P",wxEmptyString);
-    MenuSettings->Insert(3,ChangeParameterMenu);
+    // wxMenuItem *ChangeParameterMenu= new wxMenuItem(MenuSettings,5,"Change Parameter Values...\tCtrl-P",wxEmptyString);
+    // MenuSettings->Insert(3,ChangeParameterMenu);
     wxMenuItem *DefaultFontSetting= new wxMenuItem(MenuSettings,21,"Default Draw Text Settings...\tCtrl-Alt-F");
     MenuSettings->Append(DefaultFontSetting);
-    wxMenuItem *SetCSize= new wxMenuItem(MenuSettings,22,"Set Panel Size...\tF8");
-    MenuSettings->Append(SetCSize);
+    MenuSettings->Append(ID_MENUITEM5, _("Size for png-Graphic"));
     MenuSettings->Append(23,_T("Regression Degree...\tShift-Alt-A"));
     MenuSettings->Append(24,_T("Round-decimals for points...\tCtrl-D"));
     MenuSettings->Append(25,_T("Move Increments...\tCtrl-M"));
@@ -234,22 +234,14 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     //
     // Tools Menu
     wxMenu *Menu_Tools=new wxMenu();
-    wxMenuItem *Menuparameter = new wxMenuItem(Menu_Tools,7000,"Parameter Values...\tAlt-P",wxEmptyString);
-    wxMenuItem *Menutangent = new wxMenuItem(Menu_Tools,7001,"Tangent...\tAlt-T",wxEmptyString);
-    wxMenuItem *Menudiff = new wxMenuItem(Menu_Tools,7002,"Derivate \tAlt-D",wxEmptyString);
-    wxMenuItem *Menutable = new wxMenuItem(Menu_Tools,7003,"Table... \tCtrl-T",wxEmptyString);
-    wxMenuItem *Menuintegral = new wxMenuItem(Menu_Tools,7004,"Integrate... \tAlt-I",wxEmptyString);
-    wxMenuItem *MenuArcLength = new wxMenuItem(Menu_Tools,7005,"Arc Length... \tShift-Alt-I",wxEmptyString);
-    wxMenuItem *MenuInterpolation = new wxMenuItem(Menu_Tools,7006,"Interpolation...\tCtrl-I");
-    wxMenuItem *Menunormal = new wxMenuItem(Menu_Tools,7007,"Normal...\tShift-Alt-N",wxEmptyString);
-    Menu_Tools->Append(Menuparameter);
-    Menu_Tools->Append(Menutangent);
-    Menu_Tools->Append(Menunormal);
-    Menu_Tools->Append(Menudiff);
-    Menu_Tools->Append(Menutable);
-    Menu_Tools->Append(Menuintegral);
-    Menu_Tools->Append(MenuArcLength);
-    Menu_Tools->Append(MenuInterpolation);
+    Menu_Tools->Append(7000,_("Parameter Values...\tAlt-P"));
+    Menu_Tools->Append(7001,_("Tangent...\tAlt-T"));
+    Menu_Tools->Append(7002,_("Derivate \tAlt-D"));
+    Menu_Tools->Append(7003,_("Table... \tCtrl-T"));
+    Menu_Tools->Append(7004,_("Integrate... \tAlt-I"));
+    Menu_Tools->Append(7005,_("Arc Length... \tShift-Alt-I"));
+    Menu_Tools->Append(7006,_("Interpolation...\tCtrl-I"));
+    Menu_Tools->Append(7007,_("Normal...\tShift-Alt-N"));
     Menu_Tools->Append(7008,_("Zero-iteration...\tAlt-Z"));
     Menu_Tools->Append(7009,_("Rotate...\tAlt-R"));
     Menu_Tools->Append(7010,_("Regression \tAlt-A"));
@@ -383,7 +375,7 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     // Bind Events:
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnQuit,this, 106);
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuExportSelected,this, 105);
-    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnAllSettingsSelected,this,ID_MENUITEM1);
+    // Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnAllSettingsSelected,this,ID_MENUITEM1);
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenu_xAxisSelected,this,ID_MENUITEM2);
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenu_xAxisSelected,this,ID_MENUITEM3);
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuSizeSelected,this,ID_MENUITEM5);
@@ -945,13 +937,15 @@ void PlotFunctionFrame::GetSettings()
 
     s="";
     if (fstring=="") {setfunctionsmenu(); WriteText(); active_function = -1;  return;}
-    val::d_array<char> ignore({'\n'});
+    //val::d_array<char> ignore({'\n'});
     val::Glist<int> colorindezes, stylechanged;
     int cindex, s_changed;
 
-    svalues = getwordsfromstring(fstring,separators,0,ignore);
+    //svalues = getwordsfromstring(fstring,separators,0,ignore);
+	svalues = getfunctionstrings(fstring);
     for (auto& v : svalues) {
         s_changed = 0;
+		// std::cout << "\n v = " << v << std::endl;
 		replace_object_in_string(v, F);
         cindex = getfunctionfromstring(v,f,s_changed);
         // if (f.f.numberofvariables()> 1) {
@@ -959,7 +953,7 @@ void PlotFunctionFrame::GetSettings()
         //     f = plotobject(g.getinfixnotation());
         // }
         if (!f.is_empty()) {
-            //std::cout << std::endl << f.getinfixnotation();
+            // std::cout << "\n f = " << f.getinfixnotation() << std::endl;
             F.push_back(std::move(f));
             //x_range.push_back(xr);
             colorindezes.push_back(cindex);
@@ -1392,7 +1386,8 @@ void PlotFunctionFrame::plotfunction(wxDC& dc,int colour)
 		xl = val::Max(pair.y, xl);
 	}
 	if (xl < xr) def_intervals.push_back(val::GPair<double>(xl,xr));
-
+	
+    if (F[colour].penstyle != wxPENSTYLE_SOLID) style = 1;
 
 	for (const auto &pair : def_intervals) {
 		i = aw = int(val::round(double(sizex-1)*((pair.x-x1)/(x2-x1)),0));
@@ -1640,6 +1635,8 @@ void PlotFunctionFrame::plotline(wxDC& dc,int colour)
     int ix0,iy0,ix1,iy1;
     double arrow;
 
+	if (f.length() < 5) return;
+
     if (active_function == colour) dc.SetPen(wxPen(Color[colour],pen[colour]+3, F[colour].penstyle));
     else dc.SetPen(wxPen(Color[colour],pen[colour], F[colour].penstyle));
     //else dc.SetPen(wxPen(Color[colour],pen[colour],wxPENSTYLE_LONG_DASH));
@@ -1656,10 +1653,15 @@ void PlotFunctionFrame::plotline(wxDC& dc,int colour)
     }
     arrow = g[4];
 
-    ix0=abst+int(double(sizex-1)*((g[0]-x1)/(x2-x1)));
-    iy0=yzero -int((double(sizey-1)/double(y2-y1)) * g[1]);
-    ix1=abst+int(double(sizex-1)*((g[2]-x1)/(x2-x1)));
-    iy1=yzero -int((double(sizey-1)/double(y2-y1)) * g[3]);
+    // ix0=abst+int(double(sizex-1)*((g[0]-x1)/(x2-x1)));
+	// iy0=yzero -int((double(sizey-1)/double(y2-y1)) * g[1]);
+	ix0=abst+int(val::round(double(sizex-1)*((g[0]-x1)/(x2-x1)), 0));
+	iy0=yzero -int(val::round((double(sizey-1)/double(y2-y1)) * g[1], 0));
+	
+    // ix1=abst+int(double(sizex-1)*((g[2]-x1)/(x2-x1)));
+    // iy1=yzero -int((double(sizey-1)/double(y2-y1)) * g[3]);
+	ix1=abst+int(val::round(double(sizex-1)*((g[2]-x1)/(x2-x1)), 0));
+	iy1=yzero -int(val::round((double(sizey-1)/double(y2-y1)) * g[3], 0));
 
     if (n_points && dpanelinsertmode == insert_type::LINE_I && colour == N-1) {
         dc.SetPen(wxPen(Color[colour],1));
@@ -1690,6 +1692,8 @@ void PlotFunctionFrame::plotcircle(wxDC& dc ,int colour)
     if (!yset || sizex <= 10 || sizey <=10 ) return;
     const val::d_array<double> &f = F[colour].farray;
 
+	if (f.length() < 6) return;
+
     int ix0,iy0,ix1,iy1;
     double x,y,r,a1,a2,lx,ly;
     int slice;
@@ -1702,8 +1706,10 @@ void PlotFunctionFrame::plotcircle(wxDC& dc ,int colour)
 
     if (n_points && dpanelinsertmode == insert_type::CIRCLE_I && colour == N-1) {
         int r;
-        ix0=abst+int(double(sizex-1)*((x-x1)/(x2-x1)));
-        iy0=yzero -int((double(sizey-1)/double(y2-y1)) * y);
+        // ix0=abst+int(double(sizex-1)*((x-x1)/(x2-x1)));
+        // iy0=yzero -int((double(sizey-1)/double(y2-y1)) * y);
+		ix0=abst+int(val::round(double(sizex-1)*((x-x1)/(x2-x1)), 0));
+		iy0=yzero -int(val::round((double(sizey-1)/double(y2-y1)) * y, 0));
         brush.SetStyle(wxBrushStyle::wxBRUSHSTYLE_TRANSPARENT);
         dc.SetBrush(brush);
         dc.SetPen(wxPen(Color[colour], 1));
@@ -1777,10 +1783,15 @@ void PlotFunctionFrame::plotrectangle(wxDC& dc, int colour)
     brush.SetStyle(wxBrushStyle::wxBRUSHSTYLE_TRANSPARENT);
     dc.SetBrush(brush);
 
-    ix0=abst+int(double(sizex-1)*((f[0]-x1)/(x2-x1)));
-    iy0=yzero -int((double(sizey-1)/double(y2-y1)) * f[1]);
-    ix1=abst+int(double(sizex-1)*((f[2]-x1)/(x2-x1)));
-    iy1=yzero -int((double(sizey-1)/double(y2-y1)) * f[3]);
+    // ix0=abst+int(double(sizex-1)*((f[0]-x1)/(x2-x1)));
+    // iy0=yzero -int((double(sizey-1)/double(y2-y1)) * f[1]);
+	ix0=abst+int(val::round(double(sizex-1)*((f[0]-x1)/(x2-x1)), 0));
+	iy0=yzero -int(val::round((double(sizey-1)/double(y2-y1)) * f[1], 0));
+
+    // ix1=abst+int(double(sizex-1)*((f[2]-x1)/(x2-x1)));
+    // iy1=yzero -int((double(sizey-1)/double(y2-y1)) * f[3]);
+	ix1=abst+int(val::round(double(sizex-1)*((f[2]-x1)/(x2-x1)), 0));
+	iy1=yzero -int(val::round((double(sizey-1)/double(y2-y1)) * f[3], 0));
     ix1-=ix0;
     iy1-=iy0;
 
@@ -1830,9 +1841,9 @@ void PlotFunctionFrame::plothistogram(wxDC& dc, int colour, const double& solid)
     else dc.SetPen(wxPen(Color[colour],pen[colour]));
 
     for (const auto &p : f.critpoints) {
-        ix0 = abst + int(double(sizex - 1) * ((p.x-dx - x1) / (x2 - x1)));
-        ix1 = abst + int(double(sizex - 1) * ((p.x+dx - x1) / (x2 - x1)));
-        iy1 = yzero - int((double(sizey - 1) / double(y2 - y1)) * p.y);
+        ix0 = abst + int(val::round(double(sizex - 1) * ((p.x-dx - x1) / (x2 - x1)), 0));
+        ix1 = abst + int(val::round(double(sizex - 1) * ((p.x+dx - x1) / (x2 - x1)), 0));
+        iy1 = yzero - int(val::round((double(sizey - 1) / double(y2 - y1)) * p.y, 0));
         ix1 -= ix0;
         iy1 -= yzero;
         if (p.y < 0) iy1 += l;
@@ -1846,8 +1857,8 @@ void PlotFunctionFrame::plottriangle(wxDC& dc,int colour)
 {
     if (!yset) return;
     const val::d_array<double> &f = F[colour].farray;
-    if (f[0]<x1 || f[0]>x2 || f[1]<y1 || f[1]>y2 || f[2]<x1 || f[2]>x2 || f[3]<y1 || f[3]>y2 || f[4]<x1 || f[4]>x2
-            || f[5]<y1 || f[5]>y2) return;
+    // if (f[0]<x1 || f[0]>x2 || f[1]<y1 || f[1]>y2 || f[2]<x1 || f[2]>x2 || f[3]<y1 || f[3]>y2 || f[4]<x1 || f[4]>x2
+    //         || f[5]<y1 || f[5]>y2) return;
 
     int ix0,iy0,ix1,iy1,ix2,iy2;
 
@@ -1926,22 +1937,26 @@ void PlotFunctionFrame::plotpolygon(wxDC& dc,int colour)
     const val::d_array<double> &f = F[colour].farray;
     int i,n=f.length();
 
-    for (i=0;i<n;i+=2) {
-        if (f[i]<x1 || f[i]>x2) return;
-        if (f[i+1]<y1 || f[i+1]>y2) return;
-    }
+    // for (i=0;i<n;i+=2) {
+    //     if (f[i]<x1 || f[i]>x2) return;
+    //     if (f[i+1]<y1 || f[i+1]>y2) return;
+    // }
 
     int ix0,iy0,ix1,iy1;
 
     if (active_function == colour) dc.SetPen(wxPen(Color[colour],pen[colour]+3, F[colour].penstyle));
     else dc.SetPen(wxPen(Color[colour],pen[colour], F[colour].penstyle));
 
-    ix0=abst+int(double(sizex-1)*((f[0]-x1)/(x2-x1)));
-    iy0=yzero -int((double(sizey-1)/double(y2-y1)) * f[1]);
+    // ix0=abst+int(double(sizex-1)*((f[0]-x1)/(x2-x1)));
+    // iy0=yzero -int((double(sizey-1)/double(y2-y1)) * f[1]);
+	ix0=abst+int(val::round(double(sizex-1)*((f[0]-x1)/(x2-x1)), 0));
+	iy0=yzero -int(val::round((double(sizey-1)/double(y2-y1)) * f[1], 0));
 
     for (i=2;i<n;i+=2) {
-        ix1=abst+int(double(sizex-1)*((f[i]-x1)/(x2-x1)));
-        iy1=yzero -int((double(sizey-1)/double(y2-y1)) * f[i+1]);
+        // ix1=abst+int(double(sizex-1)*((f[i]-x1)/(x2-x1)));
+        // iy1=yzero -int((double(sizey-1)/double(y2-y1)) * f[i+1]);
+        ix1=abst+int(val::round(double(sizex-1)*((f[i]-x1)/(x2-x1)), 0));
+        iy1=yzero -int(val::round((double(sizey-1)/double(y2-y1)) * f[i+1], 0));
         dc.DrawLine(ix0,iy0,ix1,iy1);
         ix0=ix1;
         iy0=iy1;
@@ -1962,27 +1977,59 @@ void PlotFunctionFrame::plotpoints(wxDC& dc,int colour)
 {
     if (!yset) return;
     const val::d_array<double> &f = F[colour].farray;
-    int i,n=f.length();
+    int i,n=f.length(), style = 0;
     if (n<2) return;
 
     int ix,iy, r = val::Max(1,(pen[colour]+2)/2);
 
-    dc.SetPen(wxPen(Color[colour],pen[colour]+2));
+	if (F[colour].penstyle == wxPENSTYLE_DOT) style = 1;
+	else if (F[colour].penstyle == wxPENSTYLE_LONG_DASH) style = 2;
+	// else if (F[colour].penstyle == wxPENSTYLE_SHORT_DASH) style = 3;
+
+
+	if (!style) dc.SetPen(wxPen(Color[colour],pen[colour]+2));
+	else dc.SetPen(wxPen(Color[colour],pen[colour])); 
+
     dc.SetBrush(wxBrush(Color[colour]));
 
     for (i=0;i<n;i+=2) {
         if (isInf(f[i]) || isInf(f[i+1]) || val::isNaN(f[i]) || val::isNaN(f[i+1])) continue;
-        ix=abst+int(double(sizex-1)*((f[i]-x1)/(x2-x1)));
-        iy=yzero -int((double(sizey-1)/double(y2-y1)) * f[i+1]);
+        ix=abst+int(val::round(double(sizex-1)*((f[i]-x1)/(x2-x1)), 0));
+        iy=yzero -int(val::round((double(sizey-1)/double(y2-y1)) * f[i+1], 0));
         if (f[i]<x1 || f[i]>x2) continue;
         if (iy<abst || iy >(abst+sizey)) continue;
-        if (active_function == colour && i == pointactive) {
-            dc.SetPen(wxPen(Color[colour],pen[colour]+4));
-        }
-        dc.DrawCircle(ix,iy,r);
-        if (active_function == colour && i == pointactive) {
-            dc.SetPen(wxPen(Color[colour],pen[colour]+2));
-        }
+		switch (style) {
+			case 0: 
+				if (active_function == colour && i == pointactive) {
+					dc.SetPen(wxPen(Color[colour],pen[colour]+4));
+				}
+				dc.DrawCircle(ix,iy,r);
+				break;
+			case 1:
+				if (active_function == colour && i == pointactive) {
+					dc.SetPen(wxPen(Color[colour],pen[colour]+2));
+				}
+				dc.DrawLine(ix-pointsize, iy+pointsize, ix+pointsize, iy-pointsize);
+				dc.DrawLine(ix-pointsize, iy-pointsize, ix+pointsize, iy+pointsize);
+				break;
+			case 2:
+				if (active_function == colour && i == pointactive) {
+					dc.SetPen(wxPen(Color[colour],pen[colour]+2));
+				}
+				dc.DrawLine(ix, iy-pointsize, ix, iy+pointsize);
+				dc.DrawLine(ix-pointsize, iy, ix+pointsize, iy);
+				break;
+			// case 3:
+			// 	if (active_function == colour && i == pointactive) {
+			// 		dc.SetPen(wxPen(Color[colour],pen[colour]+2));
+			// 	}
+			// 	dc.DrawLine(ix-pointsplus, iy, ix+pointsplus, iy);
+			// 	break;
+			default: break;
+		}
+        // if (active_function == colour && i == pointactive) {
+        //     dc.SetPen(wxPen(Color[colour],pen[colour]+2));
+        // }
     }
 }
 
@@ -2070,7 +2117,7 @@ void::PlotFunctionFrame::plotbitmap(wxDC& dc,int colour)
 {
     if (!yset) return;
     const val::d_array<double> &f = F[colour].farray;
-    if (f[0]<x1 || f[0]>x2 || f[1]<y1 || f[1]>y2) return;
+    // if (f[0]<x1 || f[0]>x2 || f[1]<y1 || f[1]>y2) return;
     int ix0=abst+int(double(sizex-1)*((f[0]-x1)/(x2-x1))), iy0=yzero -int((double(sizey-1)/double(y2-y1)) * f[1]);
     //std::cout << "\n" << ix0 << " " << iy0 << std::endl;
     dc.DrawBitmap(F[colour].bitmap,ix0,iy0);
@@ -2456,53 +2503,53 @@ void PlotFunctionFrame::Compute(int i, int comppoints)
 }
 
 
-void PlotFunctionFrame::OnAllSettingsSelected(wxCommandEvent& event)
-{
-    int i,n;
-    std::string input,output,pstring="";
+// void PlotFunctionFrame::OnAllSettingsSelected(wxCommandEvent& event)
+// {
+//     int i,n;
+//     std::string input,output,pstring="";
 
-    input+=xstring;
-    input+="\n" + ystring;
-    input+="\n" + val::ToString(points);
+//     input+=xstring;
+//     input+="\n" + ystring;
+//     input+="\n" + val::ToString(points);
 
-    input+="\n" + fstring;
+//     input+="\n" + fstring;
 
-    val::MultiLineDialog dialog(this,input,"x values / y values / number of values / functions:",260,100,"Change Settings",fontsize);
-#ifdef __APPLE__
-    dialog.Centre();
-#endif // __APPLE__
-    if (dialog.ShowModal()==wxID_CANCEL) return;
-    // else OK:
-    output=dialog.GetSettingsText();
-    if (input==output) return;
-    // else change:
+//     val::MultiLineDialog dialog(this,input,"x values / y values / number of values / functions:",260,100,"Change Settings",fontsize);
+// #ifdef __APPLE__
+//     dialog.Centre();
+// #endif // __APPLE__
+//     if (dialog.ShowModal()==wxID_CANCEL) return;
+//     // else OK:
+//     output=dialog.GetSettingsText();
+//     if (input==output) return;
+//     // else change:
 
-    xstring = "-5;5";
-    ystring = "";
-    fstring = "";
+//     xstring = "-5;5";
+//     ystring = "";
+//     fstring = "";
 
-    val::d_array<char> separators{'\n'};
-    val::Glist<std::string> words = getwordsfromstring(output,separators,1);
+//     val::d_array<char> separators{'\n'};
+//     val::Glist<std::string> words = getwordsfromstring(output,separators,1);
 
-    n = words.length();
+//     n = words.length();
 
-    if (n>0) xstring = words[0];
-    if (n>1) ystring = words[1];
-    if (n>2) pstring = words[2];
+//     if (n>0) xstring = words[0];
+//     if (n>1) ystring = words[1];
+//     if (n>2) pstring = words[2];
 
-    for (i = 3; i < n; ++i) fstring += words[i] + "\n";
+//     for (i = 3; i < n; ++i) fstring += words[i] + "\n";
 
-    refreshfunctionstring();
+//     refreshfunctionstring();
 
-    points = val::FromString<int>(pstring);
+//     points = val::FromString<int>(pstring);
 
-    if (points<500) points=500;
-    else if(points>6000) points=6000;
-    spoints = val::ToString(points);
+//     if (points<500) points=500;
+//     else if(points>6000) points=6000;
+//     spoints = val::ToString(points);
 
-    GetSettings();
-    Compute();
-}
+//     GetSettings();
+//     Compute();
+// }
 
 
 void PlotFunctionFrame::OnMenu_xAxisSelected(wxCommandEvent& event)
@@ -3405,23 +3452,30 @@ void PlotFunctionFrame::ChangeSettings(int command, const std::string &svalue, i
              }
         }
         break;
-    case val_settings::FONT_SIZE: case val_settings::AXIS_FONTSIZE:
+    case val_settings::FONT_SIZE: case val_settings::AXIS_FONTSIZE: case val_settings::POINTSIZE:
         {
             if (svalue == "") return;
             int fsize = val::FromString<int>(svalue);
-            if (command == FONT_SIZE) {
+			if (command == FONT_SIZE) {
                 fontsize = fsize;
                 if (fontsize<10) fontsize=10;
                 sfontsize = val::ToString(fontsize);
                 WriteText();
             }
-            else {
+			else if (command == AXIS_FONTSIZE){
                 axis_fontsize = fsize;
                 if (axis_fontsize < 2) axis_fontsize = 2;
                 if (axis_fontsize > 30) axis_fontsize = 30;
                 saxis_fontsize = val::ToString(axis_fontsize);
                 Paint();
             }
+			else {
+				pointsize = fsize;
+				if (pointsize < 1) pointsize = 1;
+				if (pointsize > 30) pointsize = 30;
+				spointsize = val::ToString(pointsize);
+				Paint();
+			}
         }
         break;
     case val_settings::REGRESSION_DEGREE:
@@ -3508,7 +3562,7 @@ void PlotFunctionFrame::ChangeSettings(int command, const std::string &svalue, i
                     Compute();
                     return;
                 }
-				d_values = getwordsfromstring(s_values[0],separators);
+				d_values = getwordsfromstring(s_values[1],separators);
                 if (d_values.length() >= 2) {
                     d1 = val::valfunction(d_values[0])(0); d2 = val::valfunction(d_values[1])(0);
                 }
@@ -5166,6 +5220,7 @@ void PlotFunctionFrame::displacefunction(int i,const std::string &dx1,const std:
     if (i<0 || i>=N) return;
 
     double dx = val::round(val::FromString<double>(dx1),decimalx) , dy = val::round(val::FromString<double>(dy1),decimaly);
+	wxPenStyle style = F[i].penstyle;
 
     switch (F[i].getmode())
     {
@@ -5316,6 +5371,7 @@ void PlotFunctionFrame::displacefunction(int i,const std::string &dx1,const std:
             }
             break;
     }
+	F[i].penstyle = style;
 }
 
 
@@ -5847,7 +5903,8 @@ void PlotFunctionFrame::WriteText()
     wxString s_f;
 
     val::d_array<char> separfunc{';'};
-    val::Glist<std::string> s_functions = getwordsfromstring(fstring,separfunc,0,val::d_array<char>{'\n'});
+    // val::Glist<std::string> s_functions = getwordsfromstring(fstring,separfunc,0,val::d_array<char>{'\n'});
+    val::Glist<std::string> s_functions = getfunctionstrings(fstring);
     int n = val::Min(s_functions.length(),N);
     wxTextAttr Style = SideText->GetDefaultStyle();
     Style.SetFontSize(fontsize);
@@ -5899,7 +5956,7 @@ void PlotFunctionFrame::CompareSideTextInput()
     O_Word.Replace(L"\u03C0", "PI");
     ispainted = 0;
     val::d_array<char> sep{';'}, numsep{':'};
-    val::Glist<std::string> words = getwordsfromstring(std::string(O_Word),sep,0,val::d_array<char>{'\n'});
+    val::Glist<std::string> words = getfunctionstrings(std::string(O_Word));   //getwordsfromstring(std::string(O_Word),sep,0,val::d_array<char>{'\n'});
     std::string s_func, first_word;
     int m;
 

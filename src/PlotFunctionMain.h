@@ -55,7 +55,7 @@ class PlotFunctionFrame: public wxFrame
         static const long ID_PANEL1;
         //static const long idMenuQuit;
         //static const long ID_MENUITEM4;
-        static const long ID_MENUITEM1;
+        // static const long ID_MENUITEM1;
         static const long ID_MENUITEM2;
         static const long ID_MENUITEM3;
         static const long ID_MENUITEM7;
@@ -89,7 +89,7 @@ class PlotFunctionFrame: public wxFrame
         int moveinpointsx = 0, moveinpointsy = 0;
         int bitmapbackground = 0, axis_fontsize = 10, SideText_isshown = 0, widthSideText = 200;
         int notebook_isshown = 0, widthNoteBookPanel = 200, plusw = 12, dpanelinsertmode = NORMAL_I, n_points = 0, wraptext = 0, lastfocusedwindow = 1;
-	    int recentfileschanged = 0, recentcommandschanged = 0, latexdefinitionsfileexists = 0;
+	    int recentfileschanged = 0, recentcommandschanged = 0, latexdefinitionsfileexists = 0, pointsize = 3;
         long InfoStyle = wxRESIZE_BORDER;
         bool closebrackets = true, computedefaultobject = false;
         wxPoint actuallinepoint,actualpolygonpoint;
@@ -98,7 +98,7 @@ class PlotFunctionFrame: public wxFrame
         double movex = 0, movey = 0;
         std::string Program_Name="PlotFunction",x_axis="x",y_axis="y",sx_scale="1",sy_scale="1",sgx_scale="0.5",sgy_scale="0.5",actual_filename="",actual_dirname="", sabst = "10",
                     saxis_fontsize = "10", sfontsize = "10", spoints = "1000", srounddrawingspoints = "-2", sregressiondegree = "1", sPanelx, sPanely,
-                    smovedx = "0.1", smovedy = "0.1", sactive_function = "0";
+                    smovedx = "0.1", smovedy = "0.1", sactive_function = "0", spointsize = "3";
         wxString SideText_Word;
         wxFont defaultFont;
         wxSize bitmapsize,actualPanelsize; //DialogInputSize{wxDefaultSize};
@@ -121,7 +121,7 @@ class PlotFunctionFrame: public wxFrame
         //
         const val::d_array<val::d_array<const std::string*>> SettingsCurrent{{&sx_scale, &sy_scale}, {}, {&sgx_scale, &sgy_scale}, {}, {&spoints}, {&xstring, &ystring},
                                                                              {}, {}, {}, {}, {}, {}, {&sfontsize}, {}, {&sPanelx, &sPanely}, {&x_axis, &y_axis}, {&sregressiondegree}, {&srounddrawingspoints},
-                                                                             {}, {}, {}, {}, {&sabst}, {&saxis_fontsize}, {}, {&smovedx, &smovedy}, {&sactive_function}};
+                                                                             {}, {}, {}, {}, {&sabst}, {&saxis_fontsize}, {}, {&smovedx, &smovedy}, {&sactive_function}, {&spointsize}};
         //
         wxMenu* MenuRecentfiles;
         val::Glist<wxMenuItem*> recent_menu;
@@ -195,7 +195,7 @@ class PlotFunctionFrame: public wxFrame
         void OnHelp(wxCommandEvent& event);
         void OnDrawPanelPaint(wxPaintEvent& event);
         void OnDrawPanelResize(wxSizeEvent& event);
-        void OnAllSettingsSelected(wxCommandEvent& event);
+        // void OnAllSettingsSelected(wxCommandEvent& event);
         void OnMenu_xAxisSelected(wxCommandEvent& event);
         void OnMenuExportSelected(wxCommandEvent& event);
         void OnMenuSizeSelected(wxCommandEvent& event);

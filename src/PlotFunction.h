@@ -62,7 +62,7 @@ enum val_colors{BLUE,RED,GREEN,LBLUE,ORANGE,VIOLET,GREY,WHITE,BlACK,LGREY,YELLOW
 // match with SettingsList, SettingsParList
 enum val_settings{AXIS_SCALE,AXIS_COLOR,GRID_SCALE,GRID_COLOR,VALUES_NUMBER,AXIS_RANGE,SHOW_X_AXIS,SHOW_Y_AXIS,SHOW_GRID,SHOW_X_SCALE,
                     SHOW_Y_SCALE,RESET_COLORS,FONT_SIZE,FUNCTION_COLOR,PANEL_SIZE,AXIS_NAMES,REGRESSION_DEGREE,POINT_DECIMALS,
-                    SHOW_FUNCTION,BACKGROND_COLOR,PARAMETER_VALUES,FUNCTION_SIZE,MARGIN,AXIS_FONTSIZE,FUNCTION_SETTINGS,MOVEINC,SELECT};
+                    SHOW_FUNCTION,BACKGROND_COLOR,PARAMETER_VALUES,FUNCTION_SIZE,MARGIN,AXIS_FONTSIZE,FUNCTION_SETTINGS,MOVEINC,SELECT,POINTSIZE};
 
 // match with CommandsList, CommandsParList
 enum val_commands{DERIVE,ANALYZE,TANGENT,NORMAL,INTERPOLATION,REGRESSION,TABLE,INTEGRAL,ARCLENGTH,ZERO_ITERATION,MOVE,EVALUATE,INTERSECTION,
@@ -135,6 +135,10 @@ val::rationalfunction derive(const val::rationalfunction &f);
 val::rational eval(const val::rationalfunction &F,const val::rational &x);
 
 void gettangentvalues(const plotobject &f,const double &x,double &m,double &b,int tangent=1);
+
+
+val::Glist<std::string> getfunctionstrings(const std::string &s);
+
 
 std::string extractstringfrombrackets(std::string &sf,const char lb, const char rb);
 
