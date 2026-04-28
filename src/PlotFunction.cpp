@@ -141,7 +141,7 @@ const val::d_array<wxString> SettingsParList({"axis-scale sx [sy]   <Shift-Alt-S
 
 const val::d_array<wxString> CommandsList({"derive", "analyze", "tangent", "normal", "interpolation", "regression", "table", "integral",
                                              "arclength", "zero-iteration", "move", "evaluate", "intersection", "calculate", "rotate", "osc_circle", "latex-string", "taylor-polynomial",
-                                             "reflection"});
+                                             "reflection", "points-in-graph"});
 
 const val::d_array<wxString> CommandsParList({"derive [#nr = 1]",
                                                  "analyze [#nr = 1] [x1 x2] [prec = 1e-09] [iterations] [decimals]    <Ctrl-A>",
@@ -161,7 +161,8 @@ const val::d_array<wxString> CommandsParList({"derive [#nr = 1]",
                                                  "osc_circle [#nr = 1] x    ",
                                                  "latex-string [#nr = 1]",
                                                  "taylor-polynomial [#nr = 1] deg [x0 = 0]",
-                                                 "reflection [#nr1 = 1] #nr2 / object"
+                                                 "reflection [#nr1 = 1] #nr2 / object",
+												 "points-in-graph [#nr = 1] expression1 (x= / y=); expression2... [;ddecimals [ = 4]]"
                                                  });
 
 
@@ -2303,6 +2304,99 @@ void computepointreflection(const plotobject &F, double px, double py)
 }
 
 
+
+void computepointsingraph(const plotobject &F, std::string input, double x1, double x2)
+{
+	using namespace val;
+	if (!F.IsFunction() && !F.IsAlgCurve() && !F.IsParcurve()) return;
+
+	d_array<char> sep{';'};
+	Glist<std::string> words = getwordsfromstring(input, sep);
+	int n = words.length(), decimals = 4;
+	
+	if (words.isempty()) return;
+	if (words[n-1].find("d") != std::string::npos) {
+		replace<char>(words[n-1], "d", "");
+		replace<char>(words[n-1], "=", "");
+		decimals = FromString<int>(words[n-1]);
+		if (decimals < 0) decimals = 0;
+		if (decimals > 16) decimals = 16;
+		words.delelement(n-1);
+	}
+
+	double x, y;
+	int xset = 0, yset = 0;
+	valfunction arg, h;
+	std::string s = "";
+	Glist<GPair<double>> values; 
+
+	for (auto &w : words) {
+		xset = yset = 0;
+		values.dellist();
+		if (w.find("y") != std::string::npos) yset = 1;
+		else if (w.find("x") != std::string::npos) xset = 1;
+		replace<char>(w, "x", "");
+		replace<char>(w, "y", "");
+		replace<char>(w, "=", "");
+		arg = valfunction(w);
+		arg.setparameter(F.f.getparameter());
+		if (F.IsFunction()) {
+			if (!yset) {
+				x = round(arg(0), decimals);
+				y = val::round(F.f(arg(0)), decimals);
+				values.push_back(GPair<double>(x,y));
+			}
+			else {
+				h = F.f - arg;
+				y = round(arg(0), decimals);
+				auto d_zeros = h.double_roots(x1, x2, 1000);
+				for (const auto &z : d_zeros) values.push_back(GPair<double>(round(z, decimals), y));
+			}
+		}
+		else if (F.IsParcurve()) {
+			if (xset) {
+				h = F.f - arg;
+				auto d_zeros = h.double_roots(F.x1(0), F.x2(0), 1000);
+				for (const auto &z : d_zeros) values.push_back(GPair<double>(round(F.f(z), decimals), round(F.g(z), decimals)));
+			}
+			else if (yset) {
+				h = F.g - arg;
+				auto d_zeros = h.double_roots(F.x1(0), F.x2(0), 1000);
+				for (const auto &z : d_zeros) values.push_back(GPair<double>(round(F.f(z), decimals), round(F.g(z), decimals)));
+			}
+			else {
+				x = round(F.f(arg(0)), decimals); y = round(F.g(arg(0)), decimals);
+				values.push_back(GPair<double>(x,y));
+			}
+		}
+		else {   //algebraic curve
+			std::string sf = F.f.getinfixnotation(), subst = "(" + arg.getinfixnotation() + ")";
+			if (yset) replace<char>(sf, "y", subst);
+			else {
+				replace<char>(sf, "x", subst);
+				replace<char>( sf, "y", "x");
+			}
+			h = valfunction(sf);
+			if (yset) y = round(arg(0), decimals);
+			else x = round(arg(0), decimals);
+			auto d_zeros = h.double_roots(x1, x2, 1000);
+			for (const auto &z : d_zeros) {
+				if (yset) values.push_back(GPair<double>(round(z,decimals), y));
+				else values.push_back(GPair<double>(x, round(z,decimals)));
+			}
+		}
+		for (const auto &v : values ) {
+			if (!isNaN(v.x) && !isNaN(v.y) && !isInf(v.x) && !isInf(v.y)) {
+				s += " " + ToString(v.x) + " " + ToString(v.y);
+			}
+		}
+	}
+	if (s == "") return;
+	fstring += "\npoints" + s;
+	
+    MyThreadEvent event(MY_EVENT, IdRefresh);
+    if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event.Clone() );
+}
 
 
 // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------

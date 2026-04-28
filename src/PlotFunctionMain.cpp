@@ -1421,6 +1421,10 @@ void PlotFunctionFrame::plotfunction(wxDC& dc,int colour)
 				if (yvalue < y1) iy0 = ylimit + 10;
 				if (yvalue > y2) iy0 = abst - 10;
 				++i;
+				if (!isInf(yvalue) && !isInf(yold)) {
+					if (yvalue < y1 && yold > y2) break;
+					if (yvalue > y2 && yold < y1) break;
+				}
 				if (i >= ew) break;
 			}
 			while (isInf(yvalue) || val::isNaN(yvalue) || (iy0 > ylimit) || (iy0 < abst));
@@ -1474,18 +1478,13 @@ void PlotFunctionFrame::plotfunction(wxDC& dc,int colour)
 					yvalue = f[index];
 					if (!isInf(yvalue) && !val::isNaN(yvalue)) {
 					 	iy0 = int(val::round(dyzero - faktor_y*yvalue,0));
-						if (yvalue < y1) iy0 = ylimit + 10;
-						if (yvalue > y2) iy0 = abst - 10;
-					 	//if (iy0 < abst) iy0 = abst;
-					 	//if (iy0 > ylimit) iy0 = ylimit;
+						// if (yvalue < y1) iy0 = ylimit + 10;
+						// if (yvalue > y2) iy0 = abst - 10;
 					 	ix0 += abst;
 					}
 					else break;
 					ix1 = ew + abst;
 					yvalue = F[colour].f(dew - 1e-9);
-					// if (val::isNaN(yvalue) || isInf(yvalue)) {
-					// 	yvalue = F[colour].f(dew - 1e-9);
-					// }
 					iy1 = int(val::round(dyzero - faktor_y*yvalue,0));
 
 
@@ -1499,7 +1498,6 @@ void PlotFunctionFrame::plotfunction(wxDC& dc,int colour)
 					}
 					
 					if (iy1  <= ylimit && iy1 >= abst) {
-						// std::cout << "\n pair.y = " << pair.y << ", iy0 = " << iy0 << " iy1 = " << iy1 << " , yvalue = " << yvalue << std::endl;
 						if (style) {
 							if (draw) dc.DrawLine(ix0,iy0,ix1,iy1);
 						}
@@ -4204,6 +4202,14 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
             }
             else global_function = plotobject(svalue);
             std::thread t(computereflection, std::cref(F[f_nr]), std::cref(global_function), x1, x2);
+            t.detach();
+            return;
+        }
+        break;
+    case val_commands::POINTSINGRAPH :
+        {
+            if (f_nr < 0 || f_nr >= N) return;
+            std::thread t(computepointsingraph, std::cref(F[f_nr]), svalue, x1, x2);
             t.detach();
             return;
         }

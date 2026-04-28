@@ -66,7 +66,7 @@ enum val_settings{AXIS_SCALE,AXIS_COLOR,GRID_SCALE,GRID_COLOR,VALUES_NUMBER,AXIS
 
 // match with CommandsList, CommandsParList
 enum val_commands{DERIVE,ANALYZE,TANGENT,NORMAL,INTERPOLATION,REGRESSION,TABLE,INTEGRAL,ARCLENGTH,ZERO_ITERATION,MOVE,EVALUATE,INTERSECTION,
-                     CALCULATE,ROTATE,OSCCIRCLE,TOLATEXSTRING,TAYLORPOL,REFLECTION};
+                     CALCULATE,ROTATE,OSCCIRCLE,TOLATEXSTRING,TAYLORPOL,REFLECTION,POINTSINGRAPH};
 
 wxDECLARE_EVENT(MY_EVENT, MyThreadEvent);
 
@@ -210,6 +210,9 @@ void computereflection(const plotobject &F, const plotobject &G, double x1, doub
 
 // computes point reflection fo F to (px,py):
 void computepointreflection(const plotobject &F, double px, double py);
+
+
+void computepointsingraph(const plotobject &F, std::string input, double x1, double x2);
 
 template <class T>
 double kepler_simpson_sum(const T& f,const double& a,const double& b,int n);

@@ -2090,6 +2090,24 @@ void computezeros(const val::valfunction &f,const double &x1,const double &x2,co
     }
     else if (f_oper == "sqrt" || f_oper == "/" || f_oper == "abs" || f_oper == "m" || f_oper == "sinh" || f_oper == "arsinh") {
         computezeros(f.getfirstargument(),x1,x2,epsilon,decimals,iterations,d_zeros,s_zeros);
+		if (f_oper == "/") {
+			valfunction g = f.getsecondargument(), sy;
+			double y;
+			Glist<double> pd_zeros(std::move(d_zeros));
+			Glist<valfunction> ps_zeros(std::move(s_zeros));
+			for (const auto &z : pd_zeros) {
+				y = g(z);
+				if (abs(y) < 1e-9 || isNaN(y) || isInf(y)) continue;
+				else d_zeros.push_back(z);
+			}
+			for (const auto &z : ps_zeros) {
+				sy = g(z);
+				y = sy(0);
+				if (sy.is_zero()) continue;
+				if (!hzeros::has_parameter(sy.getinfixnotation()) && (abs(y) < 1e-9 || isNaN(y) || isInf(y))) continue;
+				s_zeros.push_back(z);
+			}
+		}
         return;
     }
     else if (f_oper == "log" || f_oper == "arcosh") {
