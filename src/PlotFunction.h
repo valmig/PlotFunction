@@ -99,6 +99,8 @@ namespace val
 val::rational abs(const val::rational&);
 int operator <(const val::GPair<double>& p,const val::GPair<double>& q);
 const int MaxPrec = 19;
+double binomdensity(int n, const double &p, int k);
+double poissondensity(const double& lambda, int k);
 }
 
 
@@ -320,7 +322,7 @@ int NewtonIteration(const T& f, const T &f1, double &x, const double& eps, int n
 
 struct plotobject
 {
-    enum modetype {LINE,TEXT,CIRCLE,RECTANGLE,TRIANGLE,FILL,POLYGON,POINTS,HISTOGRAM,BITMAP,PARCURVE,ALGCURVE,FUNCTION};
+    enum modetype {LINE,TEXT,CIRCLE,RECTANGLE,TRIANGLE,FILL,POLYGON,POINTS,HISTOGRAM,BITMAP,BINDENSITY,POISDENSITY,GEODENSITY,PARCURVE,ALGCURVE,FUNCTION};
     //enum latexsize {tiny, script, footnote, small, normal, large, Large, LARGE, huge, HUGE};
     //
     struct latex_element
@@ -381,6 +383,9 @@ struct plotobject
     int IsFunction() const {return objectype==FUNCTION;}
     int IsAlgCurve() const {return objectype==ALGCURVE;}
     int IsBitmap() const {return objectype==BITMAP;}
+    int IsBinomdensity() const {return objectype==BINDENSITY;}
+    int IsPoissondensity() const {return objectype==POISDENSITY;}
+    int IsGeodensity() const {return objectype==GEODENSITY;}
     int has_latex_script();
     //
     val::pol<double> getpol(const double& x) const;

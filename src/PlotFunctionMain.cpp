@@ -1804,7 +1804,7 @@ void PlotFunctionFrame::plotrectangle(wxDC& dc, int colour)
         dc.DrawCircle(ix0,iy0,r);
         return;
     }
-    dc.DrawRectangle(ix0,iy0,ix1,iy1);
+    dc.DrawRectangle(ix0,iy0,ix1+1,iy1+1);
 }
 
 
@@ -1814,7 +1814,7 @@ void PlotFunctionFrame::plothistogram(wxDC& dc, int colour, const double& solid)
     const plotobject &f = F[colour];
     double dx = f.x_range.y/2.0, sol = solid;
     wxColour c_brush = Color[colour];
-    int ix0,ix1,iy1, l = pen[colour];
+    int ix0,ix1,iy1; // l = pen[colour];
 
     if (bitmapbackground) {
         if (sol > 0.0) sol = 1;
@@ -1844,11 +1844,142 @@ void PlotFunctionFrame::plothistogram(wxDC& dc, int colour, const double& solid)
         iy1 = yzero - int(val::round((double(sizey - 1) / double(y2 - y1)) * p.y, 0));
         ix1 -= ix0;
         iy1 -= yzero;
-        if (p.y < 0) iy1 += l;
-        dc.DrawRectangle(ix0,yzero,ix1,iy1);
+        //if (p.y < 0) iy1 += l;
+        dc.DrawRectangle(ix0,yzero,ix1+1,iy1+1);
     }
 }
 
+void PlotFunctionFrame::plotdiscretedensity(wxDC& dc, int colour, int fill)
+{
+    const val::d_array<double> &f = F[colour].farray;
+	const val::d_array<double> &C = F[colour].critx;
+	if (f.length() < 4) return;
+	double x, ax = F[colour].x_range.x, ex = F[colour].x_range.y, y, lambda = f[0], q = 1 - lambda;
+	int ix, iy, i = int(ax), l = int(ex) +1, type = F[colour].objectype, plotstyle, plus = 0;
+
+	if (type == plotobject::BINDENSITY) {
+		if (f.length() != 5) return;
+		plus = 1;
+	}
+
+	plotstyle = int(f[plus + 1]);
+
+	if (type == plotobject::BINDENSITY && l > C.length()) l = C.length();
+
+	if (ax < x1) {
+		x = val::round(x1,0);
+		i = x1 - x; 
+		if ((x1 - x) >=0.5) ++i;
+	}
+	if (ex > x2) {
+		ex = val::round(x2, 0);
+		l = val::Min(l, int(ex));
+	}
+
+	if (plotstyle == 0) {
+		int style = 0, r = val::Max(1,(pen[colour]+2)/2);
+
+		if (F[colour].penstyle == wxPENSTYLE_DOT) style = 1;
+		else if (F[colour].penstyle == wxPENSTYLE_LONG_DASH) style = 2;
+		if (!style) dc.SetPen(wxPen(Color[colour],pen[colour]+2));
+		else dc.SetPen(wxPen(Color[colour],pen[colour])); 
+
+		dc.SetBrush(wxBrush(Color[colour]));
+
+		if (active_function == colour) {
+			if (style) dc.SetPen(wxPen(Color[colour],pen[colour]+2));
+			else dc.SetPen(wxPen(Color[colour],pen[colour]+4));
+		}
+		
+		for (; i < l; ++i) {
+			x = double(i);
+			if (type == plotobject::POISDENSITY) y = val::poissondensity(lambda, i);
+			else if (type == plotobject::GEODENSITY) {
+				if (i == 0) continue;
+				y = val::power(q, i-1) * lambda;
+			}
+			else y = C[i];
+			ix = abst + int(val::round(double(sizex - 1) * ((x - x1) / (x2 - x1)), 0));
+			iy = yzero - int(val::round((double(sizey - 1) / double(y2 - y1)) * y, 0));
+			switch (style) {
+				case 0: 
+					dc.DrawCircle(ix,iy,r);
+					break;
+				case 1:
+					dc.DrawLine(ix-pointsize, iy+pointsize, ix+pointsize, iy-pointsize);
+					dc.DrawLine(ix-pointsize, iy-pointsize, ix+pointsize, iy+pointsize);
+					break;
+				case 2:
+					dc.DrawLine(ix, iy-pointsize, ix, iy+pointsize);
+					dc.DrawLine(ix-pointsize, iy, ix+pointsize, iy);
+					break;
+				default: break;
+			}
+		}
+	}
+	else if (plotstyle == 1) {
+		if (active_function == colour) dc.SetPen(wxPen(Color[colour],pen[colour]+2));
+		else dc.SetPen(wxPen(Color[colour],pen[colour]));
+		for (; i < l; ++i) {
+			x = double(i);
+			if (type == plotobject::POISDENSITY) y = val::poissondensity(lambda, i);
+			else if (type == plotobject::GEODENSITY) {
+				if (i == 0) continue;
+				y = val::power(q, i-1) * lambda;
+			}
+			else y = C[i];
+			ix = abst + int(val::round(double(sizex - 1) * ((x - x1) / (x2 - x1)), 0));
+			iy = yzero - int(val::round((double(sizey - 1) / double(y2 - y1)) * y, 0));
+			dc.DrawLine(ix, yzero, ix, iy);
+		}
+	}
+	else if (plotstyle == 2) {
+		double sol = f[plus + 2], dx = f[plus + 3]/2.0;
+		wxColour c_brush = Color[colour];
+		int ix1;
+
+		if (!fill) sol = 0.0;
+		if (bitmapbackground) {
+			if (sol > 0.0) sol = 1;
+		}
+		// std::cout << "\n sol = " << sol << " f[] = " << f[plus +2] << std::endl; 
+		if (sol == 0.0) {
+			wxBrush brush(Color[colour]);
+			brush.SetStyle(wxBrushStyle::wxBRUSHSTYLE_TRANSPARENT);
+			dc.SetBrush(brush);
+		}
+		else {
+			double f_bgc = 1.0 - sol;
+			const wxColour &bgc = BackgroundColor;
+			unsigned char gr = c_brush.Green(), red = c_brush.Red(), bl = c_brush.Blue();
+			gr = (unsigned char)(double(gr)*sol + double(bgc.Green())*f_bgc);
+			red = (unsigned char)(double(red)*sol + double(bgc.Red())*f_bgc);
+			bl = (unsigned char)(double(bl)*sol + double(bgc.Blue())*f_bgc);
+			wxBrush brush(wxColour(red,gr,bl));
+			dc.SetBrush(brush);
+		}
+		if (active_function == colour) dc.SetPen(wxPen(Color[colour],pen[colour]+3));
+		else dc.SetPen(wxPen(Color[colour],pen[colour]));
+
+		for (; i < l; ++i) {
+			x = double(i);
+			if (type == plotobject::POISDENSITY) y = val::poissondensity(lambda, i);
+			else if (type == plotobject::GEODENSITY) {
+				if (i == 0) continue;
+				y = val::power(q, i-1) * lambda;
+			}
+			else y = C[i];
+			ix = abst + int(val::round(double(sizex - 1) * ((x-dx - x1) / (x2 - x1)), 0));
+			ix1 = abst + int(val::round(double(sizex - 1) * ((x+dx - x1) / (x2 - x1)), 0));
+			iy = yzero - int(val::round((double(sizey - 1) / double(y2 - y1)) * y, 0));
+			ix1 -= ix;
+			iy -= yzero;
+			if (iy == -1) dc.DrawLine(ix,yzero,ix + ix1,yzero);
+			else dc.DrawRectangle(ix,yzero,ix1+1,iy+1);
+			// std::cout << "\n x = " << x << " , yzero = " << yzero << " iy1 +1 = " << iy+1 << std::endl;
+		}
+	}
+}
 
 
 void PlotFunctionFrame::plottriangle(wxDC& dc,int colour)
@@ -2351,6 +2482,10 @@ void PlotFunctionFrame::plotallfunctions(wxMemoryDC& dc)
                         plothistogram(dc, i);
                     }
                 } break;
+                case plotobject::BINDENSITY: case plotobject::POISDENSITY: case plotobject::GEODENSITY:
+					if (discretedensities) plotdiscretedensity(dc, i, 1);
+					else plotdiscretedensity(dc, i);
+					break;
                 default:
                 {
                     plotfunction(dc,i);
@@ -2452,17 +2587,21 @@ void PlotFunctionFrame::plottomemoryDc(wxMemoryDC &memDC)
 
     fillfunctions=0;
     histogrames = 0;
+	discretedensities = 0;
     for (int i=0;i<N;++i) {
             if (F[i].IsFill() && f_menu[i]->IsChecked()) ++fillfunctions;
             if (F[i].IsHistogram() && f_menu[i]->IsChecked()) ++histogrames;
+            if (F[i].IsBinomdensity()  && f_menu[i]->IsChecked() && F[i].farray[2] == 2 && F[i].farray[3] != 0.0) ++discretedensities;
+            if ((F[i].IsPoissondensity() || F[i].IsGeodensity())  && f_menu[i]->IsChecked() && F[i].farray[1] == 2 && F[i].farray[2] != 0.0) ++discretedensities;
     }
 
     plotvertices(memDC);
     plotallfunctions(memDC);
     //histogrames = 0;
-    if ((fillfunctions && gridactiv->IsCheck()) || histogrames) {
+    if ((fillfunctions && gridactiv->IsCheck()) || histogrames || discretedensities) {
         fillfunctions=0;
         histogrames = 0;
+		discretedensities = 0;
         plotvertices(memDC);
         plotallfunctions(memDC);
     }

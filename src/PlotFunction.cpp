@@ -82,7 +82,7 @@ const val::d_array<wxString> greek_letters{L"\u03B1", L"\u03B2", L"\u03B3", L"\u
 
 const val::d_array<wxString> WordList{"PI", "exp", "log", "line",  "sqrt", "circle", "text", "triangle", "polygon", "points", "histogram",
                                    "inf", "fill", "abs", "arcsin", "arccos", "arctan", "rectangle",
-                                   "arsinh", "arcosh", "artanh", "sinh", "cosh", "tanh", "sin", "cos", "tan", "bitmap"};
+                                   "arsinh", "arcosh", "artanh", "sinh", "cosh", "tanh", "sin", "cos", "tan", "bitmap", "bindensity", "poissondensity" , "geodensity"};
 
 /*
 val::d_array<std::string> sfunctionlist({"sqrt", "exp", "log", "abs", "sinh", "cosh", "tanh", "arsinh", "arcosh", "artanh",
@@ -194,6 +194,40 @@ int operator <(const val::GPair<double>& p,const val::GPair<double>& q)
     else return (p.y<q.y);
 
 }
+	
+double binomdensity(int n, const double &p, int k)
+{
+	int i,m;
+	double b;
+
+	if (k < 0 || k > n) return 0.0;
+
+	if (k == 0) return power(1-p,n);
+	if (k == 1) return double(n) * p * power(1-p,n-1);
+	if (k == n) return power(p, n);
+	if (k==n-1) return double(n) * power(p, n-1) *(1-p);
+
+	m=n+1-k;
+	b=double(n+1-k);
+	for (i=2;i<=k;i++) {
+		m++;
+		b*=double(m);
+		b/=(double(i));
+	}
+	return b * power(p,k) * power(1-p,n -k);
+}
+	
+double poissondensity(const double& lambda, int k)
+{
+	if (k < 0) return 0;
+	double value = 1.0;
+
+	for (int i = 1; i <= k; ++i) {
+		value *= (lambda/double(i));
+	}
+	return value*exp(-lambda);
+}
+
 }
 
 
@@ -1569,9 +1603,11 @@ void computepointstatistics(const plotobject& f, std::string input)
 
     if (n < 2) return;
 
-    double Ex = 0, Ey = 0, Vx = 0, Vy = 0, Cxy = 0, rhoxy = 0, dn = double(n), v, w, sigmax, sigmay, s2x, s2y, epsilon = 1e-9;
+    double Ex = 0, Ey = 0, Vx = 0, Vy = 0, Cxy = 0, rhoxy = 0, dn = double(n), v, w, sigmax, sigmay, s2x, s2y, epsilon = 1e-9,
+		   max_x = -val::Inf, max_y = max_x, min_x = val::Inf, min_y = min_x, hx , hy, median_x, median_y;
     wxString sigma(L"\u03C3"), rho(L"\u03C1");
     val::d_array<char> sep({';', '\n'});
+	val::d_array<double> X, Y;
     auto values = getwordsfromstring(input, sep);
 
     m = values.length();
@@ -1582,10 +1618,17 @@ void computepointstatistics(const plotobject& f, std::string input)
     if (epsilon < 0) epsilon = 1e-9;
     if (decimals < 0 || decimals > 10) decimals = 4;
 
+	X.reserve(n); Y.reserve(n);
+
     for (i = 0; i < n; ++i) {
-        Ex += Points[2*i];
-        Ey += Points[2*i+1];
+		hx = Points[2*i]; hy = Points[2*i+1];
+        Ex += hx;
+        Ey += hy;
+		max_x = val::Max(max_x, hx); max_y = val::Max(max_y, hy);
+		min_x = val::Min(min_x, hx); min_y = val::Min(min_y, hy);
+		X[i] = hx; Y[i] = hy;
     }
+	X.sort(); Y.sort();
     Ex /= dn; Ey /= dn;
 
     for (i = 0; i < n; ++i) {
@@ -1598,12 +1641,21 @@ void computepointstatistics(const plotobject& f, std::string input)
     s2x = Vx /(dn-1); s2y = Vy/(dn-1);
     Vx /= dn; Vy /= dn; Cxy /= dn;
     sigmax = val::sqrt(Vx); sigmay = val::sqrt(Vy);
+	//Median:
+	if (n%2) {
+		median_x = X[n/2]; median_y = Y[n/2];
+	}
+	else {
+		median_x = 0.5*(X[n/2] + X[n/2 - 1]); median_y = 0.5*(Y[n/2] + Y[n/2 - 1]);
+	}
 
     tablestring = "Number of Points, n = " + val::ToString(n) + "\n";
     tablestring += "\n E(X) = " +  val::ToString(val::round(Ex,decimals)) + ", V(X) = " + val::ToString(val::round(Vx,decimals)) + " , " + sigma + "(X) = " + val::ToString(val::round(sigmax,decimals));
-    tablestring += "\n S2(X) = " + val::ToString(val::round(s2x,decimals)) + ", sx = " + val::ToString(val::round(val::sqrt(s2x),decimals)) + "\n";
+    tablestring += "\n S2(X) = " + val::ToString(val::round(s2x,decimals)) + ", sx = " + val::ToString(val::round(val::sqrt(s2x),decimals));
+	tablestring += "\n Min(X) = " + val::ToString(min_x) + ", Max(X) = " + val::ToString(max_x) + ", Median(X) = " + val::ToString(median_x) + "\n";
     tablestring += "\n E(Y) = " + val::ToString(val::round(Ey,decimals)) + ", V(Y) = " + val::ToString(val::round(Vy,decimals)) + " , " + sigma + "(Y) = " + val::ToString(val::round(sigmay,decimals));
-    tablestring += "\n S2(Y) = " + val::ToString(val::round(s2y,decimals)) + ", sy = " + val::ToString(val::round(val::sqrt(s2y),decimals)) + "\n";
+    tablestring += "\n S2(Y) = " + val::ToString(val::round(s2y,decimals)) + ", sy = " + val::ToString(val::round(val::sqrt(s2y),decimals));
+	tablestring += "\n Min(Y) = " + val::ToString(min_y) + ", Max(Y) = " + val::ToString(max_y) + ", Median(Y) = " + val::ToString(median_y) + "\n";
     tablestring += "\n C(X,Y) = " + val::ToString(val::round(Cxy,decimals));
 
     if ((val::abs(Vx) > epsilon) && (val::abs(Vy) > epsilon)) {
@@ -2401,8 +2453,9 @@ void computepointsingraph(const plotobject &F, std::string input, double x1, dou
 
 // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-const val::d_array<std::string> plotobject::s_object_type{"line", "text", "circle", "rectangle", "triangle", "fill", "polygon", "points", "histogram", "bitmap"};
-const val::d_array<int> plotobject::defnpoints{5,2,6,4,6,3,2,2,4,4};
+const val::d_array<std::string> plotobject::s_object_type{"line", "text", "circle", "rectangle", "triangle", "fill", "polygon", "points", "histogram", "bitmap", "bindensity",
+                                                          "poissondensity", "geodensity"};
+const val::d_array<int> plotobject::defnpoints{5,2,6,4,6,3,2,2,4,4,5,4,4};
 val::Glist<wxImage> plotobject::image;
 //const val::d_array<std::string> plotobject::latex_string_size{"\\tiny", "\\scriptsize", "\\footnotesize", "\\small", "\\normalsize", "\\large", "\\Large", "\\LARGE", "\\huge", "\\Huge"};
 val::Glist<plotobject::latex_element> plotobject::latexbitmap_list;
@@ -2447,7 +2500,7 @@ int plotobject::latex_element::create_latex_element(const wxColour &col, int f_s
     }
     if (val::system(createpngfile)) {
 		MyThreadEvent event(MY_EVENT,IdInfo);
-		event.SetMessage("Cannot create dvi file!");
+		event.SetMessage("Cannot create png file!");
         if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event.Clone() );
         return 0;
     }
@@ -2691,6 +2744,97 @@ plotobject::plotobject(const std::string &sf)
     n = values.length();
 
     switch (objectype) {
+		case BINDENSITY:
+		{
+			int valid = 1, m;
+			double p;
+			std::string s_p;
+			if (n < 2) valid = 0;
+			else {
+				m = val::FromString<int>(values[0]);
+				if (m < 0  || m > 1000) valid = 0;
+				s_p = values[1];
+				p = val::valfunction(s_p)(0);
+				if (p < 0.0 || p > 1) valid = 0;
+			}
+			if (!valid) {
+                objectype = FUNCTION;
+                s_infix = "";
+                return;
+			}
+			double style = 0 , transparancy = 0, width = 0;
+
+			farray = val::d_array<double>(0.0, 5);
+			farray[0] = val::round(double(m),0); farray[1] = p;
+			s_infix += " " + val::ToString(farray[0]) + " " + s_p;
+
+			if (n > 2) style = val::FromString<double>(values[2]);
+			if (n > 3) transparancy = val::FromString<double>(values[3]);
+			if (n > 4) width = val::FromString<double>(values[4]);
+
+			if (style < 0 || style > 2) style = 2;
+			if (transparancy < 0 || transparancy > 1) transparancy = 0;
+			if (width <= 0 || width > 1) width = 1;
+			farray[2] = style; farray[3] = transparancy; farray[4] = width;
+
+			if (width != 1.0) s_infix += " " + val::ToString(style) + " " + val::ToString(transparancy) + " " + val::ToString(width);
+			else if (transparancy != 0.0) s_infix += " " + val::ToString(style) + " " + val::ToString(transparancy);
+			else if (style != 0.0) s_infix += " " + val::ToString(style); // + " " + val::ToString(transparancy) + " " + val::ToString(width);
+			
+			if (x_range.x == 0.0) {
+				if (x_range.y == 0.0) x_range.y = double(m);
+			}
+			if (x_range.y > farray[0]) x_range.y = farray[0];
+			x1 = val::valfunction(val::ToString(x_range.x));
+			x2 = val::valfunction(val::ToString(x_range.y));
+			critx = val::d_array<double>(m+1);
+
+			for (int i = 0; i <= m ; ++i) {
+				critx[i] = val::binomdensity(m, p, i);
+			}
+		} break;
+		case POISDENSITY: case GEODENSITY:
+		{
+			int valid = 1;
+			double lambda;
+			std::string s_l;
+			if (n < 1) valid = 0;
+			else {
+				s_l = values[0];
+				lambda = val::valfunction(s_l)(0);
+				if (lambda <= 0) valid = 0;
+				if (objectype == GEODENSITY && lambda > 1) valid = 0;
+			}
+			if (!valid) {
+                objectype = FUNCTION;
+                s_infix = "";
+                return;
+			}
+			double style = 0 , transparancy = 0, width = 0;
+
+			farray = val::d_array<double>(0.0, 4);
+			farray[0] = lambda;
+			s_infix += " " + s_l;
+
+			if (n > 1) style = val::FromString<double>(values[1]);
+			if (n > 2) transparancy = val::FromString<double>(values[2]);
+			if (n > 3) width = val::FromString<double>(values[3]);
+
+			if (style < 0 || style > 2) style = 2;
+			if (transparancy < 0 || transparancy > 1) transparancy = 0;
+			if (width <= 0 || width > 1) width = 1;
+			farray[1] = style; farray[2] = transparancy; farray[3] = width;
+
+			if (width != 1.0) s_infix += " " + val::ToString(style) + " " + val::ToString(transparancy) + " " + val::ToString(width);
+			else if (transparancy != 0.0) s_infix += " " + val::ToString(style) + " " + val::ToString(transparancy);
+			else if (style != 0.0) s_infix += " " + val::ToString(style); // + " " + val::ToString(transparancy) + " " + val::ToString(width);
+			
+			if (x_range.x == 0.0) {
+				if (x_range.y == 0.0) x_range.y = 1000;
+			}
+			x1 = val::valfunction(val::ToString(x_range.x));
+			x2 = val::valfunction(val::ToString(x_range.y));
+		} break;
         case HISTOGRAM:
         {
             //int m = n;

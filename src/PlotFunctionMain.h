@@ -84,7 +84,7 @@ class PlotFunctionFrame: public wxFrame
                     *addpointsmenu, *polygonpointsmenu, *linepointsmenu, *rectanglemenu , *circlemenu, *multicolormenu, *trianglemenu;
         int ispainted=0,N=0,points=1000,abst=10,sizex,sizey,yzero,yset=1,defaultsize=1,fontsize=10,nchildwindows=0;
         int settings=0,Posx=0,Posy=0,clientsize_x=0,clientsize_y=0,iter=50,dez=4,mouse_x1,mouse_y1,fillfunctions=0,pi_scale_x=0,pi_scale_y=0,histogrames = 0;//mouse_x2,mouse_y2;
-        int n_fstring=1,a_fstring=0,axis_pen=2,grid_pen=1,iscomputing=0,MaxRecent=10, doubleclicked = 0;
+        int n_fstring=1,a_fstring=0,axis_pen=2,grid_pen=1,iscomputing=0,MaxRecent=10, doubleclicked = 0, discretedensities = 0;
         int regressiondegree=1,rounddrawingpoints=-2,nanalyzewindows=0,active_function=-1,pointactive=0,decimalx=0,decimaly=0;
         int moveinpointsx = 0, moveinpointsy = 0;
         int bitmapbackground = 0, axis_fontsize = 10, SideText_isshown = 0, widthSideText = 200;
@@ -157,6 +157,7 @@ class PlotFunctionFrame: public wxFrame
         void plotcircle(wxDC& dc,int colour);
         void plotrectangle(wxDC& dc,int colour);
         void plothistogram(wxDC& dc, int colour, const double& solid = 0.0);
+	    void plotdiscretedensity(wxDC&, int colour, int fill = 0);
         void plottriangle(wxDC& dc,int colour);
         void plotfill(wxMemoryDC& dc,int colour);
         void plotpolygon(wxDC& dc,int colour);
