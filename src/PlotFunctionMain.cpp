@@ -4155,7 +4155,9 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
     case val_commands::EVALUATE:
         {
             if (f_nr < 0 || f_nr >= N) return;
-            if ((F[f_nr].getmode() != plotobject::FUNCTION) || F[f_nr].f.numberofvariables() > 1) return;
+			const plotobject &f = F[f_nr];
+			
+			if (!f.IsFunction() && !f.IsBinomdensity() && !f.IsPoissondensity() && !f.IsGeodensity() && !f.IsNormdensity()) return;
             tablestring = svalue;
             double par = 1.0;
 
@@ -4438,7 +4440,7 @@ void PlotFunctionFrame::OnMyEvent(MyThreadEvent& event)
 
         if (id  == IdTable) title = "Table";
         else title = "Evaluation";
-        sx=200;
+        sx=250;
         sy=dy;
         x+=dx;
         if (x+sx+23>maxx) {
@@ -5094,7 +5096,7 @@ int PlotFunctionFrame::findactivefunction(int x, int y)
                 if (squaredistance(l1,l2,p)<100) return i;
             }
             break;
-        default:  //plotobject::LINE , plotobject::TRIANGLE, plotobject::POLYGON
+            case plotobject::LINE: case plotobject::TRIANGLE: case plotobject::POLYGON:
             {
                 int ix0,j;
                 double inf(val::Inf);
@@ -5128,6 +5130,7 @@ int PlotFunctionFrame::findactivefunction(int x, int y)
                 if (F[i].getmode() == plotobject::TRIANGLE && squaredistance(l0,l2,p)<100) return i;
             }
             break;
+			default: break;
         }
 
     }
@@ -5488,7 +5491,7 @@ void PlotFunctionFrame::displacefunction(int i,const std::string &dx1,const std:
                 F[i] = plotobject(nf);
             }
             break;
-        default:  //plotobject::TRIANGLE, plotobject::POLYGON
+            case plotobject::TRIANGLE: case plotobject::POLYGON:
             {
                 std::string nf = "";
                 int k = 0, j;
@@ -5515,6 +5518,7 @@ void PlotFunctionFrame::displacefunction(int i,const std::string &dx1,const std:
                 F[i] = plotobject(nf);
             }
             break;
+			default: break;
     }
 	F[i].penstyle = style;
 }

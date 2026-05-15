@@ -99,8 +99,10 @@ namespace val
 val::rational abs(const val::rational&);
 int operator <(const val::GPair<double>& p,const val::GPair<double>& q);
 const int MaxPrec = 19;
+valfunction& operator *=(valfunction &f, const valfunction &g);
 double binomdensity(int n, const double &p, int k);
 double poissondensity(const double& lambda, int k);
+double Phi(double x);
 }
 
 
@@ -176,6 +178,7 @@ std::string valfunction_to_latex(const val::valfunction &f, int cdot = 0);
 
 val::pol<double> taylor_polynomial(const val::valfunction &f, int deg, const double &x0 = 0);
 
+double evaluatedistribution(const plotobject &F, const std::string &arg);
 
 void computepoints(val::Glist<plotobject> &F, int points,const double &x1,const double &x2,double &ymax,double &ymin,int activef,int comppoints);
 
@@ -231,11 +234,6 @@ double integral(const T& f,const double &a,const double &b,int iter = 50, const 
 template<class T>
 int NewtonIteration(const T& f, const T &f1, double &x, const double& eps = 1e-9, int n = 15);
 
-namespace val
-{
-valfunction& operator *=(valfunction &f, const valfunction &g);
-//std::ostream& operator <<(std::ostream& os,const valfunction &f);
-}
 
 void computezeros(const val::valfunction &f,const double &x1,const double &x2,const double &epsilon,int decimals,int iterations,
                   val::Glist<double> &d_zeros, val::Glist<val::valfunction> &s_zeros);
@@ -322,7 +320,7 @@ int NewtonIteration(const T& f, const T &f1, double &x, const double& eps, int n
 
 struct plotobject
 {
-    enum modetype {LINE,TEXT,CIRCLE,RECTANGLE,TRIANGLE,FILL,POLYGON,POINTS,HISTOGRAM,BITMAP,BINDENSITY,POISDENSITY,GEODENSITY,PARCURVE,ALGCURVE,FUNCTION};
+    enum modetype {LINE,TEXT,CIRCLE,RECTANGLE,TRIANGLE,FILL,POLYGON,POINTS,HISTOGRAM,BITMAP,BINDENSITY,POISDENSITY,GEODENSITY,NORMDENSITY,PARCURVE,ALGCURVE,FUNCTION};
     //enum latexsize {tiny, script, footnote, small, normal, large, Large, LARGE, huge, HUGE};
     //
     struct latex_element
@@ -386,6 +384,7 @@ struct plotobject
     int IsBinomdensity() const {return objectype==BINDENSITY;}
     int IsPoissondensity() const {return objectype==POISDENSITY;}
     int IsGeodensity() const {return objectype==GEODENSITY;}
+    int IsNormdensity() const {return objectype==NORMDENSITY;}
     int has_latex_script();
     //
     val::pol<double> getpol(const double& x) const;

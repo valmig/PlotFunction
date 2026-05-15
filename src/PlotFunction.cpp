@@ -82,7 +82,8 @@ const val::d_array<wxString> greek_letters{L"\u03B1", L"\u03B2", L"\u03B3", L"\u
 
 const val::d_array<wxString> WordList{"PI", "exp", "log", "line",  "sqrt", "circle", "text", "triangle", "polygon", "points", "histogram",
                                    "inf", "fill", "abs", "arcsin", "arccos", "arctan", "rectangle",
-                                   "arsinh", "arcosh", "artanh", "sinh", "cosh", "tanh", "sin", "cos", "tan", "bitmap", "bindensity", "poissondensity" , "geodensity"};
+                                   "arsinh", "arcosh", "artanh", "sinh", "cosh", "tanh", "sin", "cos", "tan", "bitmap", "bindensity", "poissondensity" , "geodensity",
+                                   "normaldensity"};
 
 /*
 val::d_array<std::string> sfunctionlist({"sqrt", "exp", "log", "abs", "sinh", "cosh", "tanh", "arsinh", "arcosh", "artanh",
@@ -162,7 +163,7 @@ const val::d_array<wxString> CommandsParList({"derive [#nr = 1]",
                                                  "latex-string [#nr = 1]",
                                                  "taylor-polynomial [#nr = 1] deg [x0 = 0]",
                                                  "reflection [#nr1 = 1] #nr2 / object",
-												 "points-in-graph [#nr = 1] expression1 (x= / y=); expression2... [;ddecimals [ = 4]]"
+												 "points-in-graph [#nr = 1] expression1 (x= / y=); expression2... [;ddecimals [ = 4]] [T print table] "
                                                  });
 
 
@@ -226,6 +227,29 @@ double poissondensity(const double& lambda, int k)
 		value *= (lambda/double(i));
 	}
 	return value*exp(-lambda);
+}
+
+double Phi(double x)
+{
+    // constants
+    double a1 =  0.254829592;
+    double a2 = -0.284496736;
+    double a3 =  1.421413741;
+    double a4 = -1.453152027;
+    double a5 =  1.061405429;
+    double p  =  0.3275911;
+
+    // Save the sign of x
+    int sign = 1;
+    if (x < 0)
+        sign = -1;
+    x = val::abs(x)/val::sqrt(2.0);
+
+    // A&S formula 7.1.26
+    double t = 1.0/(1.0 + p*x);
+    double y = 1.0 - (((((a5*t + a4)*t) + a3)*t + a2)*t + a1)*t*val::exp(-x*x);
+
+    return 0.5*(1.0 + sign*y);
 }
 
 }
@@ -582,6 +606,142 @@ val::pol<double> taylor_polynomial(const val::valfunction &f, int deg, const dou
 
     return pf;
 }
+
+
+double evaluatedistribution(const plotobject &F, const std::string &arg)
+{
+	if (!F.IsBinomdensity() && !F.IsGeodensity() && !F.IsPoissondensity() && !F.IsNormdensity()) return 0.0;
+	int nvalues = 1, k1 = 0, k2 = 0, eq1 = 0, eq2 = 0, nbinom = 0;
+	size_t pos = 0, n = arg.length();
+	double y = 0, dk1 = 0, dk2 = 0, mu = 0, sigma = 0, p = 0.0, lambda = 0;
+	std::string sk1 = "", sk2 = "";
+	val::Glist<std::string> name;
+
+	if (F.IsNormdensity()) {
+		std::string sf = F.getinfixnotation();
+		val::d_array<char> sep{' '};
+
+		name = getwordsfromstring(sf, sep);
+		mu = val::valfunction(name[1])(0);
+		sigma = val::sqrt(val::valfunction(name[2])(0));
+	}
+	if (F.IsBinomdensity()) {
+		nbinom = F.farray[0]; p = F.farray[1];
+	}
+	if (F.IsGeodensity()) {
+		p = F.farray[0];
+	}
+	if (F.IsPoissondensity()) {
+		lambda = F.farray[0];
+	}
+
+	if ((pos = arg.find("<")) != std::string::npos) {
+		size_t pos2;
+		if (pos < n && arg[pos + 1] == '=') eq1 = 1;
+		if ((pos2 = arg.find("<", pos+1)) != std::string::npos) { // two values
+			for (size_t i = 0; i < pos; ++i) sk1 += arg[i];
+			if (pos2 < n && arg[pos2 + 1] == '=') {
+				eq2 = 1;
+				++pos2;
+			}
+			for (size_t i = pos2+1; i < n; ++i) sk2 += arg[i];
+			nvalues = 2;
+		}
+		else {
+			eq2 = eq1;
+			pos += eq2;
+			for (size_t i = pos+1; i < n; ++i) sk2 += arg[i];
+		}
+		if (nvalues == 2) {
+			dk1 = val::valfunction(sk1)(0);
+			k1 = int(dk1);
+			if (eq1) {
+				if (dk1 - double(k1) > 0.0) ++k1;
+			}
+			else ++k1;
+		}
+		dk2 = val::valfunction(sk2)(0);
+		k2 = int(dk2);
+		if (!eq2) {
+			if (dk2 - double(k2) == 0.0) --k2;
+		}
+	}
+	else if ((pos = arg.find(">")) != std::string::npos) {
+		if (pos < n && arg[pos + 1] ==  '=') eq1 = 1;
+		pos += eq1;
+		for (size_t i = pos + 1; i < n; ++i) sk1 += arg[i];
+		dk1 = val::valfunction(sk1)(0);
+		k1 = int(dk1);
+		if (!eq1 || (dk1 - double(k1)) > 0) ++k1;
+		switch (F.objectype) {
+			case plotobject::NORMDENSITY: return (1 - val::Phi((dk1 - mu)/sigma));
+			case plotobject::BINDENSITY:
+			{
+				for (int i = k1; i <= nbinom; ++i) y += val::binomdensity(nbinom, p, i);
+				return y;
+			}
+			case plotobject::GEODENSITY:
+			{
+				if (k1 <= 1) return 1.0;
+				for (int i = 1; i < k1; ++i) y += p * val::power(1-p, i);
+				return (1 - y);
+			}
+			case plotobject::POISDENSITY:
+			{
+				for (int i = 0; i < k1; ++i) y += val::poissondensity(lambda, i);
+				return (1 - y);
+			}
+			default: break;
+		}
+	}
+	else {
+		std::string svalue = arg;
+		val::replace<char>(svalue, "x", "");
+		val::replace<char>(svalue, "X", "");
+		val::replace<char>(svalue, "=", "");
+		dk1 = val::valfunction(svalue)(0);
+		k1 = int(dk1);
+		switch (F.objectype) {
+			case plotobject::NORMDENSITY:
+			{
+				std::string smu = name[1], qsigma = name[2];
+				val::valfunction h("1/sqrt(2 * PI * " + qsigma + ") exp(-0.5 (x - " + smu + ")^2 / " + qsigma + ")", 0);
+				return h(dk1);
+			}
+			case plotobject::BINDENSITY: return  val::binomdensity(nbinom, p, k1);
+			case plotobject::POISDENSITY: return val::poissondensity(lambda, k1);
+			case plotobject::GEODENSITY:
+			{
+				if (k1 == 0) return 0;
+				else return  (p * val::power(1-p, k1));
+			}
+			default: break;
+		}
+	}
+	
+	if (F.IsNormdensity()) {
+		y = val::Phi((dk2 - mu)/sigma);
+		if (nvalues == 2)  y -= val::Phi((dk1 - mu)/sigma);
+	}
+	else  {
+		double w = 0.0;
+		if (F.IsGeodensity() && k1 == 0) k1 = 1;
+		if (F.IsBinomdensity() && k2 > nbinom) k2 = nbinom;
+		for (int i = k1; i <= k2; ++i) {
+			switch (F.objectype) {
+				case plotobject::BINDENSITY : w = val::binomdensity(nbinom, p, i); break;
+				case plotobject::GEODENSITY : w = p * val::power(1-p,i-1); break;
+				case plotobject::POISDENSITY : w = val::poissondensity(lambda, i); break;
+				default: break;
+			}
+			y += w;
+		}
+	}
+
+	return y;
+}	
+
+
 
 
 
@@ -1126,7 +1286,7 @@ void computepoints(val::Glist<plotobject> &F,int points,const double &x1,const d
                 ymin=val::Min(ymin,y);
             }
         }
-        if (F[i].getmode() == plotobject::FUNCTION) {
+        if (F[i].getmode() == plotobject::FUNCTION || F[i].getmode() == plotobject::NORMDENSITY) {
             F[i].farray.reserve(points);
             for (x=x1,j=0;j<points;++j,x+=delta) {
                 //y=farray[i_f][j]=F[i](val::round(x,dec));
@@ -1134,7 +1294,7 @@ void computepoints(val::Glist<plotobject> &F,int points,const double &x1,const d
                 ymax=val::Max(ymax,y);
                 ymin=val::Min(ymin,y);
             }
-			if (comppoints) {
+			if (comppoints && F[i].IsFunction()) {
 				F[i].critpoints = F[i].f.get_undefined_intervals(x1, x2, points);
 			}
         }
@@ -1278,6 +1438,7 @@ void computetable_rat(const plotobject& f,val::rational x1,val::rational x2,val:
 
 void computeevaluation(const plotobject& f, double par)
 {
+	if (!f.IsFunction() && !f.IsBinomdensity() && !f.IsPoissondensity() && !f.IsGeodensity() && !f.IsNormdensity()) return;
     using namespace val;
     d_array<char> sep({';'});
     Glist<std::string> wlist = getwordsfromstring(std::string(tablestring),sep);
@@ -1309,10 +1470,16 @@ void computeevaluation(const plotobject& f, double par)
     std::string ow;
     val::Glist<char> VarList;
 
-    tablestring = "f(x) = " + f.getinfixnotation() + "\n";
+	if (f.IsFunction()) tablestring = "f(x) = " + f.getinfixnotation() + "\n";
+	else tablestring = "Computation of Probablities:\n"; 
 
     for (auto & w : wlist) {
         replace<char>(w, "ans", ansexpr);
+		if (!f.IsFunction()) {
+			y = val::round(evaluatedistribution(f, w),decimals);
+			tablestring += "\nEvaluation of " + w + ":\n" + val::ToString(y) + "\n";
+			continue;
+		}
         ow = w;
         VarList = substitutepar(w);
         h = F(valfunction(w));
@@ -1339,7 +1506,7 @@ void computeevaluation(const plotobject& f, double par)
         tablestring += "\n\nDouble evaluation:\n f(" + ow + ") = " + ToString(y,yprecision);
         tablestring += "\nPoint in graph: \n" + ToString(x,precision) + "  " + ToString(y,yprecision) + "\n";
     }
-    ansexpr = "(" + h.getinfixnotation() + ")";
+    if (f.IsFunction()) ansexpr = "(" + h.getinfixnotation() + ")";
     MyThreadEvent event(MY_EVENT,IdEval);
     if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event.Clone());
 }
@@ -2362,6 +2529,13 @@ void computepointsingraph(const plotobject &F, std::string input, double x1, dou
 	using namespace val;
 	if (!F.IsFunction() && !F.IsAlgCurve() && !F.IsParcurve()) return;
 
+	int withtable = 0;
+
+	if (input.find("T") != std::string::npos) {
+		withtable = 1;
+		replace<char>(input, "T", "");
+	}
+	
 	d_array<char> sep{';'};
 	Glist<std::string> words = getwordsfromstring(input, sep);
 	int n = words.length(), decimals = 4;
@@ -2380,7 +2554,9 @@ void computepointsingraph(const plotobject &F, std::string input, double x1, dou
 	int xset = 0, yset = 0;
 	valfunction arg, h;
 	std::string s = "";
-	Glist<GPair<double>> values; 
+	Glist<GPair<double>> values;
+
+	if (withtable) tablestring = "";
 
 	for (auto &w : words) {
 		xset = yset = 0;
@@ -2394,6 +2570,7 @@ void computepointsingraph(const plotobject &F, std::string input, double x1, dou
 		arg.setparameter(F.f.getparameter());
 		if (F.IsFunction()) {
 			if (!yset) {
+				xset = 1;
 				x = round(arg(0), decimals);
 				y = val::round(F.f(arg(0)), decimals);
 				values.push_back(GPair<double>(x,y));
@@ -2437,9 +2614,17 @@ void computepointsingraph(const plotobject &F, std::string input, double x1, dou
 				else values.push_back(GPair<double>(x, round(z,decimals)));
 			}
 		}
+		if (withtable) {
+			tablestring += "\n\nPoints to ";
+			if (yset) tablestring += "y-value : ";
+			else if (xset) tablestring += "x-value : ";
+			else tablestring += "parameter value t : ";
+			tablestring += arg.getinfixnotation();
+		}
 		for (const auto &v : values ) {
 			if (!isNaN(v.x) && !isNaN(v.y) && !isInf(v.x) && !isInf(v.y)) {
 				s += " " + ToString(v.x) + " " + ToString(v.y);
+				tablestring += "\n" + ToString(v.x) + " " + ToString(v.y);
 			}
 		}
 	}
@@ -2447,14 +2632,19 @@ void computepointsingraph(const plotobject &F, std::string input, double x1, dou
 	fstring += "\npoints" + s;
 	
     MyThreadEvent event(MY_EVENT, IdRefresh);
-    if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event.Clone() );
+    if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event.Clone());
+
+	if (withtable) {
+		MyThreadEvent event2(MY_EVENT, IdTable);
+		if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event2.Clone());
+	}
 }
 
 
 // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 const val::d_array<std::string> plotobject::s_object_type{"line", "text", "circle", "rectangle", "triangle", "fill", "polygon", "points", "histogram", "bitmap", "bindensity",
-                                                          "poissondensity", "geodensity"};
+                                                          "poissondensity", "geodensity", "normaldensity"};
 const val::d_array<int> plotobject::defnpoints{5,2,6,4,6,3,2,2,4,4,5,4,4};
 val::Glist<wxImage> plotobject::image;
 //const val::d_array<std::string> plotobject::latex_string_size{"\\tiny", "\\scriptsize", "\\footnotesize", "\\small", "\\normalsize", "\\large", "\\Large", "\\LARGE", "\\huge", "\\Huge"};
@@ -2834,6 +3024,21 @@ plotobject::plotobject(const std::string &sf)
 			}
 			x1 = val::valfunction(val::ToString(x_range.x));
 			x2 = val::valfunction(val::ToString(x_range.y));
+		} break;
+		case NORMDENSITY:
+		{
+			s_infix = "";
+			objectype = FUNCTION;
+			if (n != 2) return;
+			val::valfunction mu = val::valfunction(values[0]), qsigma = val::valfunction(values[1]);
+			double qs = qsigma(0);
+			if (qs <= 0) {
+				return;
+			}
+			objectype = NORMDENSITY;
+			s_infix = "normaldensity " + mu.getinfixnotation() + " " + qsigma.getinfixnotation();
+			
+			f = val::valfunction("1/sqrt(2 * PI * " + qsigma.getinfixnotation() + ") exp(-0.5 (x - " + mu.getinfixnotation() + ")^2 / " + qsigma.getinfixnotation() + ")", 0);
 		} break;
         case HISTOGRAM:
         {
