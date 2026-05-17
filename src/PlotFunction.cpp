@@ -83,7 +83,7 @@ const val::d_array<wxString> greek_letters{L"\u03B1", L"\u03B2", L"\u03B3", L"\u
 const val::d_array<wxString> WordList{"PI", "exp", "log", "line",  "sqrt", "circle", "text", "triangle", "polygon", "points", "histogram",
                                    "inf", "fill", "abs", "arcsin", "arccos", "arctan", "rectangle",
                                    "arsinh", "arcosh", "artanh", "sinh", "cosh", "tanh", "sin", "cos", "tan", "bitmap", "bindensity", "poissondensity" , "geodensity",
-                                   "normaldensity"};
+                                   "normaldensity", "normaldistribution", "bindistribution"};
 
 /*
 val::d_array<std::string> sfunctionlist({"sqrt", "exp", "log", "abs", "sinh", "cosh", "tanh", "arsinh", "arcosh", "artanh",
@@ -196,6 +196,27 @@ int operator <(const val::GPair<double>& p,const val::GPair<double>& q)
 
 }
 	
+double binom(int n, int k)
+{
+	int i,m;
+	double b;
+
+	if (k==0) return double(1);
+	if (k==1) return double(n);
+	if (n==k) return double(1);
+	if (k==n-1) return double(n);
+
+	m=n+1-k;
+	b=double(n+1-k);
+	for (i=2;i<=k;i++) {
+		m++;
+		b*=double(m);
+		b/=(double(i));
+	}
+	return b;
+}
+
+	
 double binomdensity(int n, const double &p, int k)
 {
 	int i,m;
@@ -217,6 +238,25 @@ double binomdensity(int n, const double &p, int k)
 	}
 	return b * power(p,k) * power(1-p,n -k);
 }
+
+double binomcd(int n, const double &p, int k1, int k2)
+{
+	int i;
+	double c,b,q=1-p;
+
+	if (k1>k2) return 0;
+	if (n<k2) return 0;
+
+	c=b=binom(n,k1) *val::power(p,k1)*val::power(q,n-k1);
+	for (i=k1+1;i<=k2;i++){
+		//cout<<endl<<b;
+		c*= (p/q)*(double(n-i+1)/double(i));
+		b+=c;
+	}
+	return b;
+}
+
+
 	
 double poissondensity(const double& lambda, int k)
 {
@@ -610,14 +650,15 @@ val::pol<double> taylor_polynomial(const val::valfunction &f, int deg, const dou
 
 double evaluatedistribution(const plotobject &F, const std::string &arg)
 {
-	if (!F.IsBinomdensity() && !F.IsGeodensity() && !F.IsPoissondensity() && !F.IsNormdensity()) return 0.0;
+	if (!F.IsBinomdensity() && !F.IsGeodensity() && !F.IsPoissondensity() && !F.IsNormdensity()
+		&& !F.IsNormdistribution() && !F.IsBindistribution()) return 0.0;
 	int nvalues = 1, k1 = 0, k2 = 0, eq1 = 0, eq2 = 0, nbinom = 0;
 	size_t pos = 0, n = arg.length();
 	double y = 0, dk1 = 0, dk2 = 0, mu = 0, sigma = 0, p = 0.0, lambda = 0;
 	std::string sk1 = "", sk2 = "";
 	val::Glist<std::string> name;
 
-	if (F.IsNormdensity()) {
+	if (F.IsNormdensity() || F.IsNormdistribution()) {
 		std::string sf = F.getinfixnotation();
 		val::d_array<char> sep{' '};
 
@@ -625,7 +666,7 @@ double evaluatedistribution(const plotobject &F, const std::string &arg)
 		mu = val::valfunction(name[1])(0);
 		sigma = val::sqrt(val::valfunction(name[2])(0));
 	}
-	if (F.IsBinomdensity()) {
+	if (F.IsBinomdensity() || F.IsBindistribution()) {
 		nbinom = F.farray[0]; p = F.farray[1];
 	}
 	if (F.IsGeodensity()) {
@@ -675,7 +716,7 @@ double evaluatedistribution(const plotobject &F, const std::string &arg)
 		if (!eq1 || (dk1 - double(k1)) > 0) ++k1;
 		switch (F.objectype) {
 			case plotobject::NORMDENSITY: return (1 - val::Phi((dk1 - mu)/sigma));
-			case plotobject::BINDENSITY:
+			case plotobject::BINDENSITY: case plotobject::BINDISTRIBUTION:
 			{
 				for (int i = k1; i <= nbinom; ++i) y += val::binomdensity(nbinom, p, i);
 				return y;
@@ -702,13 +743,20 @@ double evaluatedistribution(const plotobject &F, const std::string &arg)
 		dk1 = val::valfunction(svalue)(0);
 		k1 = int(dk1);
 		switch (F.objectype) {
-			case plotobject::NORMDENSITY:
+			case plotobject::NORMDENSITY: case plotobject::NORMDISTRIBUTION:
 			{
 				std::string smu = name[1], qsigma = name[2];
-				val::valfunction h("1/sqrt(2 * PI * " + qsigma + ") exp(-0.5 (x - " + smu + ")^2 / " + qsigma + ")", 0);
-				return h(dk1);
+				if (F.IsNormdensity()) {
+					val::valfunction h("1/sqrt(2 * PI * " + qsigma + ") exp(-0.5 (x - " + smu + ")^2 / " + qsigma + ")", 0);
+					return h(dk1);
+				}
+				else {
+					double mu = val::valfunction(smu)(0), sigma = val::sqrt(val::valfunction(qsigma)(0));
+					return val::Phi((dk1 - mu)/sigma);
+				}
 			}
 			case plotobject::BINDENSITY: return  val::binomdensity(nbinom, p, k1);
+			case plotobject::BINDISTRIBUTION: return  val::binomcd(nbinom, p, 0, k1);
 			case plotobject::POISDENSITY: return val::poissondensity(lambda, k1);
 			case plotobject::GEODENSITY:
 			{
@@ -726,10 +774,12 @@ double evaluatedistribution(const plotobject &F, const std::string &arg)
 	else  {
 		double w = 0.0;
 		if (F.IsGeodensity() && k1 == 0) k1 = 1;
-		if (F.IsBinomdensity() && k2 > nbinom) k2 = nbinom;
+		if ((F.IsBinomdensity() || F.IsBindistribution()) && k2 > nbinom) k2 = nbinom;
 		for (int i = k1; i <= k2; ++i) {
 			switch (F.objectype) {
-				case plotobject::BINDENSITY : w = val::binomdensity(nbinom, p, i); break;
+				case plotobject::BINDENSITY: case plotobject::BINDISTRIBUTION:
+					w = val::binomdensity(nbinom, p, i);
+					break;
 				case plotobject::GEODENSITY : w = p * val::power(1-p,i-1); break;
 				case plotobject::POISDENSITY : w = val::poissondensity(lambda, i); break;
 				default: break;
@@ -896,12 +946,42 @@ int isInf(const double  &a)
 }
 
 
+int normquantile(double y, double &x)
+{
+	int res;
+	auto F = [=](double z)
+		{
+			return val::Phi(z) - y;
+		};
+	auto phi = [](double x)
+		{
+			val::valfunction f("exp(-1/2x^2)/sqrt(2PI)");
+			return  f(x);
+		};
+
+	res = NewtonIteration(F, phi ,x);
+	if (res < 0) return 0;
+	return 1;
+}
+
+int binquantile(double y, int &x, int n, double p)
+{
+	if (y < 0 || y > 1) return 0;
+	if (y == 0) {
+		x = 0;
+		return 1;
+	}
+	x = 0;
+	while (val::binomcd(n, p, 0, x) <= y) ++x;
+	--x;
+	return 1;
+}
+
+
+
+
 void gettangentvalues(const plotobject &f,const double &x,double &m,double &b,int tangent)
 {
-    //val::DoubleFunction F(val::doublefunction(std::bind(std::cref(f),std::placeholders::_1)));
-    //int n=isderived(f);
-    //for (i=0;i<n;++i) F=F.derive();
-
     m= derive(f,x);  //F.derive(x);
     if (!tangent) {
         if (val::abs(m)<=1e-9) m = val::Inf;
@@ -1264,7 +1344,8 @@ void computepoints(val::Glist<plotobject> &F,int points,const double &x1,const d
     int m=F.length(),i,j;// nrf = 0, i_rf = 0;
     val::pol<double> p;
     val::vector<double> zeros;
-    double delta=(x2-x1)/(double(points-1)),x,y;//deltay = (y2-y1)/(double(points-1));
+    double delta=(x2-x1)/(double(points-1)),x,y, mu = 0, sigma = 0;//deltay = (y2-y1)/(double(points-1));
+	val::d_array<char> sep{' '};
 
     if (activef == -1) {
         ymax=-val::Inf;
@@ -1286,11 +1367,18 @@ void computepoints(val::Glist<plotobject> &F,int points,const double &x1,const d
                 ymin=val::Min(ymin,y);
             }
         }
-        if (F[i].getmode() == plotobject::FUNCTION || F[i].getmode() == plotobject::NORMDENSITY) {
+        if (F[i].IsFunction() || F[i].IsNormdensity() || F[i].IsNormdistribution()) {
+			if (F[i].IsNormdistribution()) {
+				val::Glist<std::string> sval = getwordsfromstring(F[i].s_infix, sep);
+				mu = val::valfunction(sval[1])(0); sigma = val::sqrt(val::valfunction(sval[2])(0));
+			}
             F[i].farray.reserve(points);
             for (x=x1,j=0;j<points;++j,x+=delta) {
                 //y=farray[i_f][j]=F[i](val::round(x,dec));
-                y=F[i].farray[j]=F[i].f(x);
+				if (F[i].IsNormdistribution()) {
+					y = F[i].farray[j] = val::Phi((x-mu)/sigma);
+				}
+				else  y=F[i].farray[j]=F[i].f(x);
                 ymax=val::Max(ymax,y);
                 ymin=val::Min(ymin,y);
             }
@@ -1438,7 +1526,8 @@ void computetable_rat(const plotobject& f,val::rational x1,val::rational x2,val:
 
 void computeevaluation(const plotobject& f, double par)
 {
-	if (!f.IsFunction() && !f.IsBinomdensity() && !f.IsPoissondensity() && !f.IsGeodensity() && !f.IsNormdensity()) return;
+	if (!f.IsFunction() && !f.IsBinomdensity() && !f.IsPoissondensity() && !f.IsGeodensity()
+		&& !f.IsNormdensity() && !f.IsNormdistribution() && !f.IsBindistribution()) return;
     using namespace val;
     d_array<char> sep({';'});
     Glist<std::string> wlist = getwordsfromstring(std::string(tablestring),sep);
@@ -1689,7 +1778,7 @@ void computerotation(const val::d_array<plotobject*> F,std::string input)
 void computeregression(const plotobject& f,int degree)
 {
     if (!f.IsPoints() && !f.IsPolygon()) return;
-    val::d_array<double> d_f = f.farray;
+    const val::d_array<double> &d_f = f.farray;
     double minx = val::Inf, maxx = -val::Inf;
     int n = d_f.length(), i, N = n/2;
     if (n<=0) return;
@@ -2527,7 +2616,7 @@ void computepointreflection(const plotobject &F, double px, double py)
 void computepointsingraph(const plotobject &F, std::string input, double x1, double x2)
 {
 	using namespace val;
-	if (!F.IsFunction() && !F.IsAlgCurve() && !F.IsParcurve()) return;
+	if (!F.IsFunction() && !F.IsAlgCurve() && !F.IsParcurve() && !F.IsNormdistribution() && !F.IsBindistribution()) return;
 
 	int withtable = 0;
 
@@ -2550,13 +2639,21 @@ void computepointsingraph(const plotobject &F, std::string input, double x1, dou
 		words.delelement(n-1);
 	}
 
-	double x, y;
-	int xset = 0, yset = 0;
+	double x, y, mu = 0, sigma = 0, p = 0;
+	int xset = 0, yset = 0, nbinom = 0, ix = 0;
 	valfunction arg, h;
 	std::string s = "";
 	Glist<GPair<double>> values;
 
 	if (withtable) tablestring = "";
+
+	if (F.IsNormdistribution()) {
+		Glist<std::string> names = getwordsfromstring(F.s_infix, val::d_array<char>{' '});
+		mu = val::valfunction(names[1])(0); sigma = val::sqrt(val::valfunction(names[2])(0));
+	}
+	if (F.IsBindistribution()) {
+		nbinom = int(F.farray[0]); p = F.farray[1];
+	}
 
 	for (auto &w : words) {
 		xset = yset = 0;
@@ -2568,7 +2665,39 @@ void computepointsingraph(const plotobject &F, std::string input, double x1, dou
 		replace<char>(w, "=", "");
 		arg = valfunction(w);
 		arg.setparameter(F.f.getparameter());
-		if (F.IsFunction()) {
+		if (F.IsNormdistribution() || F.IsBindistribution()) {
+			if (!yset) {
+				xset = 1;
+				x = arg(0);
+				if (F.IsNormdistribution()) y = round(Phi((x-mu)/sigma),decimals);
+				else y = round(binomcd(nbinom, p, 0, int(x)), decimals);
+				x = round(x,decimals);
+				values.push_back(GPair<double>(x,y));
+			}
+			else {
+				y = arg(0);
+				x = 0;
+				if (F.IsNormdistribution()) {
+					if (normquantile(y, x)) {
+						x *= sigma;
+						x += mu;
+						x = val::round(x,decimals);
+						y = val::round(y,decimals);
+					}
+					else continue;
+				}
+				else {
+					ix = 0;
+					if (binquantile(y, ix, nbinom, p)) {
+						x = double(ix);
+						y = round(binomcd(nbinom, p, 0, ix),decimals);
+					}
+					else continue;
+				}
+				values.push_back(GPair<double>(x,y));
+			}
+		}
+		else if (F.IsFunction()) {
 			if (!yset) {
 				xset = 1;
 				x = round(arg(0), decimals);
@@ -2624,7 +2753,7 @@ void computepointsingraph(const plotobject &F, std::string input, double x1, dou
 		for (const auto &v : values ) {
 			if (!isNaN(v.x) && !isNaN(v.y) && !isInf(v.x) && !isInf(v.y)) {
 				s += " " + ToString(v.x) + " " + ToString(v.y);
-				tablestring += "\n" + ToString(v.x) + " " + ToString(v.y);
+				if (withtable) tablestring += "\n" + ToString(v.x) + " " + ToString(v.y);
 			}
 		}
 	}
@@ -2644,8 +2773,8 @@ void computepointsingraph(const plotobject &F, std::string input, double x1, dou
 // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 const val::d_array<std::string> plotobject::s_object_type{"line", "text", "circle", "rectangle", "triangle", "fill", "polygon", "points", "histogram", "bitmap", "bindensity",
-                                                          "poissondensity", "geodensity", "normaldensity"};
-const val::d_array<int> plotobject::defnpoints{5,2,6,4,6,3,2,2,4,4,5,4,4};
+                                                          "poissondensity", "geodensity", "normaldensity", "normaldistribution", "bindistribution"};
+const val::d_array<int> plotobject::defnpoints{5,2,6,4,6,3,2,2,4,4,5,4,4,4,5};
 val::Glist<wxImage> plotobject::image;
 //const val::d_array<std::string> plotobject::latex_string_size{"\\tiny", "\\scriptsize", "\\footnotesize", "\\small", "\\normalsize", "\\large", "\\Large", "\\LARGE", "\\huge", "\\Huge"};
 val::Glist<plotobject::latex_element> plotobject::latexbitmap_list;
@@ -2934,10 +3063,10 @@ plotobject::plotobject(const std::string &sf)
     n = values.length();
 
     switch (objectype) {
-		case BINDENSITY:
+		case BINDENSITY: case BINDISTRIBUTION:
 		{
 			int valid = 1, m;
-			double p;
+			double p, sum = 0, y;
 			std::string s_p;
 			if (n < 2) valid = 0;
 			else {
@@ -2980,7 +3109,10 @@ plotobject::plotobject(const std::string &sf)
 			critx = val::d_array<double>(m+1);
 
 			for (int i = 0; i <= m ; ++i) {
-				critx[i] = val::binomdensity(m, p, i);
+				y = val::binomdensity(m, p, i);
+				sum += y;
+				if (objectype == BINDENSITY) critx[i] = y;
+				else critx[i] = sum;
 			}
 		} break;
 		case POISDENSITY: case GEODENSITY:
@@ -3025,20 +3157,28 @@ plotobject::plotobject(const std::string &sf)
 			x1 = val::valfunction(val::ToString(x_range.x));
 			x2 = val::valfunction(val::ToString(x_range.y));
 		} break;
-		case NORMDENSITY:
+		case NORMDENSITY: case NORMDISTRIBUTION:
 		{
+			int type = objectype;
 			s_infix = "";
 			objectype = FUNCTION;
 			if (n != 2) return;
 			val::valfunction mu = val::valfunction(values[0]), qsigma = val::valfunction(values[1]);
-			double qs = qsigma(0);
+			double qs = qsigma(0), factor = 1.0/val::sqrt(2*val::PI*qs);
 			if (qs <= 0) {
 				return;
 			}
-			objectype = NORMDENSITY;
-			s_infix = "normaldensity " + mu.getinfixnotation() + " " + qsigma.getinfixnotation();
+			objectype = type;
+			if (objectype == plotobject::NORMDENSITY) {
+				s_infix = "normaldensity ";
+				f = val::valfunction(val::ToString(factor,19) +  "*exp(-0.5 (x - " + mu.getinfixnotation() + ")^2 / " + qsigma.getinfixnotation() + ")", 0);
+			}
+			else {
+				s_infix = "normaldistribution ";
+			}
+			s_infix += mu.getinfixnotation() + " " + qsigma.getinfixnotation();
 			
-			f = val::valfunction("1/sqrt(2 * PI * " + qsigma.getinfixnotation() + ") exp(-0.5 (x - " + mu.getinfixnotation() + ")^2 / " + qsigma.getinfixnotation() + ")", 0);
+			//f = val::valfunction("1/sqrt(2 * PI * " + qsigma.getinfixnotation() + ") exp(-0.5 (x - " + mu.getinfixnotation() + ")^2 / " + qsigma.getinfixnotation() + ")", 0);
 		} break;
         case HISTOGRAM:
         {

@@ -101,6 +101,7 @@ int operator <(const val::GPair<double>& p,const val::GPair<double>& q);
 const int MaxPrec = 19;
 valfunction& operator *=(valfunction &f, const valfunction &g);
 double binomdensity(int n, const double &p, int k);
+double binomcd(int n,const double &p, int k1,int k2);
 double poissondensity(const double& lambda, int k);
 double Phi(double x);
 }
@@ -123,6 +124,11 @@ int intdigits(double x);
 int getpiscale(const std::string& s,val::rational &factor,double &scale,int pos = 1);
 
 int isInf(const double& a);
+
+int normquantile(double y, double &x);
+
+// Computes to  X ~ Bin(n,p) largest x with P(X<=x) <= y, if (0 <= y <= 1)
+int binquantile(double y, int &x, int n, double p);
 
 //int isderived(const std::string &s);
 
@@ -231,8 +237,8 @@ double integral(const T& f,const double &a,const double &b,int iter = 50, const 
 //          -1 number of iterations reached, but |f(x) > eps|; iteration failed
 //          i = number of required iterations; iteration succesful.
 // f1 = f'
-template<class T>
-int NewtonIteration(const T& f, const T &f1, double &x, const double& eps = 1e-9, int n = 15);
+template<class T, class S>
+int NewtonIteration(const T& f, const S &f1, double &x, const double& eps = 1e-9, int n = 15);
 
 
 void computezeros(const val::valfunction &f,const double &x1,const double &x2,const double &epsilon,int decimals,int iterations,
@@ -301,8 +307,8 @@ double integral(const T& f,const double &a,const double &b,int iter, const doubl
     return wert2;
 }
 
-template<class T>
-int NewtonIteration(const T& f, const T &f1, double &x, const double& eps, int n)
+template<class T, class S>
+int NewtonIteration(const T& f, const S &f1, double &x, const double& eps, int n)
 {
     int i;
     double y1, y;
@@ -320,7 +326,8 @@ int NewtonIteration(const T& f, const T &f1, double &x, const double& eps, int n
 
 struct plotobject
 {
-    enum modetype {LINE,TEXT,CIRCLE,RECTANGLE,TRIANGLE,FILL,POLYGON,POINTS,HISTOGRAM,BITMAP,BINDENSITY,POISDENSITY,GEODENSITY,NORMDENSITY,PARCURVE,ALGCURVE,FUNCTION};
+    enum modetype {LINE,TEXT,CIRCLE,RECTANGLE,TRIANGLE,FILL,POLYGON,POINTS,HISTOGRAM,BITMAP,BINDENSITY,POISDENSITY,GEODENSITY,NORMDENSITY,NORMDISTRIBUTION,
+		           BINDISTRIBUTION, PARCURVE,ALGCURVE,FUNCTION};
     //enum latexsize {tiny, script, footnote, small, normal, large, Large, LARGE, huge, HUGE};
     //
     struct latex_element
@@ -385,6 +392,8 @@ struct plotobject
     int IsPoissondensity() const {return objectype==POISDENSITY;}
     int IsGeodensity() const {return objectype==GEODENSITY;}
     int IsNormdensity() const {return objectype==NORMDENSITY;}
+    int IsNormdistribution() const {return objectype==NORMDISTRIBUTION;}
+    int IsBindistribution() const {return objectype==BINDISTRIBUTION;}
     int has_latex_script();
     //
     val::pol<double> getpol(const double& x) const;

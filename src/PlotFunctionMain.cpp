@@ -1307,7 +1307,7 @@ void PlotFunctionFrame::plotvertices(wxDC& dc)
 void PlotFunctionFrame::plotfunction(wxDC& dc,int colour)
 {
     const val::d_array<double> &f = F[colour].farray;
-    int ix0,ix1 = -1, iy0, iy1 = -1,index,ylimit=abst+sizey-1,aw=0,ew=sizex, ready = 0, i, k;
+    int ix0,ix1 = -1, iy0, iy1 = -1,index,ylimit=abst+sizey-1,aw=0,ew=sizex, ready = 0, i, k, normdist = 0;
     double faktor_x,faktor_y,xr1=F[colour].x_range.x, xr2=F[colour].x_range.y, yvalue = 0, yold = val::Inf, dyzero(yzero);
 
 	if (f.length() < points) return;
@@ -1329,6 +1329,8 @@ void PlotFunctionFrame::plotfunction(wxDC& dc,int colour)
 
     faktor_x=double(points-1)/double(sizex-1);
     faktor_y=double(sizey-1)/(y2-y1);
+
+	if (F[colour].IsNormdistribution()) normdist = 1;
 
     if (F[colour].islinear) {
         if (active_function == colour) dc.SetPen(wxPen(Color[colour],pen[colour]+3, F[colour].penstyle));
@@ -1409,7 +1411,7 @@ void PlotFunctionFrame::plotfunction(wxDC& dc,int colour)
 				ix0 = i + abst;
 				index = int (val::round(double(i)*faktor_x,0));
 				if (index<0 || index >= points) return;
-				if (awset) {
+				if (awset && !normdist) {
 					yvalue = F[colour].f(daw + 1e-9);
 					// if (val::isNaN(yvalue) || isInf(yvalue)) {
 					// 	yvalue = F[colour].f(daw + 1e-9);
@@ -1484,7 +1486,7 @@ void PlotFunctionFrame::plotfunction(wxDC& dc,int colour)
 					}
 					else break;
 					ix1 = ew + abst;
-					yvalue = F[colour].f(dew - 1e-9);
+					if (!normdist) yvalue = F[colour].f(dew - 1e-9);
 					iy1 = int(val::round(dyzero - faktor_y*yvalue,0));
 
 
@@ -1857,14 +1859,14 @@ void PlotFunctionFrame::plotdiscretedensity(wxDC& dc, int colour, int fill)
 	double x, ax = F[colour].x_range.x, ex = F[colour].x_range.y, y, lambda = f[0], q = 1 - lambda;
 	int ix, iy, i = int(ax), l = int(ex) +1, type = F[colour].objectype, plotstyle, plus = 0;
 
-	if (type == plotobject::BINDENSITY) {
+	if (type == plotobject::BINDENSITY || type == plotobject::BINDISTRIBUTION) {
 		if (f.length() != 5) return;
 		plus = 1;
 	}
 
 	plotstyle = int(f[plus + 1]);
 
-	if (type == plotobject::BINDENSITY && l > C.length()) l = C.length();
+	if ((type == plotobject::BINDENSITY || type == plotobject::BINDISTRIBUTION) && l > C.length()) l = C.length();
 
 	if (ax < x1) {
 		x = val::round(x1,0);
@@ -2148,17 +2150,8 @@ void PlotFunctionFrame::plotpoints(wxDC& dc,int colour)
 				dc.DrawLine(ix, iy-pointsize, ix, iy+pointsize);
 				dc.DrawLine(ix-pointsize, iy, ix+pointsize, iy);
 				break;
-			// case 3:
-			// 	if (active_function == colour && i == pointactive) {
-			// 		dc.SetPen(wxPen(Color[colour],pen[colour]+2));
-			// 	}
-			// 	dc.DrawLine(ix-pointsplus, iy, ix+pointsplus, iy);
-			// 	break;
 			default: break;
 		}
-        // if (active_function == colour && i == pointactive) {
-        //     dc.SetPen(wxPen(Color[colour],pen[colour]+2));
-        // }
     }
 }
 
@@ -2482,7 +2475,7 @@ void PlotFunctionFrame::plotallfunctions(wxMemoryDC& dc)
                         plothistogram(dc, i);
                     }
                 } break;
-                case plotobject::BINDENSITY: case plotobject::POISDENSITY: case plotobject::GEODENSITY:
+                case plotobject::BINDENSITY: case plotobject::POISDENSITY: case plotobject::GEODENSITY: case plotobject::BINDISTRIBUTION:
 					if (discretedensities) plotdiscretedensity(dc, i, 1);
 					else plotdiscretedensity(dc, i);
 					break;
@@ -2591,7 +2584,7 @@ void PlotFunctionFrame::plottomemoryDc(wxMemoryDC &memDC)
     for (int i=0;i<N;++i) {
             if (F[i].IsFill() && f_menu[i]->IsChecked()) ++fillfunctions;
             if (F[i].IsHistogram() && f_menu[i]->IsChecked()) ++histogrames;
-            if (F[i].IsBinomdensity()  && f_menu[i]->IsChecked() && F[i].farray[2] == 2 && F[i].farray[3] != 0.0) ++discretedensities;
+            if ((F[i].IsBinomdensity() || F[i].IsBindistribution())  && f_menu[i]->IsChecked() && F[i].farray[2] == 2 && F[i].farray[3] != 0.0) ++discretedensities;
             if ((F[i].IsPoissondensity() || F[i].IsGeodensity())  && f_menu[i]->IsChecked() && F[i].farray[1] == 2 && F[i].farray[2] != 0.0) ++discretedensities;
     }
 
@@ -4157,7 +4150,8 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
             if (f_nr < 0 || f_nr >= N) return;
 			const plotobject &f = F[f_nr];
 			
-			if (!f.IsFunction() && !f.IsBinomdensity() && !f.IsPoissondensity() && !f.IsGeodensity() && !f.IsNormdensity()) return;
+			if (!f.IsFunction() && !f.IsBinomdensity() && !f.IsPoissondensity() && !f.IsGeodensity()
+				&& !f.IsNormdensity() && !f.IsNormdistribution() && !f.IsBindistribution()) return;
             tablestring = svalue;
             double par = 1.0;
 
