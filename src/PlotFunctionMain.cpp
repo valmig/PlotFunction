@@ -1007,6 +1007,7 @@ void PlotFunctionFrame::GetSettings()
         for (int i = 0; i < N; ++i) {
             for (int j = 0; j < Fold.length(); ++j) {
                 if (F[i].getinfixnotation() == Fold[j].getinfixnotation()) {
+					if (F[i].IsBinomdensity()) continue;
                     if (F[i].iswithparameter()) {
                         if (F[i].f.getparameter() == Fold[j].f.getparameter()) remained[i] = j;
                     }
@@ -4349,6 +4350,13 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
             return;
         }
         break;
+	case val_commands::BINOMTEST :
+	   {
+		   std::thread t(computebinomtest, svalue);
+		   t.detach();
+		   return;
+	   }
+	   break;
     default:
         break;
     }

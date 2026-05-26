@@ -1549,7 +1549,7 @@ int trysubstitutionofoperator(const val::valfunction &f, val::valfunction &F, in
 	};
 
 	auto substitute = [&](valfunction &fsubst, const std::string &oper) {
-		size_t pos = 0, n;
+		size_t pos = 0, n = 0, oldpos = 0;
 		int brakets;
 		valfunction quot, inv;
 		std::string sf = fsubst.getinfixnotation(), sarg, to;
@@ -1563,6 +1563,7 @@ int trysubstitutionofoperator(const val::valfunction &f, val::valfunction &F, in
 			sarg="";
 			brakets = 1;
 			n = sf.length();
+			oldpos = pos;
 			for (pos += oper.length() + 1; pos < n; ++pos) {
 				if (sf[pos] == ')') --brakets;
 				if (brakets == 0) break;
@@ -1576,6 +1577,7 @@ int trysubstitutionofoperator(const val::valfunction &f, val::valfunction &F, in
 				else return 0;
 			}
 			replace(sf, oper + "(" + sarg +")", to);
+			pos = oldpos + to.length();
 		}
 		while (1);
 		fsubst = valfunction(sf);
@@ -2070,21 +2072,28 @@ int trigolinzeros(const val::valfunction &f_var, const double &x1, const double 
     d_array<valfunction> arcsinval{valfunction("0"), valfunction("PI/6"), valfunction("PI/4"), valfunction("PI/3"), valfunction("PI/2")};
     d_array<valfunction> arccosval{valfunction("PI/2"), valfunction("PI/3"), valfunction("PI/4"), valfunction("PI/6"), valfunction("0")};
     double c = f_const(0);
-    valfunction c_func;
+    valfunction c_func, one("1");
     int j = -1;
 
     if (c < 0) c_func = -f_const;
     else c_func = f_const;
 
     for (int i = 0; i < values.length(); ++i) {
-        if (values[i] == c_func) {
+		if (values[i] == c_func) {
             j = i;
             break;
         }
+		else if (!values[i].is_zero() && (values[i]/c_func == one || c_func/values[i] == one)) {
+			j = i;
+			break;
+		}
     }
     if (j == -1) return 0;
     valfunction arcsinc = arcsinval[j], arccosc = arccosval[j], arcusf, h;
-    if (c < 0) arcsinc = -arcsinc;
+    if (c < 0) {
+		arcsinc = -arcsinc;
+		arccosc = valfunction("PI") - arccosc;
+	}
     double asinc = arcsinc(0), acosc = arccosc(0), arcusc, plus;
     int k1l, k1r, k2l, k2r, plusi;
 
@@ -2218,6 +2227,76 @@ void rootsofquadraticpol(const val::pol<val::valfunction> &F, val::Glist<double>
 	return;
 }
 
+	
+int zerosbyoperatorsubstitution(const val::valfunction &f,const double &x1,const double &x2,const double &epsilon,int decimals,int iterations,
+								val::Glist<double> &d_zeros, val::Glist<val::valfunction> &s_zeros)
+{
+	if (f.isconst()) return 0;
+	using namespace val;
+
+	std::string oper = "";
+	d_array<std::string> f_t = f.get_prefix();
+
+	for (const auto &op : hintegral::operators) {
+		if (isinContainer(op, f_t)) {
+			if (oper == "") oper = op;
+			else if (op != oper) return 0; 
+		}
+	}
+	if (oper == "") return 0;
+
+	size_t pos = 0;
+	int brakets = 0;
+	std::string sf = f.getinfixnotation(), sarg;
+	valfunction arg;
+
+	while ((pos = sf.find(oper, pos)) != std::string::npos) {
+		sarg = "";
+		brakets = 1;
+		for (pos += oper.length() +1; pos < sf.length(); ++pos) {
+			if (sf[pos] == ')') --brakets;
+			if (brakets == 0) break;
+			if (sf[pos] == '(') ++brakets;
+			sarg += sf[pos];
+		}
+		if (arg.is_zero()) {
+			arg = valfunction(sarg);
+			if (arg.isconst()) return 0;
+		}
+		else if (arg != valfunction(sarg)) return 0;
+	}
+
+	std::string from = oper + "(" + sarg + ")", to = "Z";
+
+	replace(sf, from, to);
+	if (sf.find("x") != std::string::npos) return 0;
+	replace<char>( sf, "Z", "x");
+
+	Glist<double> pd_zeros, hd_zeros, d_dummy;
+	Glist<valfunction> ps_zeros, hs_zeros,s_dummy;
+	valfunction g(sf), z(from), h;
+	pol<valfunction> pg = hintegral::getpolynomial(g);
+	double z1 = z(x1), z2 = z(x2);
+
+	if (pg.degree() <= 1) return 0;
+	
+	computezeros(g, z1, z2, epsilon, decimals, iterations, pd_zeros, ps_zeros);
+
+	for (const auto &x : pd_zeros) {
+		h = z - valfunction(ToString(x,19));
+		computezeros(h, x1, x2, epsilon, decimals, iterations, hd_zeros, s_dummy);
+		d_zeros.append(std::move(hd_zeros));
+	}
+	
+	for (const auto &x : ps_zeros) {
+		h = z - x;
+		computezeros(h, x1, x2, epsilon, decimals, iterations, d_dummy, hs_zeros);
+		s_zeros.append(std::move(hs_zeros));
+	}
+	return 1;
+}
+
+	
 } // end namespace hzeros
 
 
@@ -2306,7 +2385,7 @@ void computezeros(const val::valfunction &f,const double &x1,const double &x2,co
 			pol<valfunction> pG;
 
 			pG.insert(pF[deg], 2); pG.insert(pF[d1],1); pG.insert(pF[0],0);
-			std::cout << "\n pG = \n" << pG << std::endl;
+			// std::cout << "\n pG = \n" << pG << std::endl;
 			hzeros::rootsofquadraticpol(pG, pd_zeros, ps_zeros, f.getparameter(), epsilon);
 			if (pd_zeros.isempty() && ps_zeros.isempty()) return;
 			
@@ -2336,7 +2415,7 @@ void computezeros(const val::valfunction &f,const double &x1,const double &x2,co
 		}
 	}
 
-    if (f.ispolynomialfunction()) {
+	if (f.ispolynomialfunction()) {
         pol<rational> F = f.getpolynomial();
         vector<double> zeros;
         d_array<rational> r_zeros;
@@ -2386,11 +2465,11 @@ void computezeros(const val::valfunction &f,const double &x1,const double &x2,co
             return;
         }
     }
-    else if (hzeros::trigolinzeros(f, x1, x2, d_zeros, s_zeros,epsilon)) return;
-    else if (f_oper == "exp" || f_oper == "cosh") {
+	else if (hzeros::trigolinzeros(f, x1, x2, d_zeros, s_zeros,epsilon)) return;
+	else if (f_oper == "exp" || f_oper == "cosh") {
         return;
     }
-    else if (f_oper == "sqrt" || f_oper == "/" || f_oper == "abs" || f_oper == "m" || f_oper == "sinh" || f_oper == "arsinh") {
+	else if (f_oper == "sqrt" || f_oper == "/" || f_oper == "abs" || f_oper == "m" || f_oper == "sinh" || f_oper == "arsinh") {
         computezeros(f.getfirstargument(),x1,x2,epsilon,decimals,iterations,d_zeros,s_zeros);
 		if (f_oper == "/") {
 			valfunction g = f.getsecondargument(), sy;
@@ -2412,13 +2491,13 @@ void computezeros(const val::valfunction &f,const double &x1,const double &x2,co
 		}
         return;
     }
-    else if (f_oper == "log" || f_oper == "arcosh") {
+	else if (f_oper == "log" || f_oper == "arcosh") {
         valfunction g = f.getfirstargument() - valfunction("1");
         g.setparameter(f.getparameter());
         computezeros(g, x1, x2, epsilon, decimals, iterations, d_zeros, s_zeros);
         return;
     }
-    else if (f_oper == "*") {
+	else if (f_oper == "*") {
         Glist<double> d_zeros2;
         Glist<valfunction> s_zeros2;
         computezeros(f.getfirstargument(),x1,x2,epsilon,decimals,iterations,d_zeros,s_zeros);
@@ -2427,7 +2506,8 @@ void computezeros(const val::valfunction &f,const double &x1,const double &x2,co
         hzeros::addto(s_zeros,s_zeros2);
         return;
     }
-    else if (f_oper == "-" || f_oper == "+") {
+	else if (hzeros::zerosbyoperatorsubstitution(f, x1, x2, epsilon, decimals, iterations, d_zeros, s_zeros)) return;
+	else if (f_oper == "-" || f_oper == "+") {
         valfunction f_var = f, f_const, g, h;
         do {
             g = f_var.getfirstargument(); h = f_var.getsecondargument();

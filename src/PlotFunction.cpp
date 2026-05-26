@@ -142,7 +142,7 @@ const val::d_array<wxString> SettingsParList({"axis-scale sx [sy]   <Shift-Alt-S
 
 const val::d_array<wxString> CommandsList({"derive", "analyze", "tangent", "normal", "interpolation", "regression", "table", "integral",
                                              "arclength", "zero-iteration", "move", "evaluate", "intersection", "calculate", "rotate", "osc_circle", "latex-string", "taylor-polynomial",
-                                             "reflection", "points-in-graph"});
+                                             "reflection", "points-in-graph", "binomtest"});
 
 const val::d_array<wxString> CommandsParList({"derive [#nr = 1]",
                                                  "analyze [#nr = 1] [x1 x2] [prec = 1e-09] [iterations] [decimals]    <Ctrl-A>",
@@ -163,7 +163,8 @@ const val::d_array<wxString> CommandsParList({"derive [#nr = 1]",
                                                  "latex-string [#nr = 1]",
                                                  "taylor-polynomial [#nr = 1] deg [x0 = 0]",
                                                  "reflection [#nr1 = 1] #nr2 / object",
-												 "points-in-graph [#nr = 1] expression1 (x= / y=); expression2... [;ddecimals [ = 4]] [T print table] "
+												 "points-in-graph [#nr = 1] expression1 (x= / y=); expression2... [;ddecimals [ = 4]] [T print table] ",
+												 "binomtest n ; = / <= / >= ; [alpha = 0.05]; [color reject = red ; color accept = green]"
                                                  });
 
 
@@ -2769,6 +2770,103 @@ void computepointsingraph(const plotobject &F, std::string input, double x1, dou
 	}
 }
 
+void computebinomtest(std::string sf)
+{
+	using namespace val;
+	d_array<char> sep{' ', ';', '\n'};
+	Glist<std::string> values = getwordsfromstring(sf, sep);
+	int l = values.length();
+
+	if (l < 3) return;
+
+	enum test_type{R, L, B};
+	int n , type = L, k1 = 0, k2 = 0;
+	double p, alpha = 0.05, accept, h;
+	std::string color_accepted = "green", color_rejected = "red", h_s, h0, h1;
+	
+	n = FromString<int>(values[0]);
+	if (n <= 0 || n > 2000) return;
+	p = FromString<double>(values[2]);
+	if (p <= 0 || p >= 1) return;
+	if (l > 3) alpha = FromString<double>(values[3]);
+	if (l > 4) {
+		if (val::isinContainer(wxString(values[4]), defaultcolornames)) color_rejected = values[4]; 
+	}
+	if (l > 5) {
+		if (val::isinContainer(wxString(values[5]), defaultcolornames)) color_accepted = values[5]; 
+	}
+	if (alpha <= 0 || alpha >= 1) return;
+	accept = 1 - alpha;
+	if (values[1] == "=") {
+		type = B;
+		accept = 1 - 0.5*alpha;
+	}
+	else if (values[1] == "<=" || values[1] == "<") type = R;
+	
+    switch (type) {
+        case test_type::L :
+        {
+            for (k1 = 0; k1 <= n; ++k1) {
+                if ((h = binomcd(n, p, k1, k2)) < accept) {
+                    --k1;
+                    break;
+                }
+            }
+        }
+        break;
+        case test_type::R :
+        {
+            for (k2 = n; k2 >= 0; --k2) {
+                if ((h = binomcd(n, p, k1, k2)) < accept) {
+                    ++k2;
+                    break;
+                }
+            }
+        }
+        break;
+        case test_type::B :
+        {
+            for (k1 = 0; k1 <= n; ++k1) {
+                if ((h = binomcd(n, p, k1, n)) < accept) {
+                    --k1;
+                    break;
+                }
+            }
+            for (k2 = n; k2 >= 0; --k2) {
+                if ((h = binomcd(n, p, 0, k2)) < accept) {
+                    ++k2;
+                    break;
+                }
+            }
+        }
+        break;
+        default: break;
+    }
+	h_s = "\n bindensity " + ToString(n) + " " + values[2] + " 2 0.1 <" + color_rejected + ">;"; 
+	h_s += "\n bindensity " + ToString(n) + " " + values[2] + " 2 0.1 [ " + ToString(k1) + " , " + ToString(k2) + "] <" + color_accepted + ">;";
+	// std::cout << "\n h_s = \n" << h_s << std::endl;
+	fstring += h_s;
+	tablestring = "Binomial-Test:\nH0: p";
+	if (type == test_type::R) {
+		h0 = " <= ";
+		h1 = " > ";
+	}
+	else if (type == test_type::L) {
+		h0 = " >= ";
+		h1 = " < ";
+	}
+	else {
+		h0 = " = ";
+		h1 = " != ";
+	}
+	tablestring += h0 + values[2] + + "\t H1: p" + h1 + values[2] + "\n alpha = " + val::ToString(alpha) + "\n";
+	tablestring += "\n H0 accepted in [" + ToString(k1) + " , " + ToString(k2) + " ]";
+		
+    MyThreadEvent event(MY_EVENT, IdRefresh);
+    if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event.Clone());
+	MyThreadEvent event2(MY_EVENT, IdTable);
+	if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event2.Clone());
+}
 
 // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
