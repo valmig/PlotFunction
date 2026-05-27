@@ -2786,7 +2786,7 @@ void computebinomtest(std::string sf)
 	
 	n = FromString<int>(values[0]);
 	if (n <= 0 || n > 2000) return;
-	p = FromString<double>(values[2]);
+	p = double(FromString<rational>(values[2]));
 	if (p <= 0 || p >= 1) return;
 	if (l > 3) alpha = FromString<double>(values[3]);
 	if (l > 4) {
@@ -2802,7 +2802,8 @@ void computebinomtest(std::string sf)
 		accept = 1 - 0.5*alpha;
 	}
 	else if (values[1] == "<=" || values[1] == "<") type = R;
-	
+
+	k2 = n;
     switch (type) {
         case test_type::L :
         {
@@ -2844,7 +2845,7 @@ void computebinomtest(std::string sf)
     }
 	h_s = "\n bindensity " + ToString(n) + " " + values[2] + " 2 0.1 <" + color_rejected + ">;"; 
 	h_s += "\n bindensity " + ToString(n) + " " + values[2] + " 2 0.1 [ " + ToString(k1) + " , " + ToString(k2) + "] <" + color_accepted + ">;";
-	// std::cout << "\n h_s = \n" << h_s << std::endl;
+	std::cout << "\n h_s = \n" << h_s << std::endl;
 	fstring += h_s;
 	tablestring = "Binomial-Test:\nH0: p";
 	if (type == test_type::R) {
@@ -3202,6 +3203,7 @@ plotobject::plotobject(const std::string &sf)
 				if (x_range.y == 0.0) x_range.y = double(m);
 			}
 			if (x_range.y > farray[0]) x_range.y = farray[0];
+			if (x_range.x < 0) x_range.x = 0;
 			x1 = val::valfunction(val::ToString(x_range.x));
 			x2 = val::valfunction(val::ToString(x_range.y));
 			critx = val::d_array<double>(m+1);
