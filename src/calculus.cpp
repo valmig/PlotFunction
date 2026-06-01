@@ -2248,7 +2248,8 @@ int zerosbyoperatorsubstitution(const val::valfunction &f,const double &x1,const
 	size_t pos = 0;
 	int brakets = 0;
 	std::string sf = f.getinfixnotation(), sarg;
-	valfunction arg;
+	valfunction arg, quot, harg;
+	Glist<valfunction> arglist;
 
 	while ((pos = sf.find(oper, pos)) != std::string::npos) {
 		sarg = "";
@@ -2262,19 +2263,44 @@ int zerosbyoperatorsubstitution(const val::valfunction &f,const double &x1,const
 		if (arg.is_zero()) {
 			arg = valfunction(sarg);
 			if (arg.isconst()) return 0;
+			arglist.push_back(arg);
 		}
-		else if (arg != valfunction(sarg)) return 0;
+		else if (arg != (harg = valfunction(sarg))) {
+			if (oper != "exp") return 0;
+			quot = arg/harg;
+			if (!quot.isconst()) return 0;
+			if (abs(quot(0)) > 1) arg = harg;
+			arglist.push_back(harg);
+		}
 	}
-
+	
 	std::string from = oper + "(" + sarg + ")", to = "Z";
 
-	replace(sf, from, to);
-	if (sf.find("x") != std::string::npos) return 0;
+	if (oper == "exp") {
+		for (const auto &v : arglist) {
+			from = oper + "(" + v.getinfixnotation() + ")";
+			quot = v/arg;
+			to = "Z^(" + quot.getinfixnotation() + ")";
+			replace( sf, from, to);
+		}
+	}
+	else replace(sf, from, to);
+	
+	if (sf.find("x") != std::string::npos) {
+		if (oper != "sqrt") return 0;
+		if (!arg.islinearfunction()) return 0;
+		pol<valfunction> parg = hintegral::getpolynomial(arg);
+		std::string argto = "((Z^2 - " + parg[0].getinfixnotation() + ")/" + parg.LC().getinfixnotation() + ")";
+		replace<char>(sf, "x", argto);
+	}
 	replace<char>( sf, "Z", "x");
 
 	Glist<double> pd_zeros, hd_zeros, d_dummy;
 	Glist<valfunction> ps_zeros, hs_zeros,s_dummy;
-	valfunction g(sf), z(from), h;
+	valfunction g(sf), z(oper + "(" + arg.getinfixnotation() + ")"), h;
+
+	if (!hintegral::is_polynomial(g)) return 0;
+	
 	pol<valfunction> pg = hintegral::getpolynomial(g);
 	double z1 = z(x1), z2 = z(x2);
 
@@ -2296,6 +2322,111 @@ int zerosbyoperatorsubstitution(const val::valfunction &f,const double &x1,const
 	return 1;
 }
 
+// zeros of f = a oper(g(x)) +- b oper(h(x));
+int zerosumoper(const val::valfunction &f,const double &x1,const double &x2,const double &epsilon,int decimals,int iterations,
+                  val::Glist<double> &d_zeros, val::Glist<val::valfunction> &s_zeros)
+{
+	// std::cout << "\n Hier" << std::endl;
+	using namespace val;
+	std::string firstop = f.getfirstoperator();
+	if (firstop != "+" && firstop != "-") return 0;
+
+	// std::cout << "\n Hier" << std::endl;
+	valfunction f1 = f.getfirstargument(), f2 = f.getsecondargument() , a("1"), b("1");
+	std::string oper1 = f1.getfirstoperator(), oper2 = f2.getfirstoperator();
+
+	if (oper1 == "*") {
+		a = f1.getfirstargument();
+		// std::cout << "\n a = " << a << std::endl;
+		if (!a.isconst()) return 0;
+		f1 = f1.getsecondargument();
+		oper1 = f1.getfirstoperator();
+	}
+	if (oper2 == "*") {
+		b = f2.getfirstargument();
+		// std::cout << "\n b = " << b << std::endl;
+		if (!b.isconst()) return 0;
+		f2 = f2.getsecondargument();
+		oper2 = f2.getfirstoperator();
+	}
+	if (oper1 != oper2) return 0;
+	if (oper1 != "exp" && oper1 != "log" && oper1 != "sqrt") return 0;
+	std::cout << "\n firstop = " << firstop << "; a = " << a << "; f1 = " << f1 << "; b = " << b << "; f2 = " << f2 << std::endl;
+	if (oper1 == "exp") {
+		if (firstop == "+") b = -b/a;
+		else b /= a;
+		if (!has_parameter(b.getinfixnotation()) && b(0) < 0) return 1;
+		valfunction ln("log(x)"), g = f1.getfirstargument() - f2.getfirstargument() - ln(b);
+		computezeros(g, x1, x2, epsilon, decimals, iterations, d_zeros, s_zeros);
+		return 1;
+	}
+	if (oper1 == "log") {
+		std::string op = "*";
+		if (firstop == "-") b = -b;
+		f1 = f1.getfirstargument(); f2 = f2.getfirstargument();
+		// if (b.isconst() && b(0) < 0) {
+		// 	b = -b;
+		// 	op = "/";
+		// }
+		valfunction g("(" + f1.getinfixnotation() + ")^(" + a.getinfixnotation() + ")" + op +
+			           "(" + f2.getinfixnotation() + ")^(" + b.getinfixnotation() + ") - 1");
+		Glist<double> dd_zeros;
+		Glist<valfunction> ds_zeros;
+		double x , y, delta = 1e-10;
+		std::cout << "\n g = " << g << std::endl;
+		computezeros(g, x1, x2, epsilon, decimals, iterations, dd_zeros, ds_zeros);
+		for (const auto &v : dd_zeros) {
+			x = f1(v); y = f2(v);
+			if (x < 0 || abs(x) < delta || y < 0 || abs(y) < delta) continue;
+			d_zeros.push_back(v);
+		}
+		for (const auto &v : ds_zeros) {
+			if (!v.isconst()) {
+				s_zeros.push_back(v);
+				continue;
+			}
+			x = f1(v(0)); y = f2(v(0));
+			if (x < 0 || abs(x) < delta || y < 0 || abs(y) < delta) continue;
+			s_zeros.push_back(v);
+		}
+		return 1;
+	}
+	if (oper1 == "sqrt") {
+		valfunction c = b/a, g;
+		
+		if (firstop == "-") c = -c;
+		if (c.isconst() && c(0) > 0) return 1;
+		a *= a; b *= b;
+		f1 = f1.getfirstargument(); f2 = f2.getfirstargument();
+		g = a*f1 - b*f2;
+		
+		Glist<double> dd_zeros;
+		Glist<valfunction> ds_zeros;
+		double x , y;
+		
+		std::cout << "\n g = " << g << std::endl;
+		computezeros(g, x1, x2, epsilon, decimals, iterations, dd_zeros, ds_zeros);
+		for (const auto &v : dd_zeros) {
+			x = f1(v); y = f2(v);
+			if (x < 0 || y < 0) continue;
+			if (abs(f(v)) > epsilon) continue;
+			d_zeros.push_back(v);
+		}
+		for (const auto &v : ds_zeros) {
+			if (!v.isconst()) {
+				s_zeros.push_back(v);
+				continue;
+			}
+			x = f1(v(0)); y = f2(v(0));
+			if (x < 0 || y < 0) continue;
+			if (abs(f(v(0))) > epsilon) continue;
+			s_zeros.push_back(v);
+		}
+		return 1;
+	}
+
+	return 0;
+}
 	
 } // end namespace hzeros
 
@@ -2508,6 +2639,7 @@ void computezeros(const val::valfunction &f,const double &x1,const double &x2,co
     }
 	else if (hzeros::zerosbyoperatorsubstitution(f, x1, x2, epsilon, decimals, iterations, d_zeros, s_zeros)) return;
 	else if (f_oper == "-" || f_oper == "+") {
+		if (hzeros::zerosumoper(f, x1, x2, epsilon,  decimals, iterations, d_zeros, s_zeros)) return;
         valfunction f_var = f, f_const, g, h;
         do {
             g = f_var.getfirstargument(); h = f_var.getsecondargument();
