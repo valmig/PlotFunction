@@ -2723,7 +2723,7 @@ void compute_zeros_of_alg_curves(const val::valfunction &f, const val::valfuncti
 {
 	d_zeros.dellist(); s_zeros.dellist();
     if (f.is_zero() || g.is_zero()) return;
-	if (f.numberofvariables() != 2 && g.numberofvariables() != 2) return;
+	if (f.numberofvariables() != 2 || g.numberofvariables() != 2) return;
 
     int i, oldordn = val::n_expo::getordtype(), oldordns = val::s_expo::getordtype();
     val::Glist<val::s_polynom<val::integer>> G;
@@ -2732,6 +2732,7 @@ void compute_zeros_of_alg_curves(const val::valfunction &f, const val::valfuncti
 
     val::n_polynom<val::rational>::setstaticexpodim(2);
     val::n_expo::setordtype(-2);
+	val::s_expo::setdim(2);
     val::s_expo::setordtype(-2);
     h=val::primitivpart(f.gets_polynom<val::rational>());
     h1=val::primitivpart(g.gets_polynom<val::rational>());
@@ -4089,4 +4090,84 @@ void intersection(const plotobject &f, const plotobject &g, std::string input)
     MyThreadEvent event(MY_EVENT,IdIntersection);
     if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event.Clone() );
     return;
+}
+
+void computeupperlowersum(std::string sf, const val::Glist<plotobject> &F ,int upper)
+{
+	using namespace val;
+	d_array<char> sep{' ', ';', '\n'};
+	Glist<std::string> values = getwordsfromstring(sf, sep);
+	int l = values.length(), beg = 0, k = 0;
+
+	if (l == 0) return;
+	if (values[0].find("#") == std::string::npos) {
+		if (l != 3) return;
+	}
+	else {
+		if (l != 4) return;
+		std::string s = values[0];
+		val::replace<char>(s, "#", "");
+		k = FromString<int>(s);
+		beg = 1;
+	}
+	if (k < 0 || k >= F.length()) return;
+	if (!F[k].IsFunction()) return;
+	if (F[k].f.numberofvariables() != 1) return;
+
+	int n = FromString<int>(values[beg]);
+	valfunction a = FromString<valfunction>(values[beg + 1]), b = FromString<valfunction>(values[beg + 2]);
+	rational ra = FromString<rational>(values[beg + 1]), rb = FromString<rational>(values[beg + 2]), dx = (rb-ra)/rational(n);
+
+	if (dx.signum() < 0) return;
+
+	std::string h_s = "\nhistogram ", valuations;
+	rational two(2);
+	double rv, lv;
+	const valfunction &f = F[k].f;
+	valfunction uppersum, lowersum, trapez, flv, frv, G = integral(f);
+
+	for (auto v = ra; v < rb; v += dx) {
+		valuations += "x = " + ToString(v) + ":   f(" + ToString(v) + ") = ";
+		h_s += ToString(double(v + dx/two)) + " ";
+		lv = f(double(v)); rv = f(double(v+dx));
+		flv = f(valfunction(ToString(v))); frv = f(valfunction(ToString(v + dx)));
+		if (lv > rv) {
+			if (upper) h_s += ToString(lv) + " ";
+			else h_s += ToString(rv) + " ";
+			uppersum += flv;
+			lowersum += frv;
+		}
+		else {
+			if (upper) h_s += ToString(rv) + " ";
+			else h_s += ToString(lv) + " ";
+			uppersum += frv;
+			lowersum += flv;
+		}
+		trapez += (frv + flv)/valfunction("2");
+		valuations += flv.getinfixnotation() + " = " + ToString(flv(0)) + "\n";
+	}
+	valuations += "x = " + b.getinfixnotation() + ":   f(" + b.getinfixnotation() + ") = " + frv.getinfixnotation() + " = " + ToString(frv(0));
+	uppersum *= valfunction(ToString(dx));
+	lowersum *= valfunction(ToString(dx));
+	trapez *= valfunction(ToString(dx));
+	h_s += "[ 0.2 , " + ToString(double(dx)) + " ]";
+	fstring += h_s;
+	tablestring = "Approximations of:\nintegral(" + f.getinfixnotation() + ", " + a.getinfixnotation() + " , " + b.getinfixnotation() + "); n = " + ToString(n) +":\n"; 
+	tablestring += "\n Lower sum = " + lowersum.getinfixnotation() + " = " + ToString(lowersum(0)) + "\n";
+	tablestring += "\n Upper sum = " + uppersum.getinfixnotation() + " = " + ToString(uppersum(0)) + "\n"; 
+	tablestring += "\n Trapezoid rule = " + trapez.getinfixnotation() + " = " + ToString(trapez(0)) + "\n";
+	if (!G.is_zero()) {
+		valfunction ev = G(b) - G(a);
+		tablestring += "\n Exact value = " + ev.getinfixnotation() + " = " + ToString(ev(0)) + "\n";		
+	}
+	tablestring += "\n Approx. value = " + ToString(integral(f, double(ra), double(rb)));
+
+	if (n <= 8) {
+		tablestring += "\n\n Valuations:\n" + valuations;
+	}
+	
+    MyThreadEvent event(MY_EVENT, IdRefresh);
+    if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event.Clone());
+	MyThreadEvent event2(MY_EVENT, IdTable);
+	if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event2.Clone());
 }

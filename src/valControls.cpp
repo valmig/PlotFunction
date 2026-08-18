@@ -1084,7 +1084,7 @@ int CompleteTextCtrl::isalphabetical(wxChar s) const
 {
     //if ( (s >= 65 && s<= 90 ) || (s >= 97 && s <= 122 ) ) return 1;
     //else return 0;
-    if (s >= beg && s <= end) return 1;
+    if ((s >= beg && s <= end) || s == '-' || s== '_' ) return 1;
     else return 0;
 }
 

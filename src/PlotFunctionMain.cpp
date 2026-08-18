@@ -420,6 +420,7 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnGridMenu,this,12);           // Grid Settings
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuFontSize,this,13);       // Axis Fontsize
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuColours,this,21);        // Default Draw Text Settings
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuColours,this,111);       // Toggle Multicolors
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuColours,this,4400);      // Background Color
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuColours,this,4401);      // Axis Color
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuColours,this,4402);      // Grid Color
@@ -2865,6 +2866,12 @@ void PlotFunctionFrame::OnMenuColours(wxCommandEvent &event)
 {
     int evid = event.GetId();
 
+	if (evid == 111) {
+		multicolored = multicolormenu->IsChecked();
+		smulticolored = val::ToString(multicolored);
+		return;
+	}
+
     if (evid==4400 || evid==1107) {
         wxColourData data;
         data.SetColour(BackgroundColor);
@@ -2897,8 +2904,8 @@ void PlotFunctionFrame::OnMenuColours(wxCommandEvent &event)
             col=Dialog.GetColor();
             pen=Dialog.GetLineWith();
         }
-        if (evid==4401) {axis_color = col; axis_pen = pen;}
-        else {grid_color = col; grid_pen = pen;}
+        if (evid==4401) {axis_color = col; axis_pen = pen; saxis_pen = val::ToString(pen);}
+        else {grid_color = col; grid_pen = pen; sgrid_pen = val::ToString(pen);}
         Paint();
         return;
     }
@@ -3584,6 +3591,7 @@ void PlotFunctionFrame::ChangeSettings(int command, const std::string &svalue, i
         }
         break;
     case val_settings::FONT_SIZE: case val_settings::AXIS_FONTSIZE: case val_settings::POINTSIZE:
+    case val_settings::AXIS_WIDTH: case val_settings::GRID_WIDTH: case MULTICOLORED: 
         {
             if (svalue == "") return;
             int fsize = val::FromString<int>(svalue);
@@ -3600,12 +3608,36 @@ void PlotFunctionFrame::ChangeSettings(int command, const std::string &svalue, i
                 saxis_fontsize = val::ToString(axis_fontsize);
                 Paint();
             }
-			else {
+			else if (command == POINTSIZE){
 				pointsize = fsize;
 				if (pointsize < 1) pointsize = 1;
 				if (pointsize > 30) pointsize = 30;
 				spointsize = val::ToString(pointsize);
 				Paint();
+			}
+			else if (command == AXIS_WIDTH) {
+				axis_pen = fsize;
+				if (axis_pen <= 0) axis_pen = 1;
+				saxis_pen = val::ToString(axis_pen);
+				Paint();
+			}
+			else if (command == GRID_WIDTH) {
+				grid_pen = fsize;
+				if (grid_pen <= 0) grid_pen = 1;
+				sgrid_pen = val::ToString(grid_pen);
+				Paint();
+			}
+			else if (command == MULTICOLORED) {
+				if (fsize) {
+					multicolored = 1;
+					multicolormenu->Check(true);
+				}
+				else {
+					multicolormenu->Check(false);
+					multicolored = 0;
+				}	
+				smulticolored = val::ToString(multicolored);
+				return;
 			}
         }
         break;
@@ -3789,6 +3821,7 @@ void PlotFunctionFrame::ChangeSettings(int command, const std::string &svalue, i
         }
         break;
     case val_settings::AXIS_COLOR: case val_settings::GRID_COLOR: case val_settings::FUNCTION_COLOR: case val_settings::BACKGROND_COLOR:
+    case val_settings::DEFAULTCOLOR:
         {
             if (svalue.length() == 0) return;
             val::d_array<char> separators({' ', ',' , ';'});
@@ -3813,13 +3846,13 @@ void PlotFunctionFrame::ChangeSettings(int command, const std::string &svalue, i
                 color = wxColour(r,g,b);
             }
             else return;
-            if (command == AXIS_COLOR) axis_color = color;
-            else if (command == GRID_COLOR) grid_color = color;
-            else if (command == FUNCTION_COLOR) {
+			if (command == AXIS_COLOR) axis_color = color;
+			else if (command == GRID_COLOR) grid_color = color;
+			else if (command == FUNCTION_COLOR) {
                 if (id <= 0 || id > N) return;
                 Color[id-1] = color;
             }
-            else {
+			else if (command == BACKGROND_COLOR) {
                 BackgroundColor = color;
                 DrawPanel->SetBackgroundColour(BackgroundColor);
                 bitmapbackground = 0;
@@ -3827,6 +3860,10 @@ void PlotFunctionFrame::ChangeSettings(int command, const std::string &svalue, i
                 BackgroundImage.Destroy();
 
             }
+			else if (command == DEFAULTCOLOR) {
+				defaultpaintcolor = color;
+				return;
+			}
             Paint();
             WriteText();
         }
@@ -4245,7 +4282,7 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
             }
         }
         break;
-    case val_commands::MOVE:
+    case val_commands::MOVE: case val_commands::STRETCH:
         {
             if (f_nr < 0 || f_nr >= N) return;
             if (F[f_nr].IsHistogram() || F[f_nr].IsFill()) return;
@@ -4258,8 +4295,12 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
             // if (n >1 ) dy = val::FromString<double>(s_values[1]);
             if (n > 0) dx = s_values[0];
             if (n >1 ) dy = s_values[1];
-
-            displacefunction(f_nr,dx,dy);
+			if (command == val_commands::MOVE) {
+				if (!displacefunction(f_nr,dx,dy)) return;
+			}
+			else {
+				if (!stretchfunction(f_nr, svalue)) return;
+			}
             fstring = "";
             int i = 0;
             for (const auto & v : F) {
@@ -4353,6 +4394,15 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
 	case val_commands::BINOMTEST :
 	   {
 		   std::thread t(computebinomtest, svalue);
+		   t.detach();
+		   return;
+	   }
+	   break;
+	case val_commands::UPPERSUM: case val_commands::LOWERSUM:
+	   {
+		   int upper = 1;
+		   if (command == val_commands::LOWERSUM) upper = 0;
+		   std::thread t(computeupperlowersum, svalue, std::cref(F), upper);
 		   t.detach();
 		   return;
 	   }
@@ -5365,9 +5415,9 @@ void PlotFunctionFrame::OnLostMouse(wxMouseCaptureLostEvent &event)
 
 
 
-void PlotFunctionFrame::displacefunction(int i,const std::string &dx1,const std::string &dy1)
+int PlotFunctionFrame::displacefunction(int i,const std::string &dx1,const std::string &dy1)
 {
-    if (i<0 || i>=N) return;
+    if (i<0 || i>=N) return 0;
 
     double dx = val::round(val::FromString<double>(dx1),decimalx) , dy = val::round(val::FromString<double>(dy1),decimaly);
 	wxPenStyle style = F[i].penstyle;
@@ -5446,7 +5496,7 @@ void PlotFunctionFrame::displacefunction(int i,const std::string &dx1,const std:
                 int n = F[i].farray.length();
                 F[i].f += val::valfunction(val::ToString(dx)); F[i].g += val::valfunction(val::ToString(dy));
                 F[i].s_infix = "( " + F[i].f.getinfixnotation() + " , " + F[i].g.getinfixnotation() + " )";
-                for (int j = 0; j < n-1; j+=2) {
+                for (int j = 0; j < n-1; j += 2) {
                     F[i].farray[j] += dx;
                     F[i].farray[j+1] += dy;
                 }
@@ -5472,6 +5522,7 @@ void PlotFunctionFrame::displacefunction(int i,const std::string &dx1,const std:
             break;
         case plotobject::FILL : case plotobject::HISTOGRAM :
             {
+				return 0;
             }
             break;
         case plotobject::RECTANGLE : case plotobject::LINE :
@@ -5520,159 +5571,58 @@ void PlotFunctionFrame::displacefunction(int i,const std::string &dx1,const std:
                 F[i] = plotobject(nf);
             }
             break;
-			default: break;
+			default: return 0; break;
     }
 	F[i].penstyle = style;
+	return 1;
 }
 
 
-/*
-void PlotFunctionFrame::displacefunction(int i,const double &dx1,const double &dy1)
+int PlotFunctionFrame::stretchfunction(int nr, const std::string& s)
 {
-    if (i<0 || i>=N) return;
+	val::d_array<char> separ{';' , ','};
+	val::Glist<std::string> s_values = getwordsfromstring(s,separ);
+	std::string sx = "1", sy = "1", fs;
+	int l = s_values.length();
+	if (l == 0) return 0;
+	for (int i = 0; i < l; ++i) {
+		if (s_values[i].find('y') != std::string::npos) {
+			sy = s_values[i];
+			val::replace<char>(sy, "y", "");
+		}
+		else {
+			sx = s_values[i];
+			val::replace<char>(sx, "x", "");
+		}
+	}
+	fs = F[nr].getinfixnotation();
+	if (F[nr].IsFunction()) {
+		val::replace<char>(fs, "x", "(x/(" + sx + "))");
+		fs = "(" + sy + ") * (" + fs + ")";
+		F[nr].f = val::valfunction(fs);
+		F[nr].s_infix = F[nr].f.getinfixnotation();
+	}
+	else if (F[nr].IsAlgCurve()) {
+		val::replace<char>(fs, "x", "(x/(" + sx + "))");
+		val::replace<char>(fs, "y", "(y/(" + sy + "))");
+		F[nr].f = val::valfunction(fs); 
+		F[nr].s_infix = F[nr].f.getinfixnotation();
+	}
+	else if (F[nr].IsParcurve()) {
+		int n = F[nr].farray.length();
+		double dx = val::valfunction(sx)(0), dy = val::valfunction(sy)(0);
+		F[nr].f *= val::valfunction(sx);
+		F[nr].g *= val::valfunction(sy);
+		F[nr].s_infix = "(" + F[nr].f.getinfixnotation() + " , " + F[nr].g.getinfixnotation() + ")";
+		for (int j = 0; j < n-1; j += 2) {
+			F[nr].farray[j] *= dx;
+			F[nr].farray[j+1] *= dy;
+		}
+	}
+	else return 0;
 
-    double dx = val::round(dx1,decimalx) , dy = val::round(dy1,decimaly);
-
-    switch (F[i].getmode())
-    {
-        case plotobject::FUNCTION : case plotobject::ALGCURVE :
-            {
-                if (F[i].f.numberofvariables() == 1) {
-                    double par = F[i].f.getparameter();
-                    val::valfunction f(F[i].getinfixnotation()), g("x"),h(val::ToString(dx)), d = g - h, y(val::ToString(dy));
-                    std::string interval = " [" + F[i].x1.getinfixnotation() + " , " + F[i].x2.getinfixnotation() + " ]";
-                    f = f(d) + y;
-                    F[i] = plotobject(f.getinfixnotation() + interval);
-                    F[i].f.setparameter(par);
-                }
-                else {
-                    std::string sf = F[i].getinfixnotation() , sx, sy, nf = "";
-                    int n = sf.length();
-                    if (dx > 0) sx = "(x - " + val::ToString(dx) + ")";
-                    else sx = "(x + " + val::ToString(val::abs(dx)) + ")";
-                    if (dy > 0) sy = "(y - " + val::ToString(dy) + ")";
-                    else sy = "(y + " + val::ToString(val::abs(dy)) + ")";
-                    for (int j=0; j<n ; ++j) {
-                        if (sf[j] == 'x') nf += sx;
-                        else if (sf[j] == 'y') nf += sy;
-                        else nf +=sf[j];
-                    }
-                    val::valfunction f(nf);
-                    F[i] = plotobject(f.getinfixnotation());
-                }
-
-            }
-            break;
-        case plotobject::TEXT :
-            {
-                std::string nf="text {" + getstringfrombrackets(F[i].getinfixnotation(), '{', '}') + "}";
-                nf += " " + val::ToString(F[i].farray[0] + dx) + " " + val::ToString(F[i].farray[1] + dy);
-                F[i] = plotobject(nf);
-            }
-            break;
-        case plotobject::BITMAP :
-            {
-                plotobject &G = F[i];
-                std::string nf = val::getfirstwordofstring(G.getinfixnotation(),val::d_array<char>({' '}));
-                nf+= " " + val::ToString(G.farray[0] + dx) + " " + val::ToString(G.farray[1] + dy) + " " + val::ToString(G.farray[2]) + " " + val::ToString(G.farray[3]);
-                G = plotobject(nf);
-            }
-            break;
-        case plotobject::CIRCLE :
-            {
-                double x,y,r,a1,a2;
-                int slice;
-                std::string nf = "circle ";
-
-                x = F[i].farray[0]; y = F[i].farray[1]; r = F[i].farray[2]; a1 = F[i].farray[3]; a2 = F[i].farray[4]; slice = F[i].farray[5];
-                nf += val::ToString(x+dx) + " " + val::ToString(y+dy) + " " + val::ToString(r) + " " + val::ToString(a1) + " " + val::ToString(a2) + " " + val::ToString(slice);
-                F[i] = plotobject(nf);
-            }
-            break;
-        case plotobject::PARCURVE:
-            {
-                int n = F[i].farray.length();
-                F[i].f += val::valfunction(val::ToString(dx)); F[i].g += val::valfunction(val::ToString(dy));
-                F[i].s_infix = "( " + F[i].f.getinfixnotation() + " , " + F[i].g.getinfixnotation() + " )";
-                for (int j = 0; j < n-1; j+=2) {
-                    F[i].farray[j] += dx;
-                    F[i].farray[j+1] += dy;
-                }
-            }
-            break;
-        case plotobject::POINTS :
-            {
-                int j,k=0;
-                std::string nf = "points";
-
-                for (j=0;j<i;++j) {
-                    if (F[j].f.numberofvariables() == 1) ++k;
-                }
-                for (j = 0; j < F[k].farray.length(); ++j) {
-                    if (j == pointactive) {
-                        nf += " " + val::ToString(F[k].farray[j] + dx) + " " + val::ToString(F[k].farray[j+1] + dy);
-                        ++j;
-                    }
-                    else nf += " " + val::ToString(F[k].farray[j]);
-                }
-                F[i] = plotobject(nf);
-            }
-            break;
-        case plotobject::FILL : case plotobject::HISTOGRAM :
-            {
-            }
-            break;
-        case plotobject::RECTANGLE : case plotobject::LINE :
-            {
-                int j, k = 0;
-                std::string nf;
-                if (F[i].getmode() == plotobject::LINE) nf = "line";
-                else nf = "rectangle";
-
-                for (j=0;j<i;++j) {
-                    if (F[j].f.numberofvariables() == 1) ++k;
-                }
-                for (j = 0; j < 4; ++j) {
-                    if (j%2 == 0) nf += " " + val::ToString(F[k].farray[j] + dx);
-                    else nf += " " + val::ToString(F[k].farray[j] + dy);
-                }
-                if (F[i].getmode() == plotobject::LINE && F[k].farray[4] != 0) nf += " " + val::ToString(F[k].farray[4]);
-
-                F[i] = plotobject(nf);
-            }
-            break;
-        default:  //plotobject::TRIANGLE, plotobject::POLYGON
-            {
-                std::string nf = "";
-                int k = 0, j;
-                switch (F[i].getmode())
-                {
-                case plotobject::TRIANGLE :
-                    nf = "triangle";
-                    break;
-                case plotobject::POLYGON :
-                    nf = "polygon";
-                    break;
-                default:
-                    break;
-                }
-                for (j = 0; j < i; ++j ) {
-                    if (F[j].f.numberofvariables() == 1) k++;
-                }
-                for (j = 0; j < F[k].farray.length(); ++j) {
-                    if (j%2 == 0) {
-                        nf += " " + val::ToString(F[k].farray[j] + dx);
-                    }
-                    else nf += " " + val::ToString(F[k].farray[j] + dy);
-                }
-                F[i] = plotobject(nf);
-            }
-            break;
-    }
+	return 1;
 }
-*/
-
-
 
 
 void PlotFunctionFrame::changedpanelinsertmode(int mode)
@@ -5711,6 +5661,7 @@ void PlotFunctionFrame::changedpanelinsertmode(int mode)
         n_points = 0;
     }
 }
+
 
 void PlotFunctionFrame::SendNotification(const std::string& s)
 {

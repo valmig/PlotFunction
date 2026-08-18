@@ -20,6 +20,7 @@ val::valfunction integral(const val::valfunction &f, int k = 1);
 
 void computeintegral(const plotobject& f,std::string x1,std::string x2,double delta,int n,int dez,int arclength=0);
 
+void computeupperlowersum(std::string sf, const val::Glist<plotobject> &F, int upper = 1);
 
 
 #endif // CALCULUS_H_INCLUDED

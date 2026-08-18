@@ -108,7 +108,7 @@ const val::d_array<wxString> defaultcolornames{"blue", "red", "green", "lblue", 
 const val::d_array<wxString> SettingsList({"axis-scale", "axis-color", "grid-scale", "grid-color", "values-number", "axis-range", "show-x-axis",
                                 "show-y-axis", "show-grid" , "show-x-scale", "show-y-scale" , "reset-colors", "font-size", "function-color", "panel-size", "axis-names", "regression-degree",
                                 "point-decimals", "show-function", "background-color", "parameter-values", "function-size", "margin",
-                                "axis-fontsize", "function-settings", "move-increment", "select", "point-size"});
+                                "axis-fontsize", "function-settings", "move-increment", "select", "point-size", "axis-width", "grid-width", "multicolored", "default-color"});
 
 const val::d_array<wxString> SettingsParList({"axis-scale sx [sy]   <Shift-Alt-S>",
                                               "axis-color def. color / Red Green Blue   <Shift-Ctrl-A>",
@@ -137,12 +137,16 @@ const val::d_array<wxString> SettingsParList({"axis-scale sx [sy]   <Shift-Alt-S
                                               "function-settings [#nr=1]",
                                               "move-increment dx [dy=dx] (p for pixels)    <Ctrl-M>",
                                               "select [#nr=1]",
-											  "point size (in pixels)"
+											  "point size (in pixels)",
+											  "axis width (in pixels)    <Shift-Ctrl-A>",
+											  "grid width (in pixels)    <Shift-Ctrl-G>",
+											  "multicolored 1/0   <Alt-C>",
+                                              "default-color def. color / Red Green Blue    <Shift-Ctrl-B>",
                                              });
 
 const val::d_array<wxString> CommandsList({"derive", "analyze", "tangent", "normal", "interpolation", "regression", "table", "integral",
                                              "arclength", "zero-iteration", "move", "evaluate", "intersection", "calculate", "rotate", "osc_circle", "latex-string", "taylor-polynomial",
-                                             "reflection", "points-in-graph", "binomtest"});
+                                             "reflection", "points-in-graph", "binomtest", "stretch", "upper-sum", "lower-sum"});
 
 const val::d_array<wxString> CommandsParList({"derive [#nr = 1]",
                                                  "analyze [#nr = 1] [x1 x2] [prec = 1e-09] [iterations] [decimals]    <Ctrl-A>",
@@ -164,7 +168,10 @@ const val::d_array<wxString> CommandsParList({"derive [#nr = 1]",
                                                  "taylor-polynomial [#nr = 1] deg [x0 = 0]",
                                                  "reflection [#nr1 = 1] #nr2 / object",
 												 "points-in-graph [#nr = 1] expression1 (x= / y=); expression2... [;ddecimals [ = 4]] [T print table] ",
-												 "binomtest n ; = / <= / >= ; [alpha = 0.05]; [color reject = red ; color accept = green]"
+												 "binomtest n ; = / <= / >= ; [alpha = 0.05]; [color reject = red ; color accept = green]",
+												 "stretch [#nr = 1] sx [x]/y ; [sy y]",
+												 "upper-sum [#nr = 1]; n; a; b",
+												 "lower-sum [#nr = 1]; n; a; b"
                                                  });
 
 
@@ -2868,6 +2875,7 @@ void computebinomtest(std::string sf)
 	MyThreadEvent event2(MY_EVENT, IdTable);
 	if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event2.Clone());
 }
+
 
 // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 

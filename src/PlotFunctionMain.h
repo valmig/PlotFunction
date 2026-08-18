@@ -89,7 +89,7 @@ class PlotFunctionFrame: public wxFrame
         int moveinpointsx = 0, moveinpointsy = 0;
         int bitmapbackground = 0, axis_fontsize = 10, SideText_isshown = 0, widthSideText = 200;
         int notebook_isshown = 0, widthNoteBookPanel = 200, plusw = 12, dpanelinsertmode = NORMAL_I, n_points = 0, wraptext = 0, lastfocusedwindow = 1;
-	    int recentfileschanged = 0, recentcommandschanged = 0, latexdefinitionsfileexists = 0, pointsize = 3;
+	    int recentfileschanged = 0, recentcommandschanged = 0, latexdefinitionsfileexists = 0, pointsize = 3, multicolored = 1;
         long InfoStyle = wxRESIZE_BORDER;
         bool closebrackets = true, computedefaultobject = false;
         wxPoint actuallinepoint,actualpolygonpoint;
@@ -98,7 +98,7 @@ class PlotFunctionFrame: public wxFrame
         double movex = 0, movey = 0;
         std::string Program_Name="PlotFunction",x_axis="x",y_axis="y",sx_scale="1",sy_scale="1",sgx_scale="0.5",sgy_scale="0.5",actual_filename="",actual_dirname="", sabst = "10",
                     saxis_fontsize = "10", sfontsize = "10", spoints = "1000", srounddrawingspoints = "-2", sregressiondegree = "1", sPanelx, sPanely,
-                    smovedx = "0.1", smovedy = "0.1", sactive_function = "0", spointsize = "3";
+                    smovedx = "0.1", smovedy = "0.1", sactive_function = "0", spointsize = "3", saxis_pen = "2", sgrid_pen = "1", smulticolored = "1";
         wxString SideText_Word;
         wxFont defaultFont;
         wxSize bitmapsize,actualPanelsize; //DialogInputSize{wxDefaultSize};
@@ -121,7 +121,8 @@ class PlotFunctionFrame: public wxFrame
         //
         const val::d_array<val::d_array<const std::string*>> SettingsCurrent{{&sx_scale, &sy_scale}, {}, {&sgx_scale, &sgy_scale}, {}, {&spoints}, {&xstring, &ystring},
                                                                              {}, {}, {}, {}, {}, {}, {&sfontsize}, {}, {&sPanelx, &sPanely}, {&x_axis, &y_axis}, {&sregressiondegree}, {&srounddrawingspoints},
-                                                                             {}, {}, {}, {}, {&sabst}, {&saxis_fontsize}, {}, {&smovedx, &smovedy}, {&sactive_function}, {&spointsize}};
+                                                                             {}, {}, {}, {}, {&sabst}, {&saxis_fontsize}, {}, {&smovedx, &smovedy}, {&sactive_function}, {&spointsize},
+																			 {&saxis_pen}, {&sgrid_pen}, {&smulticolored}, {}};
         //
         wxMenu* MenuRecentfiles;
         val::Glist<wxMenuItem*> recent_menu;
@@ -137,7 +138,8 @@ class PlotFunctionFrame: public wxFrame
         void ChangeSettings(int command, const std::string &svalue="", int id = 0);
         void ExecuteCommand(int command, int f_nr = 0, const std::string &svalue="", int id = 0);
         int findactivefunction(int x,int y);
-        void displacefunction(int i,const std::string& dx,const std::string& dy);
+        int displacefunction(int i,const std::string& dx,const std::string& dy);
+	    int stretchfunction(int nr, const std::string& s);
         void changefunctionsettings(int i);
         void changedpanelinsertmode(int mode = 0);
         void SendNotification(const std::string& s);
