@@ -4107,7 +4107,7 @@ void computeupperlowersum(std::string sf, const val::Glist<plotobject> &F ,int u
 		if (l != 4) return;
 		std::string s = values[0];
 		val::replace<char>(s, "#", "");
-		k = FromString<int>(s);
+		k = FromString<int>(s) - 1;
 		beg = 1;
 	}
 	if (k < 0 || k >= F.length()) return;
@@ -4162,12 +4162,12 @@ void computeupperlowersum(std::string sf, const val::Glist<plotobject> &F ,int u
 	}
 	tablestring += "\n Approx. value = " + ToString(integral(f, double(ra), double(rb)));
 
-	if (n <= 8) {
+	if (n <= 20) {
 		tablestring += "\n\n Valuations:\n" + valuations;
 	}
 	
     MyThreadEvent event(MY_EVENT, IdRefresh);
     if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event.Clone());
-	MyThreadEvent event2(MY_EVENT, IdTable);
+	MyThreadEvent event2(MY_EVENT, IdIntegralApprox);
 	if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event2.Clone());
 }

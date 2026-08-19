@@ -1082,13 +1082,13 @@ void PlotFunctionFrame::GetSettings()
         fstring+=F[i].getinfixnotation();
 		// if (F[i].IsAlgCurve()) fstring += " = 0";
         if (i >= oldN && !multicolormenu->IsChecked()) Color[i] = defaultpaintcolor;
-        if (F[i].x_range.x == F[i].x_range.y) {
+        if (F[i].x_range.x == F[i].x_range.y && !F[i].IsHistogram()) {
             fstring+=";\n";
             continue;
         }
-        if (F[i].x_range.y <= F[i].x_range.x) {F[i].x_range.x=x1; F[i].x_range.y=x2;}
+        if (F[i].x_range.y <= F[i].x_range.x && !F[i].IsHistogram()) {F[i].x_range.x=x1; F[i].x_range.y=x2;}
         //fstring+=F[i].getinfixnotation();
-        if (F[i].x_range.x!=x1 || F[i].x_range.y!=x2 || F[i].getmode() == plotobject::PARCURVE) fstring+= "  [ "+ F[i].x1.getinfixnotation() +" , " + F[i].x2.getinfixnotation() + " ];\n";
+        if (F[i].x_range.x!=x1 || F[i].x_range.y!=x2 || F[i].getmode() == plotobject::PARCURVE || F[i].IsHistogram()) fstring+= "  [ "+ F[i].x1.getinfixnotation() +" , " + F[i].x2.getinfixnotation() + " ];\n";
         else fstring+=";\n";
     }
     if (active_function >= N) active_function = N-1;
@@ -4487,11 +4487,19 @@ void PlotFunctionFrame::OnMyEvent(MyThreadEvent& event)
 
     tablestring.Replace(wxString("PI"), pi);
 
-    if (id == myevent_id::IdTable || id == myevent_id::IdEval) { //
+    if (id == myevent_id::IdTable || id == myevent_id::IdEval || id == myevent_id::IdIntegralApprox || id == myevent_id::IdBinTest  ) { //
         std::string title;
 
-        if (id  == IdTable) title = "Table";
-        else title = "Evaluation";
+		switch (id) {
+			case myevent_id::IdTable: title = "Table"; break;
+			case myevent_id::IdEval: title = "Evaluation"; break;
+			case myevent_id::IdIntegralApprox: title = "Integral Approximation"; break;
+			case myevent_id::IdBinTest: title = "Binomial Test"; break;
+			default: break;
+		}
+
+        // if (id  == IdTable) title = "Table";
+        // else title = "Evaluation";
         sx=250;
         sy=dy;
         x+=dx;

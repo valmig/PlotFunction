@@ -90,7 +90,8 @@ private:
         std::string message;
 };
 
-enum myevent_id{IdPaint,IdTable,IdIntegral,IdRefresh,IdIteration,IdAnalyze,IdInfo,IdEval, IdIntersection, IdCalculate, IdPointStat, IdTriangle, IdToLatexString};
+enum myevent_id{IdPaint,IdTable,IdIntegral,IdRefresh,IdIteration,IdAnalyze,IdInfo,IdEval, IdIntersection, IdCalculate, IdPointStat, IdTriangle, IdToLatexString,
+                IdBinTest, IdIntegralApprox};
 
 
 void inserttocand(val::Glist<val::GPair<int>> &cand,const val::GPair<int> &q,int y);

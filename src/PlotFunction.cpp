@@ -2872,7 +2872,7 @@ void computebinomtest(std::string sf)
 		
     MyThreadEvent event(MY_EVENT, IdRefresh);
     if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event.Clone());
-	MyThreadEvent event2(MY_EVENT, IdTable);
+	MyThreadEvent event2(MY_EVENT, IdBinTest);
 	if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event2.Clone());
 }
 
