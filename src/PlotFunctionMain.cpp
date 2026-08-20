@@ -248,6 +248,7 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     Menu_Tools->Append(7011,_("Analyze function... \tCtrl-A"));
     Menu_Tools->Append(7012,_("Intersection... \tShift-Ctrl-I"));
     Menu_Tools->Append(7013,_("Osculating Circle... \tAlt-O"));
+    Menu_Tools->Append(7014,_("Stammfunction \tShift-Alt-D"));
     //
     //
     wxMenuBar *MenuBar1 = new wxMenuBar();
@@ -407,6 +408,7 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuTools,this,7011);      // Analyze
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuTools,this,7012);      // Intersection
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuTools,this,7013);      // Osculating Circle
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuTools,this,7014);      // Stammfunction
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnChangeParmeterMenu,this,5);  // Change Parameter Values
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnChangeParmeterMenu,this,23); // Regression Degree
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnChangeParmeterMenu,this,24); // Round-decimal for points
@@ -3227,6 +3229,7 @@ void PlotFunctionFrame::OnMenuTools(wxCommandEvent &event)
             case 7007 : title = "Normal..." ; break;
             case 7008 : title = "Zero iteration..." ; break;
             case 7013 : title = "Osculating Circle..." ; break;
+            case 7014 : title = "Stammfunction..." ; break;
             default: break;
         }
         val::SingleChoiceDialog dialog(this,"Available functions:",title,List);
@@ -3241,71 +3244,82 @@ void PlotFunctionFrame::OnMenuTools(wxCommandEvent &event)
         else return;
     }
 
-    if (id==7001 || id ==7007 || id == 7013) { // Tangente, Normale, Osculating circle
-        std::string type,input;
-        if (id==7001) type = "tangent";
-        else if (id == 7007){
-            type = "normal";
-        }
-        else type = "osculating circle";
-        MultiLineDialog tangentdialog(this,"","Entry x-value or point",240,-1,"Set Point for " + type,fontsize,1);
+	switch (id)
+	{
+		case 7001: case 7007: case 7013: // Tangente, Normale, Osculating circle
+		{
+			std::string type,input;
+			if (id==7001) type = "tangent";
+			else if (id == 7007){
+				type = "normal";
+			}
+			else type = "osculating circle";
+			MultiLineDialog tangentdialog(this,"","Entry x-value or point",240,-1,"Set Point for " + type,fontsize,1);
 // #ifdef __APPLE__
 //         tangentdialog.Centre();
 // #endif // __APPLE__
-		clientPos.y = Point.y + Size.y - (20 + tangentdialog.GetSize().y);
-		tangentdialog.SetPosition(clientPos);
-        if (tangentdialog.ShowModal()==wxID_CANCEL) return;
-        input=tangentdialog.GetSettingsText();
-        if (id == 7013) ExecuteCommand(OSCCIRCLE,j,input,id);
-        else ExecuteCommand(TANGENT,j,input,id);
-        return;
-    }
-    else if (id==7002) { // Ableitung
-        ExecuteCommand(DERIVE,j);
-        return;
-    }
-    else if (id==7003) { // Table
-        // if (nchildwindows) return;
-
-        MultiLineDialog tabledialog(this,wxString(xstring) + " ; 0.5" ,"Entry x1,x2,dx:",240,-1,"Set Values for Table",fontsize,1);
+			clientPos.y = Point.y + Size.y - (20 + tangentdialog.GetSize().y);
+			tangentdialog.SetPosition(clientPos);
+			if (tangentdialog.ShowModal()==wxID_CANCEL) return;
+			input=tangentdialog.GetSettingsText();
+			if (id == 7013) ExecuteCommand(OSCCIRCLE,j,input,id);
+			else ExecuteCommand(TANGENT,j,input,id);
+			return;
+		} break;
+		case 7002: // Derive
+		{
+			ExecuteCommand(DERIVE,j);
+			return;
+		} break;
+		case 7014: // Stammfunction
+		{
+			ExecuteCommand(STAMMFUNCTION,j);
+			return;
+		} break;
+		case 7003:    // TAble
+		{
+			MultiLineDialog tabledialog(this,wxString(xstring) + " ; 0.5" ,"Entry x1,x2,dx:",240,-1,"Set Values for Table",fontsize,1);
 // #ifdef __APPLE__
 //         tabledialog.Centre();
 // #endif // __APPLE__
-		clientPos.y = Point.y + Size.y - (20 + tabledialog.GetSize().y);
-		tabledialog.SetPosition(clientPos);
-        if (tabledialog.ShowModal()==wxID_CANCEL) return;
-        ExecuteCommand(TABLE,j,std::string(tabledialog.GetSettingsText()));
-        return;
-    }
-    else if (id==7004 || id==7005 || id==7008)    { // Integral + Iteration:
-        //if (id==7005 && isderived(F[j])) return;
-        clientwidth = 240; clientheight = 100;
+			clientPos.y = Point.y + Size.y - (20 + tabledialog.GetSize().y);
+			tabledialog.SetPosition(clientPos);
+			if (tabledialog.ShowModal()==wxID_CANCEL) return;
+			ExecuteCommand(TABLE,j,std::string(tabledialog.GetSettingsText()));
+			return;
+		} break;
+		case 7004: case 7005: case 7008:   // Integral + Iteration
+		{
+			clientwidth = 240; clientheight = 100;
 
-        std::string title,param;
+			std::string title,param;
 
-        if (id==7004) title ="Integral";
-        else if (id==7005) {title = "Arc Length";}
-        else title="zero-iteration";
+			if (id==7004) title ="Integral";
+			else if (id==7005) {title = "Arc Length";}
+			else title="zero-iteration";
 
-        param="Entry round-dec / iteration / precision / x1;x2";
+			param="Entry round-dec / iteration / precision / x1;x2";
 
-        std::string text=val::ToString(dez) + "\n" + val::ToString(iter) + "\n" + val::ToString(delta) + "\n";
+			std::string text=val::ToString(dez) + "\n" + val::ToString(iter) + "\n" + val::ToString(delta) + "\n";
 
-        MultiLineDialog integraldialog(this,text,param,clientwidth,clientheight,title,fontsize);
-		clientPos.y = Point.y + Size.y - (20 + integraldialog.GetSize().y);
+			MultiLineDialog integraldialog(this,text,param,clientwidth,clientheight,title,fontsize);
+			clientPos.y = Point.y + Size.y - (20 + integraldialog.GetSize().y);
 // #ifdef __APPLE__
 //         integraldialog.Centre();
 // #endif // __APPLE__
 
-        // integraldialog.SetPosition(wxPoint(Point.x,Point.y+10));
-        integraldialog.SetPosition(clientPos);
+			// integraldialog.SetPosition(wxPoint(Point.x,Point.y+10));
+			integraldialog.SetPosition(clientPos);
 
-        if (integraldialog.ShowModal()==wxID_CANCEL) return;
-        wxString value = integraldialog.GetSettingsText();
-        replacesupscripts(value);
-        ExecuteCommand(INTEGRAL,j,std::string(value),id);
-        return;
-    }
+			if (integraldialog.ShowModal()==wxID_CANCEL) return;
+			wxString value = integraldialog.GetSettingsText();
+			replacesupscripts(value);
+			ExecuteCommand(INTEGRAL,j,std::string(value),id);
+			return;
+		} break;
+		default: break;
+	}
+
     GetSettings();
     Compute();
 }
@@ -3997,7 +4011,7 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
     //if ((command != REGRESSION && command != INTERPOLATION && command != CALCULATE)  && (f_nr < 0 || f_nr >= N)) return;
     switch (command)
     {
-    case val_commands::DERIVE:
+    case val_commands::DERIVE: case val_commands::STAMMFUNCTION:
         {
             if (f_nr < 0 || f_nr >= N) return;
             std::string sf=F[f_nr].getinfixnotation();
@@ -4005,11 +4019,24 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
             if (m<0) return;
 
             if (fstring[n]!=';') fstring+=';';
-            if (sf[m]=='\'') fstring += sf + "\'";
+            if (sf[m]=='\'') {
+				if (command == val_commands::DERIVE) fstring += sf + "\'";
+				else {
+					sf.resize(m);
+					fstring += sf;
+				}
+			}
             else if (F[f_nr].f.numberofvariables()==1) {
                 if (F[f_nr].f.isdifferentiable()) {
-                    val::valfunction f(F[f_nr].getinfixnotation()), g = f.derive();
-                    g.simplify(1);
+                    val::valfunction f(F[f_nr].getinfixnotation()), g;
+					if (command == val_commands::DERIVE) {
+						g = f.derive();						
+						g.simplify(1);
+					}
+					else {
+						g = integral(f);
+						if (g.is_zero()) return;
+					}
                     fstring += g.getinfixnotation();
                 }
                 else return;

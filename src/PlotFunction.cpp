@@ -146,7 +146,7 @@ const val::d_array<wxString> SettingsParList({"axis-scale sx [sy]   <Shift-Alt-S
 
 const val::d_array<wxString> CommandsList({"derive", "analyze", "tangent", "normal", "interpolation", "regression", "table", "integral",
                                              "arclength", "zero-iteration", "move", "evaluate", "intersection", "calculate", "rotate", "osc_circle", "latex-string", "taylor-polynomial",
-                                             "reflection", "points-in-graph", "binomtest", "stretch", "upper-sum", "lower-sum"});
+                                             "reflection", "points-in-graph", "binomtest", "stretch", "upper-sum", "lower-sum", "stammfunction"});
 
 const val::d_array<wxString> CommandsParList({"derive [#nr = 1]",
                                                  "analyze [#nr = 1] [x1 x2] [prec = 1e-09] [iterations] [decimals]    <Ctrl-A>",
@@ -171,7 +171,8 @@ const val::d_array<wxString> CommandsParList({"derive [#nr = 1]",
 												 "binomtest n ; = / <= / >= ; [alpha = 0.05]; [color reject = red ; color accept = green]",
 												 "stretch [#nr = 1] sx [x]/y ; [sy y]",
 												 "upper-sum [#nr = 1]; n; a; b",
-												 "lower-sum [#nr = 1]; n; a; b"
+												 "lower-sum [#nr = 1]; n; a; b",
+												 "stammfunction [#nr = 1]"
                                                  });
 
 
@@ -2852,7 +2853,7 @@ void computebinomtest(std::string sf)
     }
 	h_s = "\n bindensity " + ToString(n) + " " + values[2] + " 2 0.1 <" + color_rejected + ">;"; 
 	h_s += "\n bindensity " + ToString(n) + " " + values[2] + " 2 0.1 [ " + ToString(k1) + " , " + ToString(k2) + "] <" + color_accepted + ">;";
-	std::cout << "\n h_s = \n" << h_s << std::endl;
+	//std::cout << "\n h_s = \n" << h_s << std::endl;
 	fstring += h_s;
 	tablestring = "Binomial-Test:\nH0: p";
 	if (type == test_type::R) {
@@ -2875,6 +2876,87 @@ void computebinomtest(std::string sf)
 	MyThreadEvent event2(MY_EVENT, IdBinTest);
 	if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event2.Clone());
 }
+
+void computeupperlowersum(std::string sf, const val::Glist<plotobject> &F ,int upper)
+{
+	using namespace val;
+	d_array<char> sep{' ', ';', '\n'};
+	Glist<std::string> values = getwordsfromstring(sf, sep);
+	int l = values.length(), beg = 0, k = 0;
+
+	if (l == 0) return;
+	if (values[0].find("#") == std::string::npos) {
+		if (l != 3) return;
+	}
+	else {
+		if (l != 4) return;
+		std::string s = values[0];
+		val::replace<char>(s, "#", "");
+		k = FromString<int>(s) - 1;
+		beg = 1;
+	}
+	if (k < 0 || k >= F.length()) return;
+	if (!F[k].IsFunction()) return;
+	if (F[k].f.numberofvariables() != 1) return;
+
+	int n = FromString<int>(values[beg]);
+	valfunction a = FromString<valfunction>(values[beg + 1]), b = FromString<valfunction>(values[beg + 2]);
+	rational ra = FromString<rational>(values[beg + 1]), rb = FromString<rational>(values[beg + 2]), dx = (rb-ra)/rational(n);
+
+	if (dx.signum() < 0) return;
+
+	std::string h_s = "\nhistogram ", valuations;
+	rational two(2);
+	double rv, lv;
+	const valfunction &f = F[k].f;
+	valfunction uppersum, lowersum, trapez, flv, frv, G = integral(f);
+
+	for (auto v = ra; v < rb; v += dx) {
+		valuations += "x = " + ToString(v) + ":   f(" + ToString(v) + ") = ";
+		h_s += ToString(double(v + dx/two)) + " ";
+		lv = f(double(v)); rv = f(double(v+dx));
+		flv = f(valfunction(ToString(v))); frv = f(valfunction(ToString(v + dx)));
+		if (lv > rv) {
+			if (upper) h_s += ToString(lv) + " ";
+			else h_s += ToString(rv) + " ";
+			uppersum += flv;
+			lowersum += frv;
+		}
+		else {
+			if (upper) h_s += ToString(rv) + " ";
+			else h_s += ToString(lv) + " ";
+			uppersum += frv;
+			lowersum += flv;
+		}
+		trapez += (frv + flv)/valfunction("2");
+		valuations += flv.getinfixnotation() + " = " + ToString(flv(0)) + "\n";
+	}
+	valuations += "x = " + b.getinfixnotation() + ":   f(" + b.getinfixnotation() + ") = " + frv.getinfixnotation() + " = " + ToString(frv(0));
+	uppersum *= valfunction(ToString(dx));
+	lowersum *= valfunction(ToString(dx));
+	trapez *= valfunction(ToString(dx));
+	h_s += "[ 0.2 , " + ToString(double(dx)) + " ]";
+	fstring += h_s;
+	tablestring = "Approximations of:\nintegral(" + f.getinfixnotation() + ", " + a.getinfixnotation() + " , " + b.getinfixnotation() + "); n = " + ToString(n) +":\n"; 
+	tablestring += "\n Lower sum = " + lowersum.getinfixnotation() + " = " + ToString(lowersum(0)) + "\n";
+	tablestring += "\n Upper sum = " + uppersum.getinfixnotation() + " = " + ToString(uppersum(0)) + "\n"; 
+	tablestring += "\n Trapezoid rule = " + trapez.getinfixnotation() + " = " + ToString(trapez(0)) + "\n";
+	if (!G.is_zero()) {
+		valfunction ev = G(b) - G(a);
+		tablestring += "\n Exact value = " + ev.getinfixnotation() + " = " + ToString(ev(0)) + "\n";		
+	}
+	tablestring += "\n Approx. value = " + ToString(integral(f, double(ra), double(rb)));
+
+	if (n <= 20) {
+		tablestring += "\n\n Valuations:\n" + valuations;
+	}
+	
+    MyThreadEvent event(MY_EVENT, IdRefresh);
+    if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event.Clone());
+	MyThreadEvent event2(MY_EVENT, IdIntegralApprox);
+	if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event2.Clone());
+}
+
 
 
 // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------

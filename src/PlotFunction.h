@@ -67,7 +67,7 @@ enum val_settings{AXIS_SCALE,AXIS_COLOR,GRID_SCALE,GRID_COLOR,VALUES_NUMBER,AXIS
 
 // match with CommandsList, CommandsParList
 enum val_commands{DERIVE,ANALYZE,TANGENT,NORMAL,INTERPOLATION,REGRESSION,TABLE,INTEGRAL,ARCLENGTH,ZERO_ITERATION,MOVE,EVALUATE,INTERSECTION,
-                     CALCULATE,ROTATE,OSCCIRCLE,TOLATEXSTRING,TAYLORPOL,REFLECTION,POINTSINGRAPH,BINOMTEST,STRETCH, UPPERSUM, LOWERSUM};
+                     CALCULATE,ROTATE,OSCCIRCLE,TOLATEXSTRING,TAYLORPOL,REFLECTION,POINTSINGRAPH,BINOMTEST,STRETCH, UPPERSUM, LOWERSUM, STAMMFUNCTION};
 
 wxDECLARE_EVENT(MY_EVENT, MyThreadEvent);
 
@@ -230,6 +230,9 @@ void computepointsingraph(const plotobject &F, std::string input, double x1, dou
 void computebinomtest(std::string sf);
 
 
+void computeupperlowersum(std::string sf, const val::Glist<plotobject> &F, int upper = 1);
+
+
 template <class T>
 double kepler_simpson_sum(const T& f,const double& a,const double& b,int n);
 
@@ -245,9 +248,13 @@ double integral(const T& f,const double &a,const double &b,int iter = 50, const 
 template<class T, class S>
 int NewtonIteration(const T& f, const S &f1, double &x, const double& eps = 1e-9, int n = 15);
 
-
+// Defined in calculus.cpp
 void computezeros(const val::valfunction &f,const double &x1,const double &x2,const double &epsilon,int decimals,int iterations,
                   val::Glist<double> &d_zeros, val::Glist<val::valfunction> &s_zeros);
+
+// Defined in calculus.cpp
+val::valfunction integral(const val::valfunction &f, int k = 1);
+
 
 // Iterationsverfahren zur Bestimmung einer Nullstelle nach der Sekanten-Methode:
 // Rückgabe: -2 Iterationsgrenze wird nicht erreicht, Methode fehlgeschlagen.
@@ -255,6 +262,10 @@ void computezeros(const val::valfunction &f,const double &x1,const double &x2,co
 //            i = Anzahl der Iterationen,  |f(x1)| <= eps.
 //template <class T>
 //int SecantMethod(const T& f,double& x0,double& x1,const double& eps,int n);
+
+
+
+
 
 //----------------------------------------------------------------------------------------------------------------------------------------
 
