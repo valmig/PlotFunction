@@ -50,7 +50,11 @@ extern const val::d_array<wxString> SettingsList;
 extern const val::d_array<wxString> SettingsParList;
 extern const val::d_array<wxString> CommandsParList;
 extern val::Glist<wxString> recentcommands;
+extern const val::d_array<wxString> FunctionsList;
+extern const val::d_array<wxString> CalcOPList;
+extern const val::d_array<wxString> ObjectsList;
 extern const val::d_array<wxString> WordList;
+extern const val::d_array<wxString> ExceptionList;
 extern const val::trie_type<wxString> WordTree;
 extern const val::d_array<wxString> SideTextWordList;
 extern const val::trie_type<wxString> InputDialogTree;
@@ -102,6 +106,7 @@ val::rational abs(const val::rational&);
 int operator <(const val::GPair<double>& p,const val::GPair<double>& q);
 const int MaxPrec = 19;
 valfunction& operator *=(valfunction &f, const valfunction &g);
+double binom(int n, int k);
 double binomdensity(int n, const double &p, int k);
 double binomcd(int n,const double &p, int k1,int k2);
 double poissondensity(const double& lambda, int k);
@@ -152,7 +157,7 @@ void gettangentvalues(const plotobject &f,const double &x,double &m,double &b,in
 val::Glist<std::string> getfunctionstrings(const std::string &s);
 
 
-std::string extractstringfrombrackets(std::string &sf,const char lb, const char rb);
+std::string extractstringfrombrackets(std::string &sf,const char lb, const char rb, int beg = 0);
 
 std::string getstringfrombrackets(const std::string &sf,const char lb, const char rb);
 

@@ -14,7 +14,7 @@
 #include <pol_arithmetic.h>
 #include <LA.h>
 #include <ideal_roots.h>
-
+#include <complex.h>
 
 void compute_zeros_of_alg_curves(const val::valfunction &f, const val::valfunction &g, const double &epsilon, int decimals,
 	                             val::Glist<val::GPair<double>> &d_zeros, val::Glist<val::GPair<val::valfunction>> &s_zeros);
@@ -2431,6 +2431,210 @@ int zerosumoper(const val::valfunction &f,const double &x1,const double &x2,cons
 } // end namespace hzeros
 
 
+
+namespace hcal
+{
+const val::d_array<std::string> opList{"exp", "log", "sqrt", "inf", "abs", "arcsin", "arccos", "arctan", "arsinh", "arcosh", "artanh", "sinh", "cosh", "tanh", "sin",
+	                                          "cos", "tan", "sum", "prod", "binomial", "gcd", "lcm"};
+const val::d_array<std::string> CapopList{"EXP", "LOG", "SQRT", "INF", "ABS", "ARCSIN", "ARCCOS", "ARCTAN", "ARSINH", "ARCOSH", "ARTANH", "SINH", "COSH", "TANH", "SIN",
+	                                          "COS", "TAN", "SUM", "PROD", "BINOMIAL", "GCD", "LCM"};
+	
+int evalsum_prod(std::string &s, int sum = 1);
+
+int evalbinomial(std::string &s);
+
+int evalgcd_lcm(std::string &s, int gcd = 1);
+
+int calculate (std::string &s);
+
+void capitalize_op(std::string &s);
+
+void decapitalize_op(std::string &s);
+
+
+void capitalize_op(std::string &s)
+{
+	for (int i = 0; i < opList.length(); ++i) {
+		if (s.find(opList[i]) != std::string::npos) val::replace(s, opList[i], CapopList[i]);
+	}
+}
+
+void decapitalize_op(std::string &s)
+{
+	for (int i = 0; i < CapopList.length(); ++i) {
+		if (s.find(CapopList[i]) != std::string::npos) val::replace(s, CapopList[i], opList[i]);
+	}
+}
+
+// sum syntax: sum(beg, end, expression(k))
+int evalsum_prod(std::string &s, int sum)
+{
+	int i, beg = 0, end, nsvalues = 0;
+	size_t pos;
+	std::string spart, snum, sexp, svar = "k", word = "sum";
+	val::d_array<char> separators{',', ';'};
+	val::Glist<std::string> svalues;
+	val::valfunction vsum;
+
+	if (sum) {
+		if ((pos = s.find("sum")) == std::string::npos) return 0;
+	}
+	else if ((pos = s.find("prod")) == std::string::npos) return 0;
+	if (!sum) word = "prod";
+	
+	spart = extractstringfrombrackets(s, '(', ')', pos);
+	// std::cout << "\n spart = " << spart << std::endl;
+	svalues = getwordsfromstring(spart, separators);
+	// std::cout << "length" << svalues.length() << std::endl;
+	if ((nsvalues = svalues.length()) < 3) return 0;
+	if (nsvalues >3) {
+		for (i = 3; i < nsvalues; ++i) {
+			svalues[2] += ", " + svalues[i];
+		}
+	}
+
+	if (svalues[0].find("=") != std::string::npos) {
+		std::string hs;
+		int n = svalues[0].length(), found = 0;
+		for (i = 0; i < n; ++i) {
+			hs += svalues[0][i];
+			if (svalues[0][i] != ' ' && !found) {
+				found = 1;
+				svar =""; svar += svalues[0][i];
+			}
+			if (svalues[0][i] == '=') {
+				break;
+			}
+		}
+		val::replace<char>(svalues[0], hs, "", 0);
+		// std::cout << "\n svar = " << svar << ", hs = " << hs <<  ", svalues[0] = " << svalues[0] << std::endl;
+	}
+	
+	beg = val::FromString<int>(svalues[0]);
+	end = val::FromString<int>(svalues[1]);
+	// std::cout << "\n beg = " << beg << ", end = " << end << std::endl;
+	if (svalues[2].find(svar) == std::string::npos) {
+		if (end >= beg) {
+			if (!calculate(svalues[2])) return 0;
+			if (sum) sexp = "(" + val::ToString(end - beg + 1) + ")*(" + svalues[2] + ")";
+			else sexp = "(" + svalues[2] + ")^(" + val::ToString(end - beg + 1) + ")";
+			// std::cout << "\n sexp = " << sexp << std::endl;
+			calculate(sexp);
+			val::replace<char>(s,  word, "(" + sexp + ")", 0);
+			// std::cout << "\n s = " << s << std::endl;
+			return 1;
+		}
+	}
+	else {
+		if (!sum) vsum = val::valfunction("1");
+		for (i = beg; i <= end; ++i) {
+			sexp = svalues[2];
+			capitalize_op(sexp);
+			val::replace<char>(sexp, svar, val::ToString(i));
+			// std::cout << "sexp = " << sexp << std::endl;
+			decapitalize_op(sexp);
+			calculate(sexp);
+			if (sum) vsum += val::valfunction(sexp);
+			else vsum = vsum * val::valfunction(sexp);
+		}
+	}
+
+	// std::cout << "\n vsum = " << vsum << ", s = " << s << std::endl;
+	
+	val::replace<char>(s,  word, "(" + vsum.getinfixnotation() + ")", 0);
+	// std::cout << "\n s = " << s << std::endl;
+	return 1;
+}
+
+int evalbinomial(std::string &s)
+{
+	int n, k;
+	size_t pos;
+	std::string spart, sval; 
+	val::Glist<std::string> svalues;
+	val::d_array<char> separators{',', ';'};
+	
+	if ((pos = s.find("binomial")) == std::string::npos) return 0;
+	spart = extractstringfrombrackets(s, '(', ')', pos);
+	svalues = getwordsfromstring(spart, separators);
+	// std::cout << "length" << svalues.length() << std::endl;
+	if (svalues.length() != 2) return 0;
+	n = val::FromString<int>(svalues[0]);
+	k = val::FromString<int>(svalues[1]);
+	if (k > n) return 0;
+	sval = val::ToString(val::binom(n, k));
+	val::replace<char>(s, "binomial", sval, 0);
+	return 1;
+}
+
+int evalgcd_lcm(std::string &s, int gcd)
+{
+	int nvalues;
+	size_t pos;
+	std::string spart, word = "gcd"; 
+	val::Glist<std::string> svalues;
+	val::d_array<char> separators{',', ';'};
+
+	if (gcd) {
+		if ((pos = s.find("gcd")) == std::string::npos) return 0;
+	}
+	else if ((pos = s.find("lcm")) == std::string::npos) return 0;
+
+	if (!gcd) word = "lcm";
+
+	
+	spart = extractstringfrombrackets(s, '(', ')', pos);
+	svalues = getwordsfromstring(spart, separators);
+	// std::cout << "length" << svalues.length() << std::endl;
+	if ((nvalues = svalues.length()) < 2) return 0;
+
+	val::integer a, b;
+
+	a = val::FromString<val::integer>(svalues[0]);
+	for (int i = 1; i < nvalues; ++i) {
+		b = val::FromString<val::integer>(svalues[i]);
+		if (gcd) a = val::gcd(a,b);
+		else a = val::lcm(a,b);
+	}
+	val::replace(s, word, val::ToString(a));
+	
+	return 1;
+}
+
+
+
+int calculate (std::string &s)
+{	
+	while (s.find("sum") != std::string::npos) {
+		if (!evalsum_prod(s, 1)) return 0;
+	}
+	while (s.find("prod") != std::string::npos) {
+		if (!evalsum_prod(s, 0)) return 0;
+	}
+	while (s.find("binomial") != std::string::npos) {
+		if (!evalbinomial(s)) return 0;
+	}
+	while (s.find("gcd") != std::string::npos) {
+		if (!evalgcd_lcm(s, 1)) return 0;
+	}
+	while (s.find("lcm") != std::string::npos) {
+		if (!evalgcd_lcm(s, 0)) return 0;
+	}
+    val::Glist<char> VarList;
+
+	VarList = substitutepar(s);
+
+	val::valfunction f(s);
+
+	s = f.getinfixnotation();
+    back_substitutepar(s, VarList, f.numberofvariables());
+
+	return 1;
+}
+
+} // end namespace hcal
+
+
 void computezeros(const val::valfunction &f,const double &x1,const double &x2,const double &epsilon,int decimals,int iterations,
                   val::Glist<double> &d_zeros, val::Glist<val::valfunction> &s_zeros)
 {
@@ -4092,3 +4296,32 @@ void intersection(const plotobject &f, const plotobject &g, std::string input)
     return;
 }
 
+
+void calculate(std::string s)
+{
+    val::replace<char>(s, "ans", ansexpr);
+    std::string   os = s;//, rw, rs;
+    // val::Glist<char> VarList;
+
+    // VarList = substitutepar(s);
+
+    // val::valfunction f(s);
+    // s = f.getinfixnotation();
+
+    // back_substitutepar(s, VarList, f.numberofvariables());
+	if (!hcal::calculate(s)) {
+		tablestring = "Cannot evaluate expression!";
+	}
+	else {
+		val::valfunction f(s);
+		tablestring = "Evaluation of:\n" + os +": \nSymbolic:\n" + s;
+		if (f.iscomplex()) {
+			tablestring += "\n\ncomplex:\n" + val::ToString(f(val::complex(0)));
+		}
+		else tablestring += "\n\ndouble:\n" + val::ToString(f(0),8);
+
+		ansexpr = "(" + s + ")";
+	}
+    MyThreadEvent event(MY_EVENT,IdCalculate);
+    if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event.Clone() );
+}

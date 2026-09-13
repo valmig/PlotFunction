@@ -79,12 +79,22 @@ const val::d_array<wxString> greek_letters{L"\u03B1", L"\u03B2", L"\u03B3", L"\u
 // const val::d_array<wxString> WordList{"PI", "exp", "log", "line", "sinh", "sqrt", "cosh", "circle", "tanh", "text", "triangle", "polygon", "points", "histogram",
 //                                    "inf", "fill", "abs", "arcsin", "arccos", "arctan", "rectangle", "sin", "cos", "tan",
 //                                    "arsinh", "arcosh", "artanh", "bitmap"};
+const val::d_array<wxString> FunctionsList{"PI", "exp", "log", "sqrt", "inf", "abs", "arcsin", "arccos", "arctan", "arsinh", "arcosh", "artanh", "sinh", "cosh", "tanh", "sin",
+	                                "cos", "tan"};
 
-const val::d_array<wxString> WordList{"PI", "exp", "log", "line",  "sqrt", "circle", "text", "triangle", "polygon", "points", "histogram",
-                                   "inf", "fill", "abs", "arcsin", "arccos", "arctan", "rectangle",
-                                   "arsinh", "arcosh", "artanh", "sinh", "cosh", "tanh", "sin", "cos", "tan", "bitmap", "bindensity", "poissondensity" , "geodensity",
-                                   "normaldensity", "normaldistribution", "bindistribution"};
+const val::d_array<wxString> ObjectsList{"line", "circle", "text", "triangle", "polygon", "points", "histogram", "fill", "rectangle", "bitmap", "bindensity", "poissondensity" ,
+	                                "geodensity", "normaldensity", "normaldistribution", "bindistribution"};
 
+const val::d_array<wxString> CalcOPList(FunctionsList + val::d_array<wxString>{"sum", "prod", "binomial", "gcd", "lcm"});
+
+
+// const val::d_array<wxString> WordList{"PI", "exp", "log", "line",  "sqrt", "circle", "text", "triangle", "polygon", "points", "histogram",
+//                                    "inf", "fill", "abs", "arcsin", "arccos", "arctan", "rectangle",
+//                                    "arsinh", "arcosh", "artanh", "sinh", "cosh", "tanh", "sin", "cos", "tan", "bitmap", "bindensity", "poissondensity" , "geodensity",
+//                                    "normaldensity", "normaldistribution", "bindistribution"};
+const val::d_array<wxString> WordList(FunctionsList + ObjectsList);
+
+const val::d_array<wxString> ExceptionList(CalcOPList + ObjectsList);
 /*
 val::d_array<std::string> sfunctionlist({"sqrt", "exp", "log", "abs", "sinh", "cosh", "tanh", "arsinh", "arcosh", "artanh",
                                         "sin", "cos", "tan", "arcsin", "arccos", "arctan", "inf", "PI", "line", });
@@ -148,7 +158,7 @@ const val::d_array<wxString> CommandsList({"derive", "analyze", "tangent", "norm
                                              "arclength", "zero-iteration", "move", "evaluate", "intersection", "calculate", "rotate", "osc_circle", "latex-string", "taylor-polynomial",
                                              "reflection", "points-in-graph", "binomtest", "stretch", "upper-sum", "lower-sum", "stammfunction"});
 
-const val::d_array<wxString> CommandsParList({"derive [#nr = 1]",
+const val::d_array<wxString> CommandsParList({"derive [#nr = 1]    <Alt-D>",
                                                  "analyze [#nr = 1] [x1 x2] [prec = 1e-09] [iterations] [decimals]    <Ctrl-A>",
                                                  "tangent [#nr = 1] x / x y    <Alt-T>",
                                                  "normal [#nr = 1] x / x y    <Shift-Alt-N>",
@@ -172,7 +182,7 @@ const val::d_array<wxString> CommandsParList({"derive [#nr = 1]",
 												 "stretch [#nr = 1] sx [x]/y ; [sy y]",
 												 "upper-sum [#nr = 1]; n; a; b",
 												 "lower-sum [#nr = 1]; n; a; b",
-												 "stammfunction [#nr = 1]"
+												 "stammfunction [#nr = 1]    <Shift-Alt-D>"
                                                  });
 
 
@@ -185,7 +195,7 @@ const val::trie_type<wxString> WordTree(WordList + defaultcolornames, 58, int('A
 
 
 const val::trie_type<wxString> InputDialogTree(WordList + SettingsList + CommandsList + defaultcolornames, 78, int('-'));
-const val::d_array<wxString> InputDialogList(WordList + SettingsList + CommandsList + defaultcolornames);
+const val::d_array<wxString> InputDialogList(ExceptionList + SettingsList + CommandsList + defaultcolornames);
 const val::d_array<wxString> SideTextWordList(WordList + defaultcolornames);
 
 const val::d_array<std::wstring> supscripts{L"⁰", L"¹", L"²", L"³", L"⁴", L"⁵", L"⁶", L"⁷", L"⁸", L"⁹"};
@@ -464,13 +474,13 @@ void replacesupscripts(wxString &s)
 
 val::Glist<char> substitutepar(std::string &s)
 {
-    int found = 0 , j = 1, n = WordList.length(), i;
+    int found = 0 , j = 1, n = ExceptionList.length(), i;
     std::string rw, rs;
     val::Glist<char> VarList;
 
     for (i = 0; i < n; ++i) {
         rw = "#" + val::ToString(i);
-        if (val::replace(s, std::string(WordList[i]), rw)) found = 1;
+        if (val::replace(s, std::string(ExceptionList[i]), rw)) found = 1;
     }
 
     n = s.length();
@@ -489,10 +499,10 @@ val::Glist<char> substitutepar(std::string &s)
     }
 
     //std::cout << "\n s = " << s;
-    n = WordList.length();
+    n = ExceptionList.length();
     for (i = n-1; found && i >= 0; --i) {
         rw = "#" + val::ToString(i);
-        val::replace(s, rw, std::string(WordList[i]));
+        val::replace(s, rw, std::string(ExceptionList[i]));
     }
 
     val::replace(s, std::string("A"), std::string("x"));
@@ -1025,12 +1035,13 @@ val::Glist<std::string> getfunctionstrings(const std::string &sf)
 
 
 
-std::string extractstringfrombrackets(std::string &sf,const char lb, const char rb)
+std::string extractstringfrombrackets(std::string &sf,const char lb, const char rb, int beg)
 {
     std::string s = "", sb = "";
     int i, n = sf.length(), nbrackets = 0;
 
     if (n == 0) return sb;
+	for (i = 0; i < beg; ++i) s += sf[i];
     for (i = 0; i < n; ++i) {
         if (sf[i] == lb) {
             ++nbrackets;
@@ -1609,29 +1620,6 @@ void computeevaluation(const plotobject& f, double par)
     if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event.Clone());
 }
 
-void calculate(std::string s)
-{
-    val::replace<char>(s, "ans", ansexpr);
-    std::string   os = s;//, rw, rs;
-    val::Glist<char> VarList;
-
-    VarList = substitutepar(s);
-
-    val::valfunction f(s);
-    s = f.getinfixnotation();
-
-    back_substitutepar(s, VarList, f.numberofvariables());
-
-    tablestring = "Evaluation of:\n" + os +": \nSymbolic:\n" + s;
-    if (f.iscomplex()) {
-        tablestring += "\n\ncomplex:\n" + val::ToString(f(val::complex(0)));
-    }
-    else tablestring += "\n\ndouble:\n" + val::ToString(f(0),8);
-
-    ansexpr = "(" + s + ")";
-    MyThreadEvent event(MY_EVENT,IdCalculate);
-    if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event.Clone() );
-}
 
 
 void computezeroiteration(const plotobject&F,double x1,double x2,double eps,int n,int dez)

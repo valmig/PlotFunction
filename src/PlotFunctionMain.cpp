@@ -147,13 +147,13 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     MenuSettings->Append(5, _("Change Parameter Values...\tCtrl-P"));
     //
     colorsubmenu = new wxMenu();
-    multicolormenu = new wxMenuItem(colorsubmenu,111,"Multiple Colors \tAlt-C",wxEmptyString,wxITEM_CHECK);
+    multicolormenu = new wxMenuItem(colorsubmenu,111,"Multiple Colors \tShift-Alt-C",wxEmptyString,wxITEM_CHECK);
     colorsubmenu->Append(multicolormenu);
     multicolormenu->Check(true);
     colorsubmenu->Append(4400,_T("Background Color...\tCtrl-Shift-B"));
     colorsubmenu->Append(4401,_T("Axis Color...\tCtrl-Alt-A"));
     colorsubmenu->Append(4402,_T("Grid Color...\tCtrl-Shift-G"));
-    colorsubmenu->Append(4403,_T("Default Function Color...\tAlt-Shift-C"));
+    colorsubmenu->Append(4403,_T("Default Function Color...\tAlt-F"));
     colorsubmenu->AppendSeparator();
 	MenuSettings->AppendSubMenu(colorsubmenu, "Colors");
     // MenuSettings->Insert(3,3,"Colors",colorsubmenu);
@@ -249,6 +249,7 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     Menu_Tools->Append(7012,_("Intersection... \tShift-Ctrl-I"));
     Menu_Tools->Append(7013,_("Osculating Circle... \tAlt-O"));
     Menu_Tools->Append(7014,_("Stammfunction \tShift-Alt-D"));
+    Menu_Tools->Append(7015,_("Calculate... \tAlt-C"));
     //
     //
     wxMenuBar *MenuBar1 = new wxMenuBar();
@@ -409,6 +410,7 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuTools,this,7012);      // Intersection
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuTools,this,7013);      // Osculating Circle
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuTools,this,7014);      // Stammfunction
+    Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnMenuTools,this,7015);      // Calculate
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnChangeParmeterMenu,this,5);  // Change Parameter Values
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnChangeParmeterMenu,this,23); // Regression Degree
     Bind(wxEVT_COMMAND_MENU_SELECTED,&PlotFunctionFrame::OnChangeParmeterMenu,this,24); // Round-decimal for points
@@ -1514,120 +1516,6 @@ void PlotFunctionFrame::plotfunction(wxDC& dc,int colour)
 		}
 		while (!ready);
 	}
-
-
-	// for (const auto& pair : F[colour].critpoints) {
-	// 	ix0 = int(val::round(double(sizex-1)*((pair.x-x1)/(x2-x1)),0)); 
-	// 	iy0 = int(val::round(double(sizex-1)*((pair.y-x1)/(x2-x1)),0));
-	// 	if (aw >= ix0 && aw <= iy0) {
-	// 		aw = iy0;
-	// 		if (!isInf(pair.y) && !val::isNaN(pair.y)) {
-	// 			awset = 1;
-	// 			daw = pair.y;
-	// 		}
-	// 	}
-	// 	if (xr2 >= pair.x && xr2 <= pair.y) {
-	// 		ew = ix0;
-	// 		ewset = 1;
-	// 		dew = pair.x;
-	// 	}
-	// }
-
-    // if (F[colour].penstyle != wxPENSTYLE_SOLID) style = 1;
-
-    // i = aw;
-    // do {
-    //     draw = true;
-    //     j = 0;
-    //     k = 0;
-    //     do { // search first point:
-    //         ++k;
-    //         yold = yvalue;
-    //         ix0 = i + abst;
-    //         index = int (val::round(double(i)*faktor_x,0));
-    //         if (index<0 || index >= points) return;
-	// 		if (awset) {
-	// 			yvalue = F[colour].f(daw);
-	// 			if (val::isNaN(yvalue) || isInf(yvalue)) {
-	// 				yvalue = F[colour].f(daw + 1e-9);
-	// 			}
-	// 			awset = 0;
-	// 		}
-	// 		else yvalue = f[index];
-    //         iy0 = int(val::round(dyzero - faktor_y*yvalue,0));//yzero-int(val::round(faktor_y * yvalue,0));
-    //         ++i;
-    //         if (i >= ew) break;
-    //     }
-    //     while (isInf(yvalue) || val::isNaN(yvalue) || (iy0 > ylimit) || (iy0 < abst));
-
-    //     if ((k > 1) && !isInf(yold) && !val::isNaN(yold) && i < ew) {
-    //         --i; --ix0;
-    //         iy0 = int(val::round(dyzero - faktor_y*yold,0));//yzero - int(val::round(faktor_y * yold ,0));
-    //         if (iy0 > ylimit) iy0 = ylimit;
-    //         if (iy0 < abst) iy0 = abst;
-    //     }
-
-    //     for (; i < ew; ++i, ix0 = ix1, iy0 = iy1, ++j) {
-    //         if (j == 5) {
-    //             draw = !draw;
-    //             j = 0;
-    //         }
-    //         ix1=abst+i;
-    //         index=int (val::round(double(i)*faktor_x,0));
-    //         if (index<0 || index >=points) return;
-    //         yvalue = f[index];
-    //         iy1= int(val::round(dyzero - faktor_y*yvalue,0)); //yzero -int(val::round(faktor_y* yvalue,0));
-    //         if (isInf(yvalue) || val::isNaN(yvalue)) { // || (iy1 > ylimit) || (iy1 < abst)) {
-    //             ++i;
-    //             break;
-    //         }
-    //         if (iy1 > ylimit || iy1 < abst) {
-    //             iy1 = val::Max(iy1,abst);
-    //             iy1 = val::Min(iy1,ylimit);
-    //             dc.DrawLine(ix0,iy0,ix1,iy1);
-    //             ++i;
-    //             break;
-    //         }
-    //         if (style) {
-    //             if (draw) dc.DrawLine(ix0,iy0,ix1,iy1);
-    //         }
-    //         else dc.DrawLine(ix0,iy0,ix1,iy1);
-    //     }
-    //     if (i >= ew) {
-	// 		ready = 1;
-	// 		if (ewset) {
-	// 			ix0 = ew - 1;
-	// 			index=int (val::round(double(ix0)*faktor_x,0));
-	// 			yvalue = f[index];
-	// 			if (!isInf(yvalue) && !val::isNaN(yvalue)) {
-	// 				iy0 = int(val::round(dyzero - faktor_y*yvalue,0));
-	// 				if (iy0 < abst) iy0 = abst;
-	// 				if (iy0 > ylimit) iy0 = ylimit;
-	// 				ix0 += abst;
-	// 			}
-	// 			else return;
-				
-	// 			ix1 = ew + abst;
-	// 			yvalue = F[colour].f(dew);
-	// 			if (val::isNaN(yvalue)) {
-	// 				yvalue = F[colour].f(dew - 1e-9);
-	// 			}
-	// 			if (yvalue == val::Inf) iy1 = abst;
-	// 			if (yvalue == -val::Inf) iy1 = ylimit;
-	// 			// if (!isInf(yvalue) && !val::isNaN(yvalue)) {
-	// 			// 	iy1 = int(val::round(dyzero - faktor_y*yvalue,0));
-	// 			// }
-	// 			else return;
-	// 			if (iy1  <= ylimit && iy1 >= abst) {
-	// 				if (style) {
-	// 					if (draw) dc.DrawLine(ix0,iy0,ix1,iy1);
-	// 				}
-	// 				else dc.DrawLine(ix0,iy0,ix1,iy1);
-	// 			} 
-	// 		}
-	// 	}
-    // }
-    // while (!ready);
 }
 
 
@@ -2489,10 +2377,6 @@ void PlotFunctionFrame::plotallfunctions(wxMemoryDC& dc)
                 } break;
             }
         }
-        //}
-        // else { // alg. Kurve.
-        //     if (f_menu[i]->IsChecked()) plotcurve(dc,i);
-        // }
     }
 }
 
@@ -2635,55 +2519,6 @@ void PlotFunctionFrame::Compute(int i, int comppoints)
     std::thread t(computepoints,std::ref(F),points,std::cref(x1),std::cref(x2),std::ref(ymax),std::ref(ymin),i,comppoints);
     t.detach();
 }
-
-
-// void PlotFunctionFrame::OnAllSettingsSelected(wxCommandEvent& event)
-// {
-//     int i,n;
-//     std::string input,output,pstring="";
-
-//     input+=xstring;
-//     input+="\n" + ystring;
-//     input+="\n" + val::ToString(points);
-
-//     input+="\n" + fstring;
-
-//     val::MultiLineDialog dialog(this,input,"x values / y values / number of values / functions:",260,100,"Change Settings",fontsize);
-// #ifdef __APPLE__
-//     dialog.Centre();
-// #endif // __APPLE__
-//     if (dialog.ShowModal()==wxID_CANCEL) return;
-//     // else OK:
-//     output=dialog.GetSettingsText();
-//     if (input==output) return;
-//     // else change:
-
-//     xstring = "-5;5";
-//     ystring = "";
-//     fstring = "";
-
-//     val::d_array<char> separators{'\n'};
-//     val::Glist<std::string> words = getwordsfromstring(output,separators,1);
-
-//     n = words.length();
-
-//     if (n>0) xstring = words[0];
-//     if (n>1) ystring = words[1];
-//     if (n>2) pstring = words[2];
-
-//     for (i = 3; i < n; ++i) fstring += words[i] + "\n";
-
-//     refreshfunctionstring();
-
-//     points = val::FromString<int>(pstring);
-
-//     if (points<500) points=500;
-//     else if(points>6000) points=6000;
-//     spoints = val::ToString(points);
-
-//     GetSettings();
-//     Compute();
-// }
 
 
 void PlotFunctionFrame::OnMenu_xAxisSelected(wxCommandEvent& event)
@@ -2868,73 +2703,80 @@ void PlotFunctionFrame::OnMenuColours(wxCommandEvent &event)
 {
     int evid = event.GetId();
 
-	if (evid == 111) {
-		multicolored = multicolormenu->IsChecked();
-		smulticolored = val::ToString(multicolored);
-		return;
+	switch (evid) {
+		case 111:
+		{
+			multicolored = multicolormenu->IsChecked();
+			smulticolored = val::ToString(multicolored);
+			return;
+		} break;
+		case 4400: case 1107:
+		{
+			wxColourData data;
+			data.SetColour(BackgroundColor);
+			wxColourDialog dialog(this,&data);
+			dialog.SetLabel(_("Choose background colour"));
+#ifdef __APPLE__
+			dialog.Centre();
+#endif // __APPLE__
+			if (dialog.ShowModal()==wxID_OK) {
+				BackgroundColor = dialog.GetColourData().GetColour();
+				DrawPanel->SetBackgroundColour(BackgroundColor);
+				bitmapbackground = 0;
+				actualBitmapBackground = wxBitmap();
+				BackgroundImage.Destroy();
+				Paint();
+			}
+			return;
+		} break;
+		case 4401: case 4402:
+		{
+			wxColour col;
+			int pen;
+
+			if (evid==4401) { col = axis_color; pen = axis_pen;}
+			else {col = grid_color; pen = grid_pen;}
+			FunctionColorDialog Dialog(this,col,BackgroundColor,pen);
+#ifdef __APPLE__
+			Dialog.Centre();
+#endif // __APPLE__
+			if (Dialog.ShowModal()==wxID_OK) {
+				col=Dialog.GetColor();
+				pen=Dialog.GetLineWith();
+			}
+			if (evid==4401) {axis_color = col; axis_pen = pen; saxis_pen = val::ToString(pen);}
+			else {grid_color = col; grid_pen = pen; sgrid_pen = val::ToString(pen);}
+			Paint();
+			return;
+		} break;
+		case 4403:
+		{
+			wxColourData *cdata = new wxColourData();
+			cdata->SetColour(defaultpaintcolor);
+			wxColourDialog dialog(this,cdata);
+#ifdef __APPLE__
+			dialog.Centre();
+#endif // __APPLE__
+			if (dialog.ShowModal() == wxID_OK) defaultpaintcolor = dialog.GetColourData().GetColour();
+			delete cdata;
+			return;
+		} break;
+		case 21:
+		{
+			wxFontData data;
+			data.SetInitialFont(defaultFont);
+			wxFontDialog dialog(this,data);
+#ifdef __APPLE__
+			dialog.Centre();
+#endif // __APPLE__
+			if (dialog.ShowModal()==wxID_OK) {
+				data=dialog.GetFontData();
+				defaultFont=data.GetChosenFont();
+			}
+			return;
+		} break;
+		default: break;
 	}
-
-    if (evid==4400 || evid==1107) {
-        wxColourData data;
-        data.SetColour(BackgroundColor);
-        wxColourDialog dialog(this,&data);
-        dialog.SetLabel(_("Choose background colour"));
-#ifdef __APPLE__
-        dialog.Centre();
-#endif // __APPLE__
-        if (dialog.ShowModal()==wxID_OK) {
-            BackgroundColor = dialog.GetColourData().GetColour();
-            DrawPanel->SetBackgroundColour(BackgroundColor);
-            bitmapbackground = 0;
-            actualBitmapBackground = wxBitmap();
-            BackgroundImage.Destroy();
-            Paint();
-        }
-        return;
-    }
-    if (evid==4401 || evid==4402) {
-        wxColour col;
-        int pen;
-
-        if (evid==4401) { col = axis_color; pen = axis_pen;}
-        else {col = grid_color; pen = grid_pen;}
-        FunctionColorDialog Dialog(this,col,BackgroundColor,pen);
-#ifdef __APPLE__
-        Dialog.Centre();
-#endif // __APPLE__
-        if (Dialog.ShowModal()==wxID_OK) {
-            col=Dialog.GetColor();
-            pen=Dialog.GetLineWith();
-        }
-        if (evid==4401) {axis_color = col; axis_pen = pen; saxis_pen = val::ToString(pen);}
-        else {grid_color = col; grid_pen = pen; sgrid_pen = val::ToString(pen);}
-        Paint();
-        return;
-    }
-    if (evid == 4403) {
-        wxColourData *cdata = new wxColourData();
-        cdata->SetColour(defaultpaintcolor);
-        wxColourDialog dialog(this,cdata);
-#ifdef __APPLE__
-        dialog.Centre();
-#endif // __APPLE__
-        if (dialog.ShowModal() == wxID_OK) defaultpaintcolor = dialog.GetColourData().GetColour();
-        delete cdata;
-        return;
-    }
-    if (evid==21) {
-        wxFontData data;
-        data.SetInitialFont(defaultFont);
-        wxFontDialog dialog(this,data);
-#ifdef __APPLE__
-        dialog.Centre();
-#endif // __APPLE__
-        if (dialog.ShowModal()==wxID_OK) {
-            data=dialog.GetFontData();
-            defaultFont=data.GetChosenFont();
-        }
-        return;
-    }
 
     int i=(evid%4000);
     changefunctionsettings(i);
@@ -3047,6 +2889,22 @@ void PlotFunctionFrame::OnMenuTools(wxCommandEvent &event)
 
     if (dpanelinsertmode) changedpanelinsertmode(insert_type::NORMAL_I);
 
+	if (id == 7015) {            //Calculate
+        int sx = 240, sy = 100;
+#ifdef __APPLE__
+        sx = 300, sy = 150;
+#endif // __APPLE__
+		InputFunctionDialog calcdialog(this, CalcOPList,"","Input arithmetic expression", "Calculate",wxSize(sx,sy), fontsize);
+		calcdialog.SetCloseBrackets(true);
+#ifdef __APPLE_
+		calcdialog.Centre();
+#endif // __APPLE__
+        if (calcdialog.ShowModal()==wxID_CANCEL) return;
+        std::string svalue(calcdialog.GetValue());
+		ExecuteCommand(CALCULATE, 0, svalue);
+		return;
+	}
+	
     if (id==7006) {  //interpolation
         MultiLineDialog dialog(this,"","Enter Points:",240,80,"Interpolation",fontsize);
 // #ifdef __APPLE__
@@ -6229,12 +6087,13 @@ void PlotFunctionFrame::CreateNoteBook()
     int x, b_ysize = 30, dy = b_ysize + 20, n_tools;
     b_xsize = 80;
     y = 50;
-    val::d_array<std::string> button_names{"Analyze", "Table", "Tangent", "Normal", "Derive", "Integral", "ArcLen", "PolInt", "Regress", "Intersec", "Zero", "Rotate" , "Osc-circle"};
+    val::d_array<std::string> button_names{"Analyze", "Table", "Tangent", "Normal", "Derive", "Integral", "ArcLen", "PolInt", "Regress", "Intersec", "Zero", "Rotate" , "Osc-circle", "Stammfunc."};
     val::d_array<std::string> button_tips{"Analyze Function  \tCtrl-A", "Table of values \tCtrl-T", "Tangent to function \tAlt-T", "Normal to function \tShift-Alt-N",
                                           "Derive function \tAlt-D", "Compute Integral \tAlt-I", "Arclength of function \tShift-Alt-I", "Polynomial Interpolation \tCtrl-I",
                                           "Polynomial Regression of set regressiondegree \tAlt-A", "Intersection points of two functions \tShift-Ctrl-I",
                                           "Computation of a root in an interval \tAlt-Z", "Rotate geometric element \tAlt-R",
-                                          "Computation of middle point and radius of the osculating circle at a given point \tAlt-O"};
+                                          "Computation of middle point and radius of the osculating circle at a given point \tAlt-O",
+	                                      "Computation of a Stammfunction \tSchift-Alt-D"};
     n_tools = val::Min(button_names.length(), button_tips.length());
     val::d_array<wxButton*> ToolButtons{nullptr,n_tools};
     i = 0;
@@ -6312,6 +6171,7 @@ void PlotFunctionFrame::OnNoteBookButtons(wxCommandEvent &event)
         case 10: bevent.SetId(7008); break;       // Zero-Iteration
         case 11: bevent.SetId(7009); break;       // Rotation
         case 12: bevent.SetId(7013); break;       // Osc-circle
+        case 13: bevent.SetId(7014); break;       // Stammfunction
     }
     ProcessEvent(bevent);
 }
