@@ -1622,19 +1622,43 @@ void computeevaluation(const plotobject& f, double par)
 
 
 
-void computezeroiteration(const plotobject&F,double x1,double x2,double eps,int n,int dez)
+// void computezeroiteration(const plotobject&F,double x1,double x2,double eps,int iter,int dez)
+void computezeroiteration(const plotobject&F, std::string svalue)
 {
     using namespace val;
     MyThreadEvent event(MY_EVENT,IdIteration);
-    int res, precision;
+    int dez = 4, iter = 50, n, res, precision;
     val::valfunction f(F.f.getinfixnotation());
-    double x = 0.5*(x1 + x2);
+    double eps = 1e-8, x1 = 0, x2 = 0, x;
+	val::d_array<char> sep({'\n', ';', ' '});
+	val::Glist<std::string> s_values = getwordsfromstring(svalue,sep);
 
+	n = s_values.length();
+
+	if (n == 2) {
+		s_values.push(val::ToString(eps));
+		s_values.push(val::ToString(iter));
+		s_values.push(val::ToString(dez));
+		n = 5;
+	}
+	if (n>0) dez = val::FromString<int>(s_values[0]);
+	if (n>1) iter = val::FromString<int>(s_values[1]);
+	if (n>2) eps = val::FromString<double>(s_values[2]);
+	if (n>3) {x1 = val::FromString<val::rational>(s_values[3]);}
+	if (n>4) {x2 = val::FromString<val::rational>(s_values[4]);}
+	if (dez<0) dez = 0;
+	if (dez>10) dez=10;
+	if (iter<40) iter=40;
+	if (iter>500) iter=500;
+	if (eps<1e-9) eps=1e-9;
+	if (eps>0.1) eps=0.1;
+	x = 0.5*(x1 + x2);
+	
     tablestring="Zero approximation of:\n f(x) = " + f.getinfixnotation() + ".\n\n";
 
-    tablestring+="Start-interval:  [ " + ToString(x1) + " ; " + ToString(x2) + " ]\nMax. number of Iterations: " + ToString(n) +
+    tablestring+="Start-interval:  [ " + ToString(x1) + " ; " + ToString(x2) + " ]\nMax. number of Iterations: " + ToString(iter) +
         "\nPrecision: " + ToString(eps) + "\nRound to decimal: " + ToString(dez) + "\n";
-    res = SecantMethod(f,x1,x2,eps,n);
+    res = SecantMethod(f,x1,x2,eps,iter);
     precision = intdigits(x2) + dez;
     precision = val::Min(precision, val::MaxPrec);
     if (res>=0) {
@@ -1647,7 +1671,7 @@ void computezeroiteration(const plotobject&F,double x1,double x2,double eps,int 
 
     if (f.isdifferentiable()) {
         val::valfunction f1 = f.derive();
-        res = NewtonIteration(f, f1, x,eps,n);
+        res = NewtonIteration(f, f1, x,eps,iter);
         tablestring += "\n\nNewton Iteration:";
         if (res >= 0) {
             tablestring += "\nNewton-Iteration succesful!\nNumber of Iterations: " + val::ToString(res) + "\n x = " + ToString(val::round(x,dez),precision);

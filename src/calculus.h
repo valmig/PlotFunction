@@ -17,7 +17,8 @@ void analyzefunction(const plotobject &f,std::string input);
 void intersection(const plotobject &f, const plotobject &g, std::string input);
 
 
-void computeintegral(const plotobject& f,std::string x1,std::string x2,double delta,int n,int dez,int arclength=0);
+// void computeintegral(const plotobject& f,std::string x1,std::string x2,double delta,int iter,int dez,int arclength=0);
+void computeintegral(const plotobject& f,std::string svalue, int arclength=0);
 
 
 

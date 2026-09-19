@@ -205,7 +205,8 @@ void calculate(std::string s);
 
 void computeinterpolation(std::string input,std::string &Fstring);
 
-void computezeroiteration(const plotobject& f,double x1,double x2,double eps,int n,int dez);
+// void computezeroiteration(const plotobject& f,double x1,double x2,double eps,int iter,int dez);
+void computezeroiteration(const plotobject& f, std::string svalue);
 
 void computerotation(const val::d_array<plotobject*> F,std::string input);
 

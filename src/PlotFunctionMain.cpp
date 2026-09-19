@@ -4110,59 +4110,71 @@ void PlotFunctionFrame::ExecuteCommand(int command, int f_nr, const std::string 
                 command = ZERO_ITERATION;
             }
 
-            val::rational xr1,xr2;
-            std::string sxr1, sxr2;
+            // val::rational xr1,xr2;
+            // std::string sxr1, sxr2;
 
-            val::d_array<char> sep({'\n', ';', ' '});
-            val::Glist<std::string> s_values = getwordsfromstring(svalue,sep);
+            // val::d_array<char> sep({'\n', ';', ' '});
+            // val::Glist<std::string> s_values = getwordsfromstring(svalue,sep);
 
-            int n = s_values.length();
+            // int n = s_values.length();
 
-            if (n == 2) {
-                s_values.push(val::ToString(delta));
-                s_values.push(val::ToString(iter));
-                s_values.push(val::ToString(dez));
-                n = 5;
-            }
+            // if (n == 2) {
+            //     s_values.push(val::ToString(delta));
+            //     s_values.push(val::ToString(iter));
+            //     s_values.push(val::ToString(dez));
+            //     n = 5;
+            // }
 
-            if (n>0) dez = val::FromString<int>(s_values[0]);
-            if (n>1) iter = val::FromString<int>(s_values[1]);
-            if (n>2) delta = val::FromString<double>(s_values[2]);
-            if (n>3) {sxr1 = s_values[3]; xr1 = val::FromString<val::rational>(sxr1);}
-            if (n>4) {sxr2 = s_values[4]; xr2 = val::FromString<val::rational>(sxr2);}
-            if (dez<0) dez = 0;
-            if (dez>10) dez=10;
-            if (iter<40) iter=40;
-            if (iter>500) iter=500;
-            if (delta<1e-9) delta=1e-9;
-            if (delta>0.1) delta=0.1;
+            // if (n>0) dez = val::FromString<int>(s_values[0]);
+            // if (n>1) iter = val::FromString<int>(s_values[1]);
+            // if (n>2) delta = val::FromString<double>(s_values[2]);
+            // if (n>3) {sxr1 = s_values[3]; xr1 = val::FromString<val::rational>(sxr1);}
+            // if (n>4) {sxr2 = s_values[4]; xr2 = val::FromString<val::rational>(sxr2);}
+            // if (dez<0) dez = 0;
+            // if (dez>10) dez=10;
+            // if (iter<40) iter=40;
+            // if (iter>500) iter=500;
+            // if (delta<1e-9) delta=1e-9;
+            // if (delta>0.1) delta=0.1;
+
+			const plotobject *pobj = &defaultplotobject;
+
+			if (!computedefaultobject) pobj = &F[f_nr];
 
             if (command == INTEGRAL || command == ARCLENGTH) {
-                if (!computedefaultobject) {
-                    if (!F[f_nr].IsParcurve() && !F[f_nr].IsFunction()) return;
-                    std::thread t(computeintegral,std::cref(F[f_nr]),sxr1,sxr2,delta,iter,dez,arclength);
-                    t.detach();
-                }
-                else {
-                    if (!defaultplotobject.IsParcurve() && !defaultplotobject.IsFunction()) return;
-                    std::thread t(computeintegral,std::cref(defaultplotobject),sxr1,sxr2,delta,iter,dez,arclength);
-                    t.detach();
-                    computedefaultobject = false;
-                }
+				if (!pobj->IsParcurve() && !pobj->IsFunction()) return;
+				// std::thread t(computeintegral,std::cref(*pobj),sxr1,sxr2,delta,iter,dez,arclength);
+				std::thread t(computeintegral,std::cref(*pobj), svalue,arclength);
+				t.detach();
+                // if (!computedefaultobject) {
+                //     if (!F[f_nr].IsParcurve() && !F[f_nr].IsFunction()) return;
+                //     std::thread t(computeintegral,std::cref(F[f_nr]),sxr1,sxr2,delta,iter,dez,arclength);
+                //     t.detach();
+                // }
+                // else {
+                //     if (!defaultplotobject.IsParcurve() && !defaultplotobject.IsFunction()) return;
+                //     std::thread t(computeintegral,std::cref(defaultplotobject),sxr1,sxr2,delta,iter,dez,arclength);
+                //     t.detach();
+                //     computedefaultobject = false;
+                // }
                 return;
             }
             else {
-                if (!computedefaultobject) {
-                    if (!F[f_nr].IsFunction() || (F[f_nr].f.numberofvariables() > 1)) return;
-                    std::thread t(computezeroiteration,std::cref(F[f_nr]),xr1,xr2,delta,iter,dez);
-                    t.detach();
-                }
-                else {
-                    if (!defaultplotobject.IsFunction() || (defaultplotobject.f.numberofvariables() > 1)) return;
-                    std::thread t(computezeroiteration,std::cref(defaultplotobject),xr1,xr2,delta,iter,dez);
-                    t.detach();
-                    computedefaultobject = false;
-                }
+				if (!pobj->IsFunction() || (pobj->f.numberofvariables() > 1)) return;
+				// std::thread t(computezeroiteration,std::cref(*pobj),xr1,xr2,delta,iter,dez);
+				std::thread t(computezeroiteration,std::cref(*pobj), svalue);
+				t.detach();
+                // if (!computedefaultobject) {
+                //     if (!F[f_nr].IsFunction() || (F[f_nr].f.numberofvariables() > 1)) return;
+                //     std::thread t(computezeroiteration,std::cref(F[f_nr]),xr1,xr2,delta,iter,dez);
+                //     t.detach();
+                // }
+                // else {
+                //     if (!defaultplotobject.IsFunction() || (defaultplotobject.f.numberofvariables() > 1)) return;
+                //     std::thread t(computezeroiteration,std::cref(defaultplotobject),xr1,xr2,delta,iter,dez);
+                //     t.detach();
+                //     computedefaultobject = false;
+                // }
                 return;
             }
         }
@@ -4436,7 +4448,7 @@ void PlotFunctionFrame::OnMyEvent(MyThreadEvent& event)
 		int height = 250;
         if (id == IdIntegral) {
 			title = "Integral";
-			height = 290;
+			height = 310;
 		}
         else if (id == IdPointStat) title = "Points Statistic";
         else title = "Calculate";

@@ -1898,25 +1898,59 @@ val::valfunction integral(const val::valfunction &f, int k)
 
 
 
-void computeintegral(const plotobject& f,std::string x1,std::string x2,double delta,int n,int dez,int arclength)
+// void computeintegral(const plotobject& f,std::string x1,std::string x2,double delta,int iter,int dez,int arclength)
+void computeintegral(const plotobject& f,std::string svalue, int arclength)
+	
 {
     using namespace val;
     MyThreadEvent event(MY_EVENT,IdIntegral);
-    int exact=0; //k=isderived(f)
-    valfunction A(x1), B(x2);
-    double a = A(0), b=B(0), wert,exwert = 0;
+    int n, iter = 50, dez = 4, exact=0, visual = 0; //k=isderived(f)
+    double a, b, delta = 1e-8, wert,exwert = 0, darea = 0;
     //val::rational r_wert;
     //val::DoubleFunction g;
-    val::valfunction g, symbolic;
-    std::string name="";
+    val::valfunction g, symbolic, area;
+    std::string x1, x2, name="", color;
+	val::d_array<char> sep({'\n', ';', ' '});
 
+	color = extractstringfrombrackets(svalue, '<', '>');
+	if (svalue.find("v") != std::string::npos && !arclength) {
+		visual = 1;
+		val::replace<char>(svalue, "v", "");
+		if (!isinContainer(wxString(color), defaultcolornames)) color = "lblue";
+	}
+	
+	val::Glist<std::string> s_values = getwordsfromstring(svalue,sep);
 
+	n = s_values.length();
+
+	if (n == 2) {
+		s_values.push(val::ToString(delta));
+		s_values.push(val::ToString(iter));
+		s_values.push(val::ToString(dez));
+		n = 5;
+	}
+	if (n>0) dez = val::FromString<int>(s_values[0]);
+	if (n>1) iter = val::FromString<int>(s_values[1]);
+	if (n>2) delta = val::FromString<double>(s_values[2]);
+	if (n>3) {x1 = s_values[3];}
+	if (n>4) {x2 = s_values[4];}
+	if (dez<0) dez = 0;
+	if (dez>10) dez=10;
+	if (iter<40) iter=40;
+	if (iter>500) iter=500;
+	if (delta<1e-9) delta=1e-9;
+	if (delta>0.1) delta=0.1;
+	
+    valfunction A(x1), B(x2);
+
+	a = A(0); b = B(0);
+	
     if (arclength) {
         if (f.getmode() == plotobject::PARCURVE) {
             if (!f.f.isdifferentiable() || !f.g.isdifferentiable()) return;
             val::valfunction f1 = f.f.derive(), g1 = f.g.derive(), h("sqrt(x)");
             h = h(f1*f1 + g1*g1);
-            wert = integral(h,a,b,n,delta);
+            wert = integral(h,a,b,iter,delta);
         }
         else if (f.f.isdifferentiable()) {
             val::valfunction h("sqrt(x^2 + 1)"),g(f.getinfixnotation());
@@ -1924,7 +1958,7 @@ void computeintegral(const plotobject& f,std::string x1,std::string x2,double de
             h=h(g);
             //name += h.getinfixnotation() + "\n";
             //name = h.getinfixnotation() + "  ;";
-            wert=integral(h,a,b,n,delta);
+            wert=integral(h,a,b,iter,delta);
         }
         else {
             //val::DoubleFunction g1=val::DoubleFunction(val::doublefunction(std::bind(std::cref(f),std::placeholders::_1))).derive();
@@ -1934,7 +1968,7 @@ void computeintegral(const plotobject& f,std::string x1,std::string x2,double de
             g1 += val::valfunction("1");
             //g = DoubleFunction(sqrt)(g1);
             g = val::valfunction("sqrt")(g1);
-            wert = integral(g,a,b,n,delta);
+            wert = integral(g,a,b,iter,delta);
         }
         name+="arclength( ";
         //g = val::DoubleFunction(sqrt) (val::DoubleFunction(val::doublefunction(std::bind(std::cref(f),std::placeholders::_1))).derive() + val::DoubleFunction(1));
@@ -1952,19 +1986,73 @@ void computeintegral(const plotobject& f,std::string x1,std::string x2,double de
             wert=derive(f,b,k-1) - derive(f,a,k-1);
         }
         else */
-        wert=integral(f.f,a,b,n,delta);
-        {
-            val::valfunction F= integral(val::valfunction(f.getinfixnotation()));
-            if (!F.is_zero()) {
-                F.setparameter(f.f.getparameter());
-                name += "integral("+f.getinfixnotation()+") =\n\t" + F.getinfixnotation() + " + C\n\n";
-                exact = 1;
-                symbolic = F(B) - F(A);
-                exwert = symbolic(0);
-            }
-
-        }
+        wert=integral(f.f,a,b,iter,delta);
+		val::valfunction F= integral(val::valfunction(f.getinfixnotation()));
+		if (!F.is_zero()) {
+			F.setparameter(f.f.getparameter());
+			name += "integral("+f.getinfixnotation()+") =\n\t" + F.getinfixnotation() + " + C\n\n";
+			exact = 1;
+			symbolic = F(B) - F(A);
+			exwert = symbolic(0);
+		}
         name+="integral( ";
+
+		
+		Glist<double> d_zeros, dinzeros;
+		Glist<valfunction> s_zeros, sinzeros;
+		valfunction ABS("abs(x)");
+		int haszero = 0;
+
+		computezeros(f.f, a, b, delta, dez, 1000, d_zeros, s_zeros);
+		d_zeros.sort();
+		for (const auto &dv : d_zeros) {
+			if (a < dv && dv < b) {
+				if (val::abs(dv) < 1e-9) haszero = 1;
+				dinzeros.push_back(dv);
+				if (exact) {
+					for (const auto &sv : s_zeros) {
+						if (val::abs(sv(0) - dv) < 1e-9) sinzeros.push_back(sv);
+					}
+				}
+			}
+		}
+		if (exact && sinzeros.length() == dinzeros.length()) {
+			valfunction beg = A, g;
+			for (const auto &sv : sinzeros) {
+				g = F(sv)- F(beg);
+				if (g(0) < 0) area -= g;
+				else area += g;
+				// area += ABS(F(sv) - F(beg));
+				beg = sv;
+			}
+			g = F(B)- F(beg);
+			if (g(0) < 0) area -= g;
+			else area += g;
+			// area += ABS(F(B) - F(beg));
+		}
+		else {
+			double beg = a;
+			for (const auto &dv : dinzeros) {
+				darea += val::abs(integral(f.f, beg, dv, iter, delta));
+				beg = dv;
+			}
+			darea += val::abs(integral(f.f, b, beg, iter, delta));
+		}
+		if (visual) {
+			if (!haszero && a < 0.0 && b > 0.0) dinzeros.sinsert(0);
+			if (abs(f.f(a)) > 1e-9) fstring += "line " + ToString(a) + " 0 " + ToString(a) +  " " + ToString(f.f(a)) + " <" + color + ">;\n";
+			if (abs(f.f(b)) > 1e-9) fstring += "line " + ToString(b) + " 0 " + ToString(b) +  " " + ToString(f.f(b)) + " <" + color + ">;\n";
+			double beg = a, vx, y;
+			for (const auto &v : dinzeros) {
+				vx = (v+beg)/2.0; y = f.f(vx)/2.0;
+				fstring += "fill " + ToString(vx) + " " + ToString(y) + " <" + color + ">;\n";
+				beg = v;
+			}
+			vx = (b+beg)/2.0; y = f.f(vx)/2.0;
+			fstring += "fill " + ToString(vx) + " " + ToString(y) + " <" + color + ">;\n";
+			// std::cout << "\n f.f(vx) = " << ToString(f.f(vx)/2.0) << std::endl;
+			// std::cout << "\n fstring = \n" << fstring << std::endl;
+		}
     }
 
     int wprec = intdigits(wert) + dez, eprec = intdigits(exwert) + dez;
@@ -1978,10 +2066,22 @@ void computeintegral(const plotobject& f,std::string x1,std::string x2,double de
         tablestring += ToString(val::round(exwert,dez),eprec) + "\nDouble over approximation:\n\t";
     }
     tablestring+=ToString(val::round(wert,dez),wprec);
+	if (!arclength)  {
+		tablestring += "\n Area = ";
+		if (exact) tablestring += area.getinfixnotation() + " ( =  " + ToString(val::round(area(0),dez),wprec) + " )";
+		else tablestring += ToString(val::round(darea,dez),wprec);
+	}
     //if (k==0)
-    tablestring+= "\n\nPrecision : " + ToString(delta) + " , Round to decimal: " + ToString(dez) + "\nIterations : " + ToString(n);
+    tablestring+= "\n\nPrecision : " + ToString(delta) + " , Round to decimal: " + ToString(dez) + "\nIterations : " + ToString(iter);
+
+	if (exact) ansexpr = "(" + symbolic.getinfixnotation() + ")";
+	else ansexpr = "(" + ToString(wert, wprec) + ")";
 
     if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event.Clone() );
+	if (visual) {
+		MyThreadEvent event(MY_EVENT,IdRefresh);
+		if (MyFrame!=NULL) MyFrame->GetEventHandler()->QueueEvent(event.Clone() );
+	}
 }
 
 std::string compute_partialfraction(const val::valfunction &f)
@@ -2172,7 +2272,7 @@ void rootsofquadraticpol(const val::pol<val::valfunction> &F, val::Glist<double>
 	if (F.degree() != 2) return;
 	val::pol<val::valfunction> pF = F;
 
-	d_zeros.dellist(); s_zeros.dellist();
+	// d_zeros.dellist(); s_zeros.dellist();
 	pF /= pF[2];
 	if (pF[0].is_zero()) {
 		valfunction z1, z2 = -pF[1];
