@@ -1592,6 +1592,7 @@ void computeevaluation(const plotobject& f, double par)
         ow = w;
         VarList = substitutepar(w);
         h = F(valfunction(w));
+		h.simplify(2);
         w = h.getinfixnotation();
         back_substitutepar(w, VarList, h.numberofvariables());
         tablestring += "\n x = " + ow + ":" + "\nSymbolic evaluation:\n f(" + ow + ") = " + w;

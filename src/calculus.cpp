@@ -1628,10 +1628,10 @@ val::valfunction integral(const val::valfunction &f, int k)
 
     std::string svar = "x" + ToString(k);
 
-    if (hintegral::is_polynomial(f,k)) {
-        pol<valfunction> P = hintegral::getpolynomial(f,k), Q = hintegral::integral(P);
-        return Q(valfunction(svar));
-    }
+    // if (hintegral::is_polynomial(f,k)) {
+    //     pol<valfunction> P = hintegral::getpolynomial(f,k), Q = hintegral::integral(P);
+    //     return Q(valfunction(svar));
+    // }
 
     valfunction F, g = f.getfirstargument();
     std::string firstop = f.getfirstoperator();
@@ -1740,6 +1740,31 @@ val::valfunction integral(const val::valfunction &f, int k)
         if (firstop == "+") return (f1 + f2);
         else return (f1 - f2);
     }
+    else if (firstop == "^") {
+        valfunction h = f.getsecondargument();
+		if (hintegral::isquadratictrig(g, h, F, k)) return F;
+        if (!h.isconst(k)) {
+            std::string sf = "exp(log(" + g.getinfixnotation() + ") * (" + h.getinfixnotation() + "))";
+            return integral(valfunction(sf),k);
+        }
+        if (g.getfirstoperator() == "sqrt") {
+            g = g.getfirstargument();
+            h *= valfunction("1/2");
+        }
+        if (hintegral::is_polynomial(g,k)) {
+            pol<valfunction> Pg = hintegral::getpolynomial(g,k);
+            if (Pg.degree() > 1) return F;
+            valfunction a = Pg.LC();
+            if (h.getinfixnotation() == "-1") {
+                F = valfunction("log(abs(x))");
+                return F(g)/a;
+            }
+            h += valfunction("1");
+            std::string sh = h.getinfixnotation(),
+                        sf = "1/((" + sh + ") * " + a.getinfixnotation() + ") * (" + g.getinfixnotation() + ")^(" + sh + ")";
+            return valfunction(sf);
+        }
+    }
     else if (firstop == "m") return -integral(g,k);
     else if ((operindex = hintegral::isoppolynomial(f,k)) != -1) {  // case f = polynomial * oper(ax +b)
         valfunction h = hintegral::getrationalfrom_oprat(f,hintegral::escop[operindex]), h1 = hintegral::getopargumentfrom_oprat(f,hintegral::escop[operindex]);
@@ -1765,6 +1790,7 @@ val::valfunction integral(const val::valfunction &f, int k)
                 }
                 F = P(valfunction(svar)) * (valfunction(oper1)(h1)) +
                     Q(valfunction(svar)) * (valfunction(oper2)(h1));
+				return F;
             }
             else {    // log:
                 std::string  sparg = parg(valfunction(svar)).getinfixnotation(), sF1 = "log(" + sparg + ")", sF2 = pfactor(valfunction(svar)).getinfixnotation() , sF3;
@@ -1779,6 +1805,7 @@ val::valfunction integral(const val::valfunction &f, int k)
             //std::cout << "\n g.nvar = " << g.numberofvariables();
             if (g.isconst(k)) return (g * integral(h,k));
             if (!g.isconst(k) && !h.isconst(k)) F = hintegral::integral_product_subst(g,h,k);
+			if (!F.is_zero()) return F;
         }
     }
     else if (hintegral::is_rational(f,k)) {
@@ -1786,7 +1813,7 @@ val::valfunction integral(const val::valfunction &f, int k)
         F = hintegral::rational_integral(f,k);
 		if (!F.is_zero()) return F;
     }
-    else if (firstop == "*" || firstop == "/") {
+    if (firstop == "*" || firstop == "/") {
         valfunction h = f.getsecondargument();
         int g_const = g.isconst(k), h_const = h.isconst(k);
         if (!g_const && !h_const) {
@@ -1867,30 +1894,10 @@ val::valfunction integral(const val::valfunction &f, int k)
             else return integral(g,k)/h;
         }
     }
-    else if (firstop == "^") {
-        valfunction h = f.getsecondargument();
-		if (hintegral::isquadratictrig(g, h, F, k)) return F;
-        if (!h.isconst(k)) {
-            std::string sf = "exp(log(" + g.getinfixnotation() + ") * (" + h.getinfixnotation() + "))";
-            return integral(valfunction(sf),k);
-        }
-        if (g.getfirstoperator() == "sqrt") {
-            g = g.getfirstargument();
-            h *= valfunction("1/2");
-        }
-        if (hintegral::is_polynomial(g,k)) {
-            pol<valfunction> Pg = hintegral::getpolynomial(g,k);
-            if (Pg.degree() > 1) return F;
-            valfunction a = Pg.LC();
-            if (h.getinfixnotation() == "-1") {
-                F = valfunction("log(abs(x))");
-                return F(g)/a;
-            }
-            h += valfunction("1");
-            std::string sh = h.getinfixnotation(),
-                        sf = "1/((" + sh + ") * " + a.getinfixnotation() + ") * (" + g.getinfixnotation() + ")^(" + sh + ")";
-            return valfunction(sf);
-        }
+	if (!F.is_zero()) return F;
+    if (hintegral::is_polynomial(f,k)) {
+        pol<valfunction> P = hintegral::getpolynomial(f,k), Q = hintegral::integral(P);
+        return Q(valfunction(svar));
     }
 
     return F;
@@ -2725,6 +2732,7 @@ int calculate (std::string &s)
 	VarList = substitutepar(s);
 
 	val::valfunction f(s);
+	f.simplify(2);
 
 	s = f.getinfixnotation();
     back_substitutepar(s, VarList, f.numberofvariables());
