@@ -211,13 +211,13 @@ int sqrt_dis(const val::valfunction &dis, val::valfunction &res, int n = 2)
                 res = val::valfunction(val::ToString(rootnum));
             }
             else {
-                res = val::valfunction("sqrt(" + val::ToString(num) + ")");
+                res = sqrt(val::valfunction(val::ToString(num)));
 				if (isnegative) res = -res;
             }
             if (is_nth_power(denum, n, rootdenum)) {
                 res /= val::valfunction(val::ToString(rootdenum));
             }
-            else res *= val::valfunction("sqrt(" + val::ToString(denum) + ")")/val::valfunction(val::ToString(denum));
+            else res *= sqrt(val::valfunction(val::ToString(denum)))/val::valfunction(val::ToString(denum));
             return 1;
         }
         else {
