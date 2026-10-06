@@ -319,9 +319,9 @@ PlotFunctionFrame::PlotFunctionFrame(wxWindow* parent,wxWindowID id)
     CreateNoteBook();
     notebook->Hide();
 
-#ifdef __APPLE__
-    InfoStyle = wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER;
-#endif
+// #ifdef __APPLE__
+//     InfoStyle = wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER;
+// #endif
     //
     defaultFont=this->GetFont();
     Color.resize(7);
@@ -3075,6 +3075,8 @@ void PlotFunctionFrame::OnMenuTools(wxCommandEvent &event)
         return;
     }
 
+	if (!indezes.isempty()) j = indezes[0];
+
     if (naktiv > 1) {
         std::string title;
         switch (id)
@@ -5255,7 +5257,7 @@ void PlotFunctionFrame::OnMouseReleased(wxMouseEvent &event)
     DrawPanel->SetCursor(wxCursor (wxCURSOR_HAND));
     if (DrawPanel->HasCapture()) DrawPanel->ReleaseMouse();
 
-    if (active_function != -1) {
+	if (active_function != -1) {
         while (iscomputing) {
             wxYield();
         }
@@ -5276,16 +5278,18 @@ void PlotFunctionFrame::OnMouseReleased(wxMouseEvent &event)
         refreshfunctionstring();
         active_function=-1;
         GetSettings();
-        Compute();
+        // Compute();
     }
-#ifdef __APPLE__
-    else {
-        while (iscomputing) {
-            wxYield();
-        }
-        Paint();
-    }
-#endif // __APPLE__
+	Compute();
+	// else Compute();
+// #ifdef __APPLE__
+//     else {
+//         while (iscomputing) {
+//             wxYield();
+//         }
+//         Paint();
+//     }
+// #endif // __APPLE__
 }
 
 

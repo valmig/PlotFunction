@@ -90,7 +90,7 @@ class PlotFunctionFrame: public wxFrame
         int bitmapbackground = 0, axis_fontsize = 10, SideText_isshown = 0, widthSideText = 200;
         int notebook_isshown = 0, widthNoteBookPanel = 200, plusw = 12, dpanelinsertmode = NORMAL_I, n_points = 0, wraptext = 0, lastfocusedwindow = 1;
 	    int recentfileschanged = 0, recentcommandschanged = 0, latexdefinitionsfileexists = 0, pointsize = 3, multicolored = 1;
-        long InfoStyle = wxRESIZE_BORDER;
+        long InfoStyle = wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER;
         bool closebrackets = true, computedefaultobject = false;
         wxPoint actuallinepoint,actualpolygonpoint;
         val::rational pi_factor_x,pi_factor_y,g_pi_factor_x,g_pi_factor_y;

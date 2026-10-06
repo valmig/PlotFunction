@@ -165,7 +165,7 @@ const val::d_array<wxString> CommandsParList({"derive [#nr = 1]    <Alt-D>",
                                                  "interpolation #nr / points for f; [points for f']; [points for f'']    <Ctrl-I>" ,
                                                  "regression #nr [ = 1]/points [degree = regression-degree]    <Alt-A>",
                                                  "table [#nr = 1 / \"function\"] [x1 x2] [dx = 0.5] [;]    <Ctrl-T>",
-                                                 "integral [#nr = 1 / \"function\"] [decimals iterations precision] [x1 x2]    <Alt-I>",
+                                                 "integral [#nr = 1 / \"function\"] [decimals iterations precision] [x1 x2] [v = visualize area]   <Alt-I>",
                                                  "arclength [#nr = 1 / \"function\"] [decimals iterations precision] [x1 x2]    <Shift-Alt-I>",
                                                  "zero-iteration [#nr = 1 / \"function\"] [decimals iterations precision] [x1 x2]    <Alt-Z>",
                                                  "move [#nr = 1] x y",
@@ -1404,6 +1404,11 @@ void computepoints(val::Glist<plotobject> &F,int points,const double &x1,const d
             }
 			if (comppoints && F[i].IsFunction()) {
 				F[i].critpoints = F[i].f.get_undefined_intervals(x1, x2, points);
+				// std::cout << std::endl;
+				// for (const auto &v : F[i].critpoints) {
+				// 	std::cout << " (" << v.x << " , " << v.y <<")";
+				// }
+				// std::cout << std::endl;
 			}
         }
         else if (F[i].getmode() == plotobject::ALGCURVE) { //algebraische Kurve.
@@ -1577,10 +1582,45 @@ void computeevaluation(const plotobject& f, double par)
     int precision = val::MaxPrec, yprecision = val::MaxPrec;
     val::complex z(0);
     std::string ow;
+	wxString mu = greek_letters[11], sigma = greek_letters[17], lambda = greek_letters[10];
     val::Glist<char> VarList;
 
-	if (f.IsFunction()) tablestring = "f(x) = " + f.getinfixnotation() + "\n";
-	else tablestring = "Computation of Probablities:\n"; 
+	// if (f.IsFunction()) tablestring = "f(x) = " + f.getinfixnotation() + "\n";
+	// else tablestring = "Computation of Probablities:\n";
+	switch (f.objectype) {
+		case plotobject::modetype::FUNCTION :
+		{
+			tablestring = "f(x) = " + f.getinfixnotation() + "\n";
+		} break;
+		case plotobject::modetype::BINDENSITY : case plotobject::modetype::BINDISTRIBUTION : 
+		{
+			valfunction fmu, fsig, fn = valfunction(ToString(f.farray[0]));
+			fmu = f.f * fn; fsig = fmu * (valfunction("1") - f.f);
+			tablestring = "Computation of binomial";
+			if (f.IsBindistribution()) tablestring += " distribution:\n";
+			else tablestring += " density:\n";
+			tablestring +=  "n = " + val::ToString(f.farray[0]);
+			tablestring += ". p = " + f.f.getinfixnotation();
+			tablestring += ".\n" + mu + " = " + fmu.getinfixnotation();
+			tablestring += ". " + sigma + "^2 = " + fsig.getinfixnotation() + "\n";
+		} break;
+		case plotobject::modetype::POISDENSITY: case plotobject::modetype::GEODENSITY: 
+		{	
+			if (f.IsPoissondensity()) tablestring = "Computation of poisson-density:\n" + lambda;
+			else tablestring = "Computation of geometric density:\n p = ";
+			tablestring += f.f.getinfixnotation() + "\n";	
+		} break;
+		case plotobject::modetype::NORMDENSITY: case plotobject::modetype::NORMDISTRIBUTION:
+		{
+			d_array<char> sep{' '};
+			Glist<std::string> words = getwordsfromstring(f.getinfixnotation(), sep);
+ 		
+			if (f.IsNormdensity()) tablestring = "Computation of normal density:\n";
+			else tablestring = "Computation of normal distribution:\n";
+			if (words.length() >= 3) tablestring += mu + " = " + words[1] + ". " + sigma + "^2 = " + words[2] + "\n";
+		} break;
+		default : break;
+	}
 
     for (auto & w : wlist) {
         replace<char>(w, "ans", ansexpr);
@@ -2023,21 +2063,30 @@ void computetangent(std::string sf,const plotobject &f,double x1,double x2,int t
 {
     if (sf=="") return;
     //std::string svalue;
-    int n=sf.length(),i,isingraph=0,isfunction=0, givenslope = 0;
+    int n=sf.length(),i,isingraph=0,isfunction=0, givenslope = 0, giveny = 0;
     double x=0.0,y=0.0,m,b;
+
+	if (sf.find('x') != std::string::npos) {
+		givenslope = 1;
+	}
+
+	if (sf.find('y') != std::string::npos && sf.find('=') != std::string::npos) {
+		giveny = 1;
+		val::replace<char>(sf, "y", "");
+		val::replace<char>(sf, "=", "");
+	}
 
     val::d_array<char> separators{' ', ';'};
     val::Glist<double> values = getdoublevaluesfromstring(sf,separators);
 
     if (values.isempty()) return;
     x = values[0];
-	if (sf.find('x') != std::string::npos) {
-		givenslope = 1;
-	}
-	else if (values.length()>1) {
+	if (values.length()>1) {
         y = values[1];
     }
 	else isingraph = 1;
+
+	if (givenslope) isingraph = 0;
 
     if (f.f.numberofvariables()<=1) isfunction=1;
 
@@ -2045,7 +2094,8 @@ void computetangent(std::string sf,const plotobject &f,double x1,double x2,int t
     F.setparameter(f.f.getparameter());
 
     if (f.getmode() == plotobject::PARCURVE) {
-        val::valfunction G = f.g, f1 = f.f.derive(), g1 = f.g.derive(), h, m_f(sf);
+        val::valfunction G = f.g, f1 = f.f.derive(), g1 = f.g.derive(), h, m_f(sf), *pfunc = &F;
+		if (giveny) pfunc = &G;
 
 		m_f = m_f.derive();
 
@@ -2053,7 +2103,9 @@ void computetangent(std::string sf,const plotobject &f,double x1,double x2,int t
 			if (tangent) h = f1 * m_f - g1;
 			else h = f1 + m_f * g1;
 		}
-		else if (isingraph) h = F - val::valfunction(val::ToString(x,15));
+		else if (isingraph) {
+			h = *pfunc - val::valfunction(val::ToString(x,15));
+		}
 		else {
             val::valfunction h1, h2 = G - val::valfunction(val::ToString(y,15));
             if (tangent) {
@@ -2089,12 +2141,16 @@ void computetangent(std::string sf,const plotobject &f,double x1,double x2,int t
             }
 			if (givenslope) m = m_f(0);
             if (isInf(m)) {
-                fstring += ";\nline " + val::ToString(x) + " -inf " + val::ToString(x) + " inf";
+                if (giveny) fstring += ";\nline " + val::ToString(f.f(t)) + " -inf " + val::ToString(f.f(t)) + " inf";
+                else fstring += ";\nline " + val::ToString(x) + " -inf " + val::ToString(x) + " inf";
             }
             else {
                 if (val::abs(m) < 1e-9) m = 0.0;
 				if (givenslope) b = f.g(t) - m * f.f(t);
-				else if (isingraph) b = f.g(t) - m*x;
+				else if (isingraph) {
+					if (giveny) b = x - m*f.f(t);
+					else b = f.g(t) - m*x;
+				}
 				else b = y - m*x;
 				if (val::abs(b) < 1e-9) b = 0.0;
                 h = val::valfunction(val::ToString(m) + "*x") + val::valfunction(val::ToString(b));
@@ -2105,16 +2161,60 @@ void computetangent(std::string sf,const plotobject &f,double x1,double x2,int t
         if (n) fstring += s_p;
     }
     else if (isfunction) {
-        int diffbar = 0;
+        // int diffbar = 0;
+        if (!F.isdifferentiable()) return;
         if (isingraph) {
-            if (F.isdifferentiable()) {
-                m=(F.derive())(x);
-                diffbar = 1;
-            }
-            else {
-                //n=isderived(f);
-                m= derive(f,x);  //F.derive(x);
-            }
+			val::Glist<double> X;
+			val::Glist<val::valfunction> X_f;
+			val::valfunction f_y, x_f, m_f;
+			int found = 0;
+			if (giveny) {
+				f_y = val::valfunction(sf);
+				computezeros(F - f_y, x1, x2, 1e-9, 8, 1000, X, X_f);
+			}
+			else {
+				X.push_back(x);
+				X_f.push_back(val::valfunction(sf));
+				f_y = F(X_f[0]);
+			}
+			if (X.isempty()) return;
+			for (const auto &x : X) {
+				found = 0;
+				for (const auto &v : X_f) {
+					if (val::abs(x - v(0)) < 1e-8) {
+						found = 1;
+						x_f = v;
+						break;
+					}
+				}
+				if (!found) x_f = val::valfunction(val::ToString(x));
+				m = (F.derive())(x);
+				if (val::isNaN(m)) return;
+				if (!tangent) {
+					if (val::abs(m)<=1e-9) m=val::Inf; // m = inf
+					else m = -1/m;
+				}
+				if (isInf(m)) {
+					fstring+=";\nline "+val::ToString(x)+ " -inf " + val::ToString(x) + " inf";
+				}
+				else {
+					m_f = (F.derive())(x_f);
+					if (!tangent) m_f = val::valfunction("-1/(" + m_f.getinfixnotation() + ")");
+					val::valfunction b_f = f_y - m_f * x_f, g = m_f * val::valfunction("x") + b_f;// mult = m_f * x_f;
+					fstring += ";\n" + g.getinfixnotation();
+				}
+			}
+			/*
+			m = (F.derive())(x);
+            // if (F.isdifferentiable()) {
+            //     m=(F.derive())(x);
+            //     // diffbar = 1;
+            // }
+            // else {
+			// 	return;
+            //     //n=isderived(f);
+            //     //m= derive(f,x);  //F.derive(x);
+            // }
             if (val::isNaN(m)) return;
             if (!tangent) {
                 if (val::abs(m)<=1e-9) m=val::Inf; // m = inf
@@ -2123,29 +2223,25 @@ void computetangent(std::string sf,const plotobject &f,double x1,double x2,int t
             if (isInf(m)) {
                fstring+=";\nline "+val::ToString(x)+ " -inf " + val::ToString(x) + " inf";
             }
-            else if (diffbar) {
-                val::valfunction x_f(sf), m_f = (F.derive())(x_f);
-                // std::cout << "\n m_f = " << m_f.getinfixnotation() << std::endl;
-                if (!tangent) m_f = val::valfunction("-1/(" + m_f.getinfixnotation() + ")");
-                val::valfunction b_f = F(x_f) - m_f * x_f, g = m_f * val::valfunction("x") + b_f;// mult = m_f * x_f;
-                //mult.simplify();
-                //b_f = F(x_f) - mult;
-                //g = m_f * val::valfunction("x") + b_f;
-                // std::cout << "\n F(x_f) = " << F(x_f).getinfixnotation() << ", b_f = " << b_f.getinfixnotation() << ", m_f * xf = " << mult.getinfixnotation() << std::endl;
-                fstring += ";\n" + g.getinfixnotation();
-            }
+            // else if (diffbar) {
             else {
-                b=F(x) -m*x;
-                fstring+=";\n" + val::ToString(m) + "*x";
-                if (val::abs(b)>1e-9) {
-                    if (b>=0) fstring+= " + ";
-                    fstring+=val::ToString(b);
-                }
+				val::valfunction x_f(sf), m_f = (F.derive())(x_f);
+				if (!tangent) m_f = val::valfunction("-1/(" + m_f.getinfixnotation() + ")");
+				val::valfunction b_f = F(x_f) - m_f * x_f, g = m_f * val::valfunction("x") + b_f;// mult = m_f * x_f;
+				fstring += ";\n" + g.getinfixnotation();
             }
+            // else {
+            //     b=F(x) -m*x;
+            //     fstring+=";\n" + val::ToString(m) + "*x";
+            //     if (val::abs(b)>1e-9) {
+            //         if (b>=0) fstring+= " + ";
+            //         fstring+=val::ToString(b);
+            //     }
+            */ 
         }
         else {
             val::valfunction h,h1,F1;
-            if (!F.isdifferentiable()) return;
+            // if (!F.isdifferentiable()) return;
             F1=F.derive();
             val::Glist<double> Roots;
             val::Glist<val::valfunction> SRoots;
@@ -2208,19 +2304,27 @@ void computetangent(std::string sf,const plotobject &f,double x1,double x2,int t
             }
         }
     }
-    else {
+    else {  // algebraic curve:
         val::valfunction Fx =F.derive(1) ,Fy = F.derive(2);
         if (isingraph) {
-            val::pol<double> p=f.getpol(x);
+            val::pol<double> p;
             val::vector<double> Roots;
+			int varnumber = 1;
+
+			if (giveny) varnumber = 0;
+
+			if (giveny) p = f.getpol(x , 'y');
+			else p = f.getpol(x);
+			
             val::realRoots(p,Roots);
 
             if (!(n=Roots.dimension()))return;
             double a;
             val::vector<double> X(2);
             X(0) = x;
+			if (giveny) X(1) = x;
             for (int i=0;i<n;++i) {
-                X(1) = Roots[i];
+                X(varnumber) = Roots[i];
                 a = Fx(X);
                 b=Fy(X);  // Tangente: ax+by =0;
                 if (val::abs(a)<1e-9) a=0.0;
@@ -2229,23 +2333,26 @@ void computetangent(std::string sf,const plotobject &f,double x1,double x2,int t
                 //c = -a*x - b*Roots[i];
                 if (b==0.0) {
                     if (tangent) {
-                        fstring+=";\nline " + val::ToString(x) + " -inf " + val::ToString(x) + " inf";
+                        // fstring+=";\nline " + val::ToString(x) + " -inf " + val::ToString(x) + " inf";
+                        fstring+=";\nline " + val::ToString(X(0)) + " -inf " + val::ToString(X(0)) + " inf";
                         continue;
                     }
                     else {
-                        fstring+="\n"+ val::ToString(Roots[i]);
+                        // fstring+="\n"+ val::ToString(Roots[i]);
+                        fstring+=";\n"+ val::ToString(X(1));
                         continue;
                     }
                 }
                 m=-a/b;
                 if (!tangent) {
                    if (a==0.0) {
-                       fstring+=";\nline " + val::ToString(x) + " -inf " + val::ToString(x) + " inf";
+                       fstring+=";\nline " + val::ToString(X(0)) + " -inf " + val::ToString(X(0)) + " inf";
                        continue;
                    }
                    m = b/a;
                 }
-                b = Roots[i] - m*x;
+				if (giveny) b = x - m*Roots[i];
+				else b = Roots[i] - m*x;
                 fstring+=";\n" + val::ToString(m) + "*x";
                 if (val::abs(b)>1e-9) {
                     if (b>=0) fstring+= " + ";
@@ -2881,7 +2988,7 @@ void computebinomtest(std::string sf)
 		h0 = " = ";
 		h1 = " != ";
 	}
-	tablestring += h0 + values[2] + + "\t H1: p" + h1 + values[2] + "\n alpha = " + val::ToString(alpha) + "\n";
+	tablestring += h0 + values[2] + + "\t H1: p" + h1 + values[2] + "\n " + greek_letters[0] + " = " + val::ToString(alpha) + "\n";
 	tablestring += "\n H0 accepted in [" + ToString(k1) + " , " + ToString(k2) + " ]";
 		
     MyThreadEvent event(MY_EVENT, IdRefresh);
@@ -3275,6 +3382,7 @@ plotobject::plotobject(const std::string &sf)
 				m = val::FromString<int>(values[0]);
 				if (m < 0  || m > 1000) valid = 0;
 				s_p = values[1];
+				f = val::valfunction(s_p);
 				p = val::valfunction(s_p)(0);
 				if (p < 0.0 || p > 1) valid = 0;
 			}
@@ -3326,6 +3434,7 @@ plotobject::plotobject(const std::string &sf)
 			if (n < 1) valid = 0;
 			else {
 				s_l = values[0];
+				f = val::valfunction(s_l);
 				lambda = val::valfunction(s_l)(0);
 				if (lambda <= 0) valid = 0;
 				if (objectype == GEODENSITY && lambda > 1) valid = 0;
@@ -3519,11 +3628,14 @@ int plotobject::iswithparameter() const
 }
 
 
-val::pol<double> plotobject::getpol(const double& x) const
+val::pol<double> plotobject::getpol(const double& x, const char var) const
 {
     std::string sf = s_infix, value = "(" + val::ToString(x) + ")", svarx = "x", svary = "y";
-    val::replace(sf, svarx, value);
-    val::replace(sf, svary, svarx);
+	if (var == 'x') {
+		val::replace(sf, svarx, value);
+		val::replace(sf, svary, svarx);
+	}
+	else val::replace(sf, svary, value);
     val::valfunction g(sf,0);
     val::pol<double> p = val::ToDoublePolynom(g.getpolynomial());
     return p;

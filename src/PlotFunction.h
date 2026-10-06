@@ -82,8 +82,7 @@ public:
                     :  wxThreadEvent(commandType, id) { }
 
         // You *must* copy here the data to be transported
-        MyThreadEvent(const MyThreadEvent& event)
-                    :  wxThreadEvent(event) { this->SetMessage(event.GetMessage()); }
+        MyThreadEvent(const MyThreadEvent& event) :  wxThreadEvent(event), message(event.message) {} //{ this->SetMessage(event.GetMessage()); }
 
         // Required for sending with wxPostEvent()
         wxEvent* Clone() const { return new MyThreadEvent(*this); }
@@ -418,7 +417,7 @@ struct plotobject
     int IsBindistribution() const {return objectype==BINDISTRIBUTION;}
     int has_latex_script();
     //
-    val::pol<double> getpol(const double& x) const;
+    val::pol<double> getpol(const double& x, const char var = 'x') const;
     //
     void setdrawingwords(const wxString &s);    // replace std::string with wxString
     //
