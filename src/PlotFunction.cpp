@@ -160,15 +160,15 @@ const val::d_array<wxString> CommandsList({"derive", "analyze", "tangent", "norm
 
 const val::d_array<wxString> CommandsParList({"derive [#nr = 1]    <Alt-D>",
                                                  "analyze [#nr = 1] [x1 x2] [prec = 1e-09] [iterations] [decimals]    <Ctrl-A>",
-                                                 "tangent [#nr = 1] x / x y    <Alt-T>",
-                                                 "normal [#nr = 1] x / x y    <Shift-Alt-N>",
+                                                 "tangent [#nr = 1] x / y =  / x y    <Alt-T>",
+                                                 "normal [#nr = 1] x / y =  / x y    <Shift-Alt-N>",
                                                  "interpolation #nr / points for f; [points for f']; [points for f'']    <Ctrl-I>" ,
                                                  "regression #nr [ = 1]/points [degree = regression-degree]    <Alt-A>",
                                                  "table [#nr = 1 / \"function\"] [x1 x2] [dx = 0.5] [;]    <Ctrl-T>",
                                                  "integral [#nr = 1 / \"function\"] [decimals iterations precision] [x1 x2] [v = visualize area]   <Alt-I>",
                                                  "arclength [#nr = 1 / \"function\"] [decimals iterations precision] [x1 x2]    <Shift-Alt-I>",
                                                  "zero-iteration [#nr = 1 / \"function\"] [decimals iterations precision] [x1 x2]    <Alt-Z>",
-                                                 "move [#nr = 1] x y",
+                                                 "move [#nr = 1] dx dy",
                                                  "evaluate [#nr = 1] expressions [ddecimals[ = 4 ]]",
                                                  "intersection [#nr1 = 1] #nr2 [x1 x2] [prec] [iterations] [decimals]",
                                                  "calculate arithmetic expression",
@@ -1063,13 +1063,13 @@ std::string extractstringfrombrackets(std::string &sf,const char lb, const char 
 }
 
 
-std::string getstringfrombrackets(const std::string &sf, const char lb, const char rb)
+std::string getstringfrombrackets(const std::string &sf, const char lb, const char rb, int beg)
 {
     int n = sf.length(), i, nbrackets = 0;
     std::string sb ="";
 
     if (n == 0) return sb;
-    for (i = 0; i < n; ++i) {
+    for (i = beg; i < n; ++i) {
         if (sf[i] == lb) {
             ++nbrackets;
             break;
@@ -3062,6 +3062,7 @@ void computeupperlowersum(std::string sf, const val::Glist<plotobject> &F ,int u
 	tablestring += "\n Upper sum = " + uppersum.getinfixnotation() + " = " + ToString(uppersum(0)) + "\n"; 
 	tablestring += "\n Trapezoid rule = " + trapez.getinfixnotation() + " = " + ToString(trapez(0)) + "\n";
 	if (!G.is_zero()) {
+		G.setparameter(f.getparameter());
 		valfunction ev = G(b) - G(a);
 		tablestring += "\n Exact value = " + ev.getinfixnotation() + " = " + ToString(ev(0)) + "\n";		
 	}

@@ -997,7 +997,25 @@ val::valfunction integral_product_subst(const val::valfunction &g, const val::va
         return valfunction(sf);
     }
 
-    if (oper == "/") return F;
+    if (oper == "/") {
+		valfunction inner_h = h, arg;
+
+		while (val::isinContainer(inner_h.getfirstoperator(), operators)) inner_h = inner_h.getfirstargument();
+		if (h == inner_h) return F;
+		h1 = inner_h.derive(k);
+		hdivg = g/h1;
+		if (!hdivg.isconst(k)) return F;
+		std::string var = "x" + ToString(k), s_hnew = h.getinfixnotation();
+		val::replace(s_hnew, inner_h.getinfixnotation(), var);
+		valfunction hnew(s_hnew), fnew = hdivg/hnew, Fnew = ::integral(fnew, k);
+		// std::cout << "\n fnew = " << fnew << std::endl;
+		if (Fnew.is_zero()) return F;
+		s_hnew = Fnew.getinfixnotation();
+		if (k == 1) var = "x";
+		val::replace(s_hnew, var, "(" + inner_h.getinfixnotation() + ")");
+		F = valfunction(s_hnew);
+		return F;
+	}
 
 
     valfunction z1, z1div;
@@ -1618,6 +1636,54 @@ int trysubstitutionofoperator(const val::valfunction &f, val::valfunction &F, in
 	return 0;
 }
 
+// Substitute log(ax + b) with z:
+int int_bysubstof_log(const val::valfunction &f, val::valfunction &F, int k)
+{
+	// std::cout <<"\n Here!" << std::endl;
+	if (f.isconst(k)) return 0;
+	std::string sf = f.getinfixnotation(), sarg, subst, var = "x", substvar;
+	size_t pos;
+	int nvar = f.numberofvariables();
+
+	if ((pos = sf.find("log")) == std::string::npos) return 0;
+	sarg = getstringfrombrackets(sf, '(', ')', pos);
+	val::valfunction arg(sarg);
+
+	if (!is_polynomial(arg, k)) return 0;
+	auto p = getpolynomial(arg,k);
+	if (p.degree() != 1) return 0;
+	subst = "log(" + sarg + ")";
+	val::replace<char>( sf, subst, "Z");
+	
+	if (k == 2) {
+		if (nvar <= 3) var = "y";
+		else var = "x2";
+	}
+	if (k == 3) {
+		if (nvar <= 3) var = "z";
+		else var = "x3";
+	}
+	else if (k > 3) var += val::ToString(k);
+	substvar = "(exp(Z) - " + p[0].getinfixnotation() + ")/(" + p.LC().getinfixnotation() + ")";
+	val::replace<char>( sf, "exp", "EXP");
+	val::replace( sf, var, substvar);
+	sf += "* exp(Z)/(" + p.LC().getinfixnotation() + ")";
+	// std::cout << "\n h(Z) = " << sf << std::endl;
+	val::replace<char>(sf, "Z", var);
+	val::replace<char>(sf, "EXP", "exp");
+	// std::cout << "\n h(x) = " << sf << std::endl;
+	F = ::integral(val::valfunction(sf), k);
+	sf = F.getinfixnotation();
+	// std::cout << "\n F = " << sf << std::endl;
+	val::replace<char>( sf, "exp", "EXP");
+	val::replace(sf, var, subst);
+	val::replace<char>(sf, "EXP", "exp");
+	// std::cout << "\n rF = " << sf << std::endl;
+	F = val::valfunction(sf);
+
+	return 1;
+}
+
 } // end namespace hintegral
 
 
@@ -1646,6 +1712,7 @@ val::valfunction integral(const val::valfunction &f, int k)
     }
 
     if (op != -1) {
+		if (hintegral::int_bysubstof_log(f, F, k)) return F;
         if (!hintegral::is_polynomial(g,k)) return F;
         Pg = hintegral::getpolynomial(g,k);
         if (Pg.degree() > 1 && op != hintegral::SQRT) return F;
@@ -1899,6 +1966,7 @@ val::valfunction integral(const val::valfunction &f, int k)
         pol<valfunction> P = hintegral::getpolynomial(f,k), Q = hintegral::integral(P);
         return Q(valfunction(svar));
     }
+	if (hintegral::int_bysubstof_log(f, F, k)) return F;
 
     return F;
 }
@@ -2912,7 +2980,7 @@ void computezeros(const val::valfunction &f,const double &x1,const double &x2,co
 	else if (f_oper == "exp" || f_oper == "cosh") {
         return;
     }
-	else if (f_oper == "sqrt" || f_oper == "/" || f_oper == "abs" || f_oper == "m" || f_oper == "sinh" || f_oper == "arsinh") {
+	else if (f_oper == "sqrt" || f_oper == "/" || f_oper == "abs" || f_oper == "m" || f_oper == "sinh" || f_oper == "arsinh" || f_oper == "arcsin") {
         computezeros(f.getfirstargument(),x1,x2,epsilon,decimals,iterations,d_zeros,s_zeros);
 		if (f_oper == "/") {
 			valfunction g = f.getsecondargument(), sy;
@@ -2934,7 +3002,7 @@ void computezeros(const val::valfunction &f,const double &x1,const double &x2,co
 		}
         return;
     }
-	else if (f_oper == "log" || f_oper == "arcosh") {
+	else if (f_oper == "log" || f_oper == "arcosh" || f_oper == "arccos") {
         valfunction g = f.getfirstargument() - valfunction("1");
         g.setparameter(f.getparameter());
         computezeros(g, x1, x2, epsilon, decimals, iterations, d_zeros, s_zeros);

@@ -158,7 +158,7 @@ val::Glist<std::string> getfunctionstrings(const std::string &s);
 
 std::string extractstringfrombrackets(std::string &sf,const char lb, const char rb, int beg = 0);
 
-std::string getstringfrombrackets(const std::string &sf,const char lb, const char rb);
+std::string getstringfrombrackets(const std::string &sf,const char lb, const char rb, int beg = 0);
 
 // Returns color index if specified, -1 else.
 int getfunctionfromstring(std::string &fstring, plotobject &f, int &style_changed);
